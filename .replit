@@ -1,1 +1,1 @@
-modules = ["nodejs-with-prybar-18", "web", "replit-rtld-loader", "python-3.9", "postgresql-16", "php-8.3", "nodejs-16", "nodejs-18", "nodejs-23", "angular-node-20", "dotnet-8.0"]
+modules = ["web", "replit-rtld-loader", "python-3.9", "postgresql-16", "php-8.3", "angular-node-20", "dotnet-8.0", "java-graalvm22.3", "postgresql-17", "python-base-3.13", "python-base-3.12", "python-3.12", "qbasic", "typescript-language-server", "python-with-prybar-3.10", "docker", "nodejs-20"]

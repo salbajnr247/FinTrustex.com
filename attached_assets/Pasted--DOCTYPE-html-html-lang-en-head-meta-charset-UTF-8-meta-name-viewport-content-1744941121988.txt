@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Dashboard - Bybit Theme</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Include Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">CurrencySavvy</div>
+            <ul>
+                <li class="active">Dashboard</li>
+                <li>Statistics</li>
+                <li>My Portfolio</li>
+                <li>Token Market</li>
+                <li>Transactions</li>
+                <li>Wallet</li>
+                <li>Log Out</li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Welcome Back, Stefan!</h1>
+                <div class="header-right">
+                    <input type="text" placeholder="Search">
+                    <div class="icons">
+                        <span>🔔</span>
+                        <span>Stefan Fischer</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Portfolio Section -->
+            <div class="portfolio">
+                <h2>Overall Portfolio</h2>
+                <div class="portfolio-stats">
+                    <div class="stat">
+                        <p>My Balance</p>
+                        <h3 id="balance">$42,069.00 <span class="positive">+4.23%</span></h3>
+                    </div>
+                    <div class="stat">
+                        <p>Investment</p>
+                        <h3>$20,619.00 <span class="positive">+2.7%</span></h3>
+                    </div>
+                    <div class="stat">
+                        <p>Income</p>
+                        <h3>$8,664.00 <span class="positive">+1.9%</span></h3>
+                    </div>
+                    <div class="stat">
+                        <p>Outcome</p>
+                        <h3>$1,212.00 <span class="negative">-2.0%</span></h3>
+                    </div>
+                </div>
+                <div class="graph">
+                    <div class="timeframe">
+                        <button onclick="updateGraph('1H')">1H</button>
+                        <button onclick="updateGraph('1D')">1D</button>
+                        <button onclick="updateGraph('7D')">7D</button>
+                        <button onclick="updateGraph('1M')">1M</button>
+                        <button onclick="updateGraph('1Y')">1Y</button>
+                    </div>
+                    <canvas id="portfolio-graph"></canvas>
+                </div>
+            </div>
+
+            <!-- Trading Section -->
+            <div class="trading">
+                <select id="trading-pair">
+                    <option value="BTC/USD">BTC/USD</option>
+                    <option value="ETH/USD">ETH/USD</option>
+                    <option value="DOGE/USD">DOGE/USD</option>
+                </select>
+                <button onclick="showWithdrawModal()">Withdraw</button>
+                <button class="deposit" onclick="showDepositModal()">Deposit</button>
+                <div class="trade-details">
+                    <p>Total: <span id="trade-total">$1,342.00</span></p>
+                    <button class="buy" onclick="showTradeModal('buy')">Buy</button>
+                    <button class="sell" onclick="showTradeModal('sell')">Sell</button>
+                </div>
+            </div>
+
+            <!-- Transactions Section -->
+            <div class="transactions">
+                <h2>Transactions <a href="#">View All</a></h2>
+                <div id="transaction-list">
+                    <!-- Transactions will be dynamically added here -->
+                </div>
+            </div>
+
+            <!-- My Portfolio Section -->
+            <div class="my-portfolio">
+                <h2>My Portfolio <a href="#">View All</a></h2>
+                <div class="asset">
+                    <p>BTC Bitcoin</p>
+                    <h3 id="btc-price">$9,657,255.04 <span class="positive">+96.28%</span></h3>
+                </div>
+                <div class="asset">
+                    <p>ETH Ethereum</p>
+                    <h3 id="eth-price">$4,354.27 <span class="positive">+92.12%</span></h3>
+                </div>
+                <div class="asset">
+                    <p>DOG Doge Coin</p>
+                    <h3 id="doge-price">$128,545.56 <span class="negative">-54.08%</span></h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade Modal -->
+    <div id="trade-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('trade-modal')">×</span>
+            <h2 id="modal-title">Buy/Sell</h2>
+            <p>Pair: <span id="modal-pair"></span></p>
+            <label for="trade-amount">Amount (USD):</label>
+            <input type="number" id="trade-amount" placeholder="Enter amount">
+            <button id="confirm-trade" onclick="confirmTrade()">Confirm</button>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdraw-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('withdraw-modal')">×</span>
+            <h2>Withdraw</h2>
+            <label for="withdraw-amount">Amount (USD):</label>
+            <input type="number" id="withdraw-amount" placeholder="Enter amount">
+            <button onclick="confirmWithdraw()">Confirm</button>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('deposit-modal')">×</span>
+            <h2>Deposit</h2>
+            <label for="deposit-amount">Amount (USD):</label>
+            <input type="number" id="deposit-amount" placeholder="Enter amount">
+            <button onclick="confirmDeposit()">Confirm</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
