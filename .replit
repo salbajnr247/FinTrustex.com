@@ -1,1 +1,8 @@
 modules = ["web", "replit-rtld-loader", "python-3.9", "postgresql-16", "php-8.3", "angular-node-20", "dotnet-8.0", "java-graalvm22.3", "postgresql-17", "python-base-3.13", "python-base-3.12", "python-3.12", "qbasic", "typescript-language-server", "python-with-prybar-3.10", "docker", "nodejs-20"]
+
+[nix]
+channel = "stable-24_05"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
