@@ -1,0 +1,347 @@
+/* Root variables for consistent theming */
+:root {
+  --primary-bg: #1a1f2b; /* Dark blue-gray */
+  --card-bg: rgba(255, 255, 255, 0.05); /* Glassmorphism */
+  --accent-color: #f7c948; /* Bybit yellow */
+  --text-color: #e0e7ff; /* Light text */
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --glass-blur: blur(10px);
+  --transition: all 0.3s ease;
+  --positive-color: #4caf50;
+  --negative-color: #f44336;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Fira Code', monospace;
+}
+
+body {
+  background: var(--primary-bg);
+  color: var(--text-color);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Shared Components */
+.container {
+  display: flex;
+  min-height: calc(100vh - 60px);
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--accent-color);
+  color: var(--primary-bg);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn:hover {
+  background: #e6b738;
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(247, 201, 72, 0.3); /* Subtle neon glow */
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+}
+
+.btn-outline:hover {
+  background: var(--accent-color);
+  color: var(--primary-bg);
+}
+
+.btn-yellow {
+  background: var(--accent-color);
+  color: var(--primary-bg);
+}
+
+.card {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  animation: fadeIn 0.5s ease-in;
+}
+
+.glassmorph {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-color);
+}
+
+.glassmorph-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: var(--text-color);
+  width: 100%;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--accent-color);
+}
+
+.greeting {
+  font-size: 1rem;
+  color: var(--text-color);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-color);
+}
+
+.hamburger {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.hamburger:hover {
+  color: var(--accent-color);
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--card-bg);
+  backdrop-filter: var(--glass-blur);
+  width: 250px;
+  padding: 2rem;
+  border-right: 1px solid var(--border-color);
+  animation: slideIn 0.5s ease-in;
+}
+
+.sidebar-nav ul li a {
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  padding: 0.5rem 0;
+  transition: var(--transition);
+}
+
+.sidebar-nav ul li a:hover {
+  color: var(--accent-color);
+  transform: translateX(5px);
+}
+
+.sidebar-nav ul li.active a {
+  color: var(--accent-color);
+  font-weight: bold;
+  border-left: 3px solid var(--accent-color);
+  padding-left: 0.5rem;
+}
+
+.shortcuts {
+  margin-top: 2rem;
+}
+
+.shortcuts h4 {
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+}
+
+.shortcuts ul li a {
+  color: var(--text-color);
+  text-decoration: none;
+  padding: 0.3rem 0;
+  display: block;
+}
+
+.shortcuts ul li a:hover {
+  color: var(--accent-color);
+}
+
+/* Footer */
+.footer {
+  padding: 2rem;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+.footer ul {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  list-style: none;
+}
+
+.footer a {
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--accent-color);
+}
+
+/* Portfolio Item (for wallet.js) */
+.portfolio-item {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
+}
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+}
+
+.toast {
+  padding: 10px 20px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  color: #fff;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.toast-success {
+  background: var(--positive-color);
+}
+
+.toast-error {
+  background: var(--negative-color);
+}
+
+/* Ticker and Market Items (for main.js) */
+.ticker-item {
+  display: flex;
+  gap: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.ticker-item span {
+  flex: 1;
+}
+
+.market-item {
+  padding: 1rem;
+  text-align: center;
+}
+
+.positive {
+  color: var(--positive-color);
+}
+
+.negative {
+  color: var(--negative-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Theme Toggle */
+.light-theme {
+  --primary-bg: #f0f2f5;
+  --card-bg: rgba(0, 0, 0, 0.05);
+  --text-color: #1a1f2b;
+  --border-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .navbar-left {
+    flex: 1;
+  }
+
+  .hamburger {
+    display: block;
+  }
+
+  .greeting {
+    flex: 1;
+    text-align: center;
+  }
+
+  .nav-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 2000;
+  }
+
+  .sidebar.active {
+    display: block;
+  }
+}

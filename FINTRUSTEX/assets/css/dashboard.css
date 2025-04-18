@@ -1,0 +1,76 @@
+/* Dashboard-specific styles */
+.dashboard-wrapper {
+  display: contents;
+}
+
+.main-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+.section-title {
+  color: #f7c948; /* Bybit yellow */
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.dashboard-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dashboard-overview {
+  padding: 2rem;
+}
+
+.dashboard-overview h3 {
+  color: #f7c948;
+  margin-bottom: 1rem;
+}
+
+.dashboard-overview p {
+  color: #e0e7ff;
+  font-size: 1.1rem;
+}
+
+.market-tickers {
+  padding: 2rem;
+}
+
+.market-tickers h3 {
+  color: #f7c948;
+  margin-bottom: 1rem;
+}
+
+.ticker-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e0e7ff;
+}
+
+.ticker-item span {
+  flex: 1;
+}
+
+.positive {
+  color: #4caf50;
+}
+
+.negative {
+  color: #f44336;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .dashboard-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ticker-item {
+    font-size: 0.9rem;
+  }
+}

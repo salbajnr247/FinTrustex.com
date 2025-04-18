@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Wallet</title>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/wallet.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="wallet-wrapper">
+    <header class="navbar" id="navbar-container">
+      <div class="navbar" role="banner">
+        <div class="navbar-left">
+          <button class="hamburger" aria-label="Toggle sidebar" id="hamburger-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="logo">FinTrustEX</div>
+        </div>
+        <h2 class="greeting">Welcome back, <span id="username">User</span> 👋</h2>
+        <div class="nav-actions">
+          <button class="btn deposit" data-nav="/dashboard/wallet#deposit" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw" data-nav="/dashboard/wallet#withdraw" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" data-nav="/dashboard/trading" aria-label="Start trading">Trade Now</button>
+          <button class="btn theme-toggle" aria-label="Toggle dark/light mode" id="theme-toggle">Toggle Theme</button>
+          <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
+          <div class="profile">
+            <img src="/assets/images/profile.png" alt="User Profile" class="profile-img">
+            <span class="profile-name">Trader!</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container"></aside>
+      <main class="main-content" id="app">
+        <section id="index">
+          <h1 class="section-title">Wallet</h1>
+          <div class="wallet-controls">
+            <button id="backup-wallet" class="btn btn-yellow"><i class="fas fa-download"></i> Backup Wallet</button>
+            <button id="export-transactions" class="btn btn-outline"><i class="fas fa-file-export"></i> Export Transactions</button>
+          </div>
+          <div class="portfolio-overview card glassmorph">
+            <h3>Portfolio Overview</h3>
+            <p>Total Balance: $10,000</p>
+          </div>
+          <div class="wallet-stats">
+            <div class="wallet-stat card glassmorph">
+              <h3>BTC</h3>
+              <p id="btc-balance">0.0000</p>
+              <span id="btc-address" class="address">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
+              <button class="btn btn-yellow copy-address" data-coin="btc" aria-label="Copy BTC address"><i class="fas fa-copy"></i> Copy</button>
+              <canvas id="btc-qr" class="qr-code" aria-label="QR code for BTC address"></canvas>
+              <div class="progress-bar"><div id="btc-progress" style="width: 50%;"></div></div>
+              <div id="btc-transactions">
+                <h4>Recent Transactions</h4>
+                <p>2025-04-17: +0.01 BTC</p>
+              </div>
+            </div>
+            <div class="wallet-stat card glassmorph">
+              <h3>ETH</h3>
+              <p id="eth-balance">0.0000</p>
+              <span id="eth-address" class="address">0x1234567890abcdef1234567890abcdef12345678</span>
+              <button class="btn btn-yellow copy-address" data-coin="eth" aria-label="Copy ETH address"><i class="fas fa-copy"></i> Copy</button>
+              <canvas id="eth-qr" class="qr-code" aria-label="QR code for ETH address"></canvas>
+              <div class="progress-bar"><div id="eth-progress" style="width: 30%;"></div></div>
+              <div id="eth-transactions">
+                <h4>Recent Transactions</h4>
+                <p>2025-04-17: +0.5 ETH</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="deposit" class="hidden">
+          <h1 class="section-title">Deposit</h1>
+          <div class="card glassmorph">
+            <form id="deposit-form">
+              <label for="deposit-coin">Select cryptocurrency:</label>
+              <select id="deposit-coin" class="glassmorph-input" aria-label="Select cryptocurrency">
+                <option value="btc">BTC</option>
+                <option value="eth">ETH</option>
+              </select>
+              <p>Address: <span id="deposit-address">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span></p>
+              <button type="submit" class="btn btn-yellow"><i class="fas fa-eye"></i> Show Address</button>
+            </form>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container"></footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+        QRCode.toCanvas(document.getElementById('btc-qr'), '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', { width: 100 }, (err) => {
+          if (err) console.error('QR Code Error:', err);
+        });
+      });
+    </script>
+    <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/wallet.js"></script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Authentication</title>
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <link rel="stylesheet" href="./assets/css/auth.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="auth-wrapper">
+    <header class="navbar" id="navbar-container"></header>
+    <main class="auth-content">
+      <section class="auth-section card glassmorph" data-aos="fade-up">
+        <div class="auth-tabs">
+          <button class="tab-btn active" data-tab="login">Login</button>
+          <button class="tab-btn" data-tab="register">Register</button>
+        </div>
+        <!-- Login Form -->
+        <form id="login-form" class="auth-form active">
+          <h2>Login</h2>
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" class="glassmorph-input" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" class="glassmorph-input" placeholder="Enter your password" required>
+          </div>
+          <div class="form-group">
+            <label for="login-2fa">2FA Code (Optional)</label>
+            <input type="text" id="login-2fa" class="glassmorph-input" placeholder="Enter 2FA code">
+          </div>
+          <button type="submit" class="btn btn-yellow"><i class="fas fa-sign-in-alt"></i> Login</button>
+          <a href="#" class="forgot-password">Forgot Password?</a>
+        </form>
+        <!-- Register Form -->
+        <form id="register-form" class="auth-form">
+          <h2>Register</h2>
+          <div class="form-group">
+            <label for="register-username">Username</label>
+            <input type="text" id="register-username" class="glassmorph-input" placeholder="Choose a username" required>
+          </div>
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" class="glassmorph-input" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" class="glassmorph-input" placeholder="Create a password" required>
+          </div>
+          <div class="form-group">
+            <label for="register-confirm-password">Confirm Password</label>
+            <input type="password" id="register-confirm-password" class="glassmorph-input" placeholder="Confirm your password" required>
+          </div>
+          <button type="submit" class="btn btn-yellow"><i class="fas fa-user-plus"></i> Register</button>
+        </form>
+      </section>
+      <section class="ticker-section card glassmorph" data-aos="fade-up">
+        <h3>Crypto Price Ticker</h3>
+        <div id="crypto-ticker">
+          <!-- Dynamic content populated by auth.js -->
+          <div class="ticker-item">
+            <span>BTC/USDT</span>
+            <span>$60,000</span>
+            <span class="positive">+1.2%</span>
+          </div>
+          <div class="ticker-item">
+            <span>ETH/USDT</span>
+            <span>$2,500</span>
+            <span class="negative">-0.8%</span>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="footer" id="footer-container"></footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+      });
+    </script>
+    <script src="./assets/js/components.js"></script>
+    <script src="./assets/js/main.js"></script>
+    <script src="./assets/js/auth.js"></script>
+  </div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Support</title>
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <link rel="stylesheet" href="./assets/css/support.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="support-wrapper">
+    <header class="navbar" id="navbar-container"></header>
+    <main class="support-content">
+      <section class="contact-section card glassmorph" data-aos="fade-up">
+        <h1 class="section-title">Contact Support</h1>
+        <form id="contact-form">
+          <div class="form-group">
+            <label for="contact-name">Name</label>
+            <input type="text" id="contact-name" class="glassmorph-input" placeholder="Enter your name" required>
+          </div>
+          <div class="form-group">
+            <label for="contact-email">Email</label>
+            <input type="email" id="contact-email" class="glassmorph-input" placeholder="Enter your email" required>
+          </div>
+          <div class="form-group">
+            <label for="contact-subject">Subject</label>
+            <input type="text" id="contact-subject" class="glassmorph-input" placeholder="Enter the subject" required>
+          </div>
+          <div class="form-group">
+            <label for="contact-message">Message</label>
+            <textarea id="contact-message" class="glassmorph-input" placeholder="Describe your issue" rows="5" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-yellow"><i class="fas fa-paper-plane"></i> Send Message</button>
+        </form>
+      </section>
+      <section class="faq-section card glassmorph" data-aos="fade-up">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div id="faq-list">
+          <!-- Static Test Content -->
+          <div class="faq-item">
+            <h3 class="faq-question">How do I reset my password?</h3>
+            <div class="faq-answer">Click "Forgot Password" on the login page and follow the instructions to reset your password.</div>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-question">What is 2FA and how do I enable it?</h3>
+            <div class="faq-answer">Two-Factor Authentication (2FA) adds an extra layer of security. Enable it in your account settings.</div>
+          </div>
+        </div>
+      </section>
+      <section class="chat-section card glassmorph" data-aos="fade-up">
+        <h2 class="section-title">Live Chat</h2>
+        <p>Chat with our support team for immediate assistance.</p>
+        <button id="start-chat" class="btn btn-yellow"><i class="fas fa-comment"></i> Start Chat</button>
+      </section>
+    </main>
+    <footer class="footer" id="footer-container"></footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+      });
+    </script>
+    <script src="./assets/js/components.js"></script>
+    <script src="./assets/js/main.js"></script>
+    <script src="./assets/js/support.js"></script>
+  </div>
+</body>
+</html>

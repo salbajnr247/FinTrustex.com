@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Orders</title>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/orders.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="orders-wrapper">
+    <header class="navbar" id="navbar-container">
+      <div class="navbar" role="banner">
+        <div class="logo">FinTrustEX</div>
+        <h2>Welcome back, <span id="username">User</span> 👋</h2>
+        <div class="nav-actions">
+          <button class="btn deposit" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" aria-label="Start trading">Trade Now</button>
+          <button class="btn theme-toggle" aria-label="Toggle dark/light mode" id="theme-toggle">Toggle Theme</button>
+          <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
+          <div class="profile">
+            <img src="../../assets/images/profile.png" alt="User Profile" class="profile-img">
+            <span class="profile-name">Trader!</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container">
+        <nav class="sidebar-nav">
+          <ul>
+            <li><a href="../dashboard/dashboard.html" data-nav="/dashboard">Dashboard</a></li>
+            <li><a href="../dashboard/trading/trading.html" data-nav="/dashboard/trading">Trading</a></li>
+            <li><a href="../dashboard/wallet/wallet.html" data-nav="/dashboard/wallet">Wallet</a></li>
+            <li><a href="../dashboard/orders/orders.html" data-nav="/dashboard/orders">Orders</a></li>
+            <li><a href="../earn/earn.html" data-nav="/earn">Analytics</a></li>
+            <li><a href="../support/support.html" data-nav="/support">Support</a></li>
+            <li><a href="../legal/legal.html" data-nav="/legal">Settings</a></li>
+          </ul>
+        </nav>
+        <div class="shortcuts">
+          <h4>Favorites</h4>
+          <ul>
+            <li><a href="#">BTC/USDT</a></li>
+            <li><a href="#">ETH/USDT</a></li>
+            <li><a href="#">ADA/USDT</a></li>
+          </ul>
+        </div>
+      </aside>
+      <main class="main-content" id="app">
+        <section id="index">
+          <h1 class="section-title">Orders</h1>
+          <div class="order-controls">
+            <button id="filter-orders" class="btn btn-yellow"><i class="fas fa-filter"></i> Filter Orders</button>
+            <button id="cancel-all" class="btn btn-outline"><i class="fas fa-times"></i> Cancel All</button>
+          </div>
+          <div class="order-list card glassmorph" data-aos="fade-up" id="order-list">
+            <!-- Static Test Content -->
+            <table role="grid">
+              <thead>
+                <tr>
+                  <th scope="col">Order ID</th>
+                  <th scope="col">Pair</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>ORD12345</td>
+                  <td>BTC/USDT</td>
+                  <td>Limit</td>
+                  <td>0.1 BTC</td>
+                  <td>60000 USDT</td>
+                  <td class="status-open">Open</td>
+                  <td><button class="btn btn-outline cancel-order"><i class="fas fa-times"></i> Cancel</button></td>
+                </tr>
+                <tr>
+                  <td>ORD12346</td>
+                  <td>ETH/USDT</td>
+                  <td>Market</td>
+                  <td>1 ETH</td>
+                  <td>2500 USDT</td>
+                  <td class="status-filled">Filled</td>
+                  <td><button class="btn btn-outline view-order"><i class="fas fa-eye"></i> View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container">
+      
+    </footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+      });
+    </script>
+    <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/orders.js"></script>
+  </div>
+</body>
+</html>

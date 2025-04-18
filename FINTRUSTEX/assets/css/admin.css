@@ -1,0 +1,141 @@
+/* Admin-specific styles */
+.admin-wrapper {
+  display: contents;
+}
+
+.main-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+.section-title {
+  color: var(--accent-color); /* #f7c948 */
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.admin-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.user-management,
+.transaction-monitoring,
+.system-analytics {
+  padding: 2rem;
+}
+
+.user-management h3,
+.transaction-monitoring h3,
+.system-analytics h3 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+#user-list,
+#transaction-list {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#user-list th,
+#user-list td,
+#transaction-list th,
+#transaction-list td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+#user-list th,
+#transaction-list th {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-color);
+}
+
+.status-active {
+  color: var(--positive-color);
+}
+
+.status-suspended {
+  color: var(--negative-color);
+}
+
+.status-pending {
+  color: #f7c948;
+}
+
+.system-analytics canvas {
+  max-height: 300px;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.system-analytics p {
+  color: var(--text-color);
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+}
+
+.btn-outline:hover {
+  background: var(--accent-color);
+  color: var(--primary-bg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+
+  .admin-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .user-management,
+  .transaction-monitoring,
+  .system-analytics {
+    padding: 1rem;
+  }
+
+  #user-list th,
+  #user-list td,
+  #transaction-list th,
+  #transaction-list td {
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .system-analytics canvas {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  #user-list th,
+  #user-list td,
+  #transaction-list th,
+  #transaction-list td {
+    font-size: 0.7rem;
+  }
+
+  .btn-outline {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+  }
+}

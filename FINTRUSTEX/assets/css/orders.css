@@ -1,0 +1,84 @@
+/* Orders-specific styles */
+.orders-wrapper {
+  display: contents;
+}
+
+.main-content {
+  padding: 2rem;
+  flex: 1;
+}
+
+.section-title {
+  color: #f7c948; /* Bybit yellow */
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+.order-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.order-list {
+  padding: 2rem;
+}
+
+.order-list table {
+  width: 100%;
+  border-collapse: collapse;
+  color: #e0e7ff;
+}
+
+.order-list th,
+.order-list td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.order-list th {
+  color: #f7c948;
+  font-weight: 500;
+}
+
+.order-list td {
+  font-size: 0.9rem;
+}
+
+.status-open {
+  color: #4caf50; /* Green for open orders */
+}
+
+.status-filled {
+  color: #f7c948; /* Yellow for filled orders */
+}
+
+.cancel-order,
+.view-order {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+}
+
+.cancel-order:hover,
+.view-order:hover {
+  background: #e6b738;
+  color: #1a1f2b;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .order-list table {
+    font-size: 0.8rem;
+  }
+
+  .order-list th,
+  .order-list td {
+    padding: 0.5rem;
+  }
+
+  .order-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

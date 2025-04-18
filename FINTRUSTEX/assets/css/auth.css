@@ -1,0 +1,184 @@
+/* Auth-specific styles */
+.auth-wrapper {
+  display: contents;
+}
+
+.auth-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.auth-section {
+  padding: 2rem;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.tab-btn.active {
+  color: var(--accent-color);
+  border-bottom: 2px solid var(--accent-color);
+}
+
+.tab-btn:hover {
+  color: var(--accent-color);
+}
+
+.auth-form {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-form.active {
+  display: flex;
+}
+
+.auth-form h2 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.glassmorph-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem;
+  color: var(--text-color);
+  width: 100%;
+}
+
+.glassmorph-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.forgot-password {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-size: 0.9rem;
+  text-align: right;
+  display: block;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+.ticker-section {
+  padding: 2rem;
+}
+
+.ticker-section h3 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+#crypto-ticker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ticker-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.ticker-item span {
+  flex: 1;
+}
+
+.positive {
+  color: var(--positive-color);
+}
+
+.negative {
+  color: var(--negative-color);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .auth-content {
+    grid-template-columns: 1fr;
+    padding: 1rem;
+  }
+
+  .auth-section,
+  .ticker-section {
+    padding: 1rem;
+  }
+
+  .tab-btn {
+    font-size: 0.9rem;
+  }
+
+  .auth-form h2 {
+    font-size: 1.5rem;
+  }
+
+  .glassmorph-input {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-tabs {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tab-btn {
+    padding: 0.3rem;
+    font-size: 0.8rem;
+  }
+
+  .auth-form h2 {
+    font-size: 1.2rem;
+  }
+
+  .form-group label {
+    font-size: 0.8rem;
+  }
+
+  .glassmorph-input {
+    font-size: 0.8rem;
+  }
+
+  .ticker-item {
+    font-size: 0.7rem;
+  }
+}

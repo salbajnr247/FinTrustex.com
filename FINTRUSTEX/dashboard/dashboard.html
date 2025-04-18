@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Dashboard</title>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="dashboard-wrapper">
+    <header class="navbar" id="navbar-container">
+      <div class="navbar" role="banner">
+        <div class="navbar-left">
+          <button class="hamburger" aria-label="Toggle sidebar" id="hamburger-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="logo">FinTrustEX</div>
+        </div>
+        <h2 class="greeting">Welcome back, <span id="username">User</span> 👋</h2>
+        <div class="nav-actions">
+          <button class="btn deposit" data-nav="/dashboard/wallet#deposit" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw" data-nav="/dashboard/wallet#withdraw" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" data-nav="/dashboard/trading" aria-label="Start trading">Trade Now</button>
+          <button class="btn theme-toggle" aria-label="Toggle dark/light mode" id="theme-toggle">Toggle Theme</button>
+          <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
+          <div class="profile">
+            <img src="/assets/images/profile.png" alt="User Profile" class="profile-img">
+            <span class="profile-name">Trader!</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container"></aside>
+      <main class="main-content" id="app">
+        <section id="index">
+          <h1 class="section-title">Dashboard</h1>
+          <div class="dashboard-controls">
+            <button id="refresh-data" class="btn btn-yellow"><i class="fas fa-sync"></i> Refresh</button>
+            <button id="view-analytics" class="btn btn-outline"><i class="fas fa-chart-line"></i> Analytics</button>
+          </div>
+          <div class="dashboard-overview card glassmorph" data-aos="fade-up">
+            <!-- Static Test Content -->
+            <h3>Portfolio Overview</h3>
+            <p>Total Balance: $12,500</p>
+            <p>24h Change: <span class="positive">+2.5%</span></p>
+          </div>
+          <div class="market-tickers card glassmorph" data-aos="fade-up" id="market-tickers">
+            <h3>Market Tickers</h3>
+            <div class="ticker-item">
+              <span>BTC/USDT</span>
+              <span>$60,000</span>
+              <span class="positive">+1.2%</span>
+            </div>
+            <div class="ticker-item">
+              <span>ETH/USDT</span>
+              <span>$2,500</span>
+              <span class="negative">-0.8%</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container"></footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+      });
+    </script>
+    <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/dashboard.js"></script>
+  </div>
+</body>
+</html>
