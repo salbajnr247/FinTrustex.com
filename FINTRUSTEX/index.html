@@ -33,19 +33,39 @@
   </header>
 
   <main id="main-content">
-    <!-- Hero -->
+    <!-- Hero with 3D Elements -->
     <section id="hero" class="hero">
+      <div class="hero-3d-bg">
+        <div class="floating-crypto btc"></div>
+        <div class="floating-crypto eth"></div>
+        <div class="floating-crypto usdt"></div>
+        <div class="particle-network"></div>
+      </div>
       <div class="container hero-container">
         <div class="hero-text">
-          <h2>Explore and <span class="highlight">invest</span> with Fintrust</h2>
-          <p>Your enjoyable crypto trading journey starts here. Discover, learn, and trade in a secure, intuitive, and rewarding environment.</p>
+          <h2 class="animate-title">Explore and <span class="highlight">invest</span> with Fintrust</h2>
+          <p class="animate-text">Your enjoyable crypto trading journey starts here. Discover, learn, and trade in a secure, intuitive, and rewarding environment.</p>
           <div class="hero-cta">
-            <a href="#getStartedBtn" class="btn btn-primary">Get Started</a>
-            <a href="#features" class="btn btn-secondary">Learn More</a>
+            <a href="/auth" class="btn btn-primary btn-3d">
+              <span class="btn-text">Register Now</span>
+              <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+            </a>
+            <a href="#features" class="btn btn-secondary btn-3d">Learn More</a>
+          </div>
+          <div class="login-prompt">
+            Already have an account? <a href="/auth" class="login-link">Log In</a>
           </div>
         </div>
         <div class="hero-image">
-          <img src="images/dashboard-mockup.png" alt="Fintrust Dashboard Preview" loading="lazy" />
+          <div class="dashboard-3d-wrapper">
+            <img src="images/dashboard-mockup.png" alt="Fintrust Dashboard Preview" loading="lazy" class="dashboard-image" />
+            <div class="glow-effect"></div>
+            <div class="reflection"></div>
+          </div>
+          <div class="live-data-badge">
+            <div class="pulse-dot"></div>
+            Live Market Data
+          </div>
         </div>
       </div>
     </section>

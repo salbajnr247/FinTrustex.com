@@ -22,15 +22,53 @@
 
 .user-management,
 .transaction-monitoring,
-.system-analytics {
+.system-analytics,
+.market-insights,
+.admin-tools {
   padding: 2rem;
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  background: rgba(25, 30, 47, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-management:hover,
+.transaction-monitoring:hover,
+.system-analytics:hover,
+.market-insights:hover,
+.admin-tools:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
 .user-management h3,
 .transaction-monitoring h3,
-.system-analytics h3 {
+.system-analytics h3,
+.market-insights h3,
+.admin-tools h3 {
   color: var(--accent-color);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.user-management h3::before,
+.transaction-monitoring h3::before,
+.system-analytics h3::before,
+.market-insights h3::before,
+.admin-tools h3::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 24px;
+  background: var(--accent-color);
+  margin-right: 12px;
+  border-radius: 3px;
 }
 
 #user-list,
@@ -80,15 +118,107 @@
   margin: 0.5rem 0;
 }
 
+/* Market Insights Styling */
+.market-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.stat-card h4 {
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  opacity: 0.8;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.stat-change {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.positive {
+  color: var(--positive-color);
+}
+
+.negative {
+  color: var(--negative-color);
+}
+
+/* Admin Tools Styling */
+.tool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.admin-tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.admin-tool:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.admin-tool i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+}
+
+.admin-tool span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
 .btn-outline {
   background: transparent;
   border: 1px solid var(--accent-color);
   color: var(--accent-color);
+  transition: all 0.3s ease;
 }
 
 .btn-outline:hover {
   background: var(--accent-color);
   color: var(--primary-bg);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 201, 72, 0.2);
 }
 
 /* Responsive Design */

@@ -1,30 +1,111 @@
+import websocketClient from './websocket-client.js';
+import marketDataService from './market-data-service.js';
+import api from './api.js';
+import * as utils from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
-  // Mock API Data
-  const fetchMockAdminData = async () => {
-    return {
-      users: [
-        { id: 'USR12345', username: 'Trader1', email: 'trader1@example.com', status: 'Active' },
-        { id: 'USR12346', username: 'Trader2', email: 'trader2@example.com', status: 'Suspended' }
-      ],
-      transactions: [
-        { id: 'TX12345', user: 'Trader1', type: 'Deposit', amount: '0.1 BTC', status: 'Pending' },
-        { id: 'TX12346', user: 'Trader2', type: 'Withdrawal', amount: '1 ETH', status: 'Approved' }
-      ],
-      analytics: {
-        totalUsers: 1250,
-        dailyTransactions: 150,
-        chartData: {
-          labels: ['Jan', 'Feb', 'Mar', 'Apr'],
-          data: [100, 200, 300, 400]
+  // Initialize WebSocket for real-time updates
+  initWebSocketConnection();
+  
+  // Fetch Admin Data from API
+  const fetchAdminData = async () => {
+    try {
+      // Use API client to fetch data
+      const [users, transactions, analytics] = await Promise.all([
+        api.getUsers(),
+        api.getTransactions(),
+        api.getAnalytics()
+      ]);
+      
+      return {
+        users: users || [],
+        transactions: transactions || [],
+        analytics: analytics || {
+          totalUsers: 0,
+          dailyTransactions: 0,
+          chartData: {
+            labels: [],
+            data: []
+          }
         }
-      }
-    };
+      };
+    } catch (error) {
+      console.error('Error fetching admin data:', error);
+      // Return empty data structure if API fails
+      return {
+        users: [],
+        transactions: [],
+        analytics: {
+          totalUsers: 0,
+          dailyTransactions: 0,
+          chartData: {
+            labels: [],
+            data: []
+          }
+        }
+      };
+    }
   };
+
+  // Initialize WebSocket connection for real-time updates
+  function initWebSocketConnection() {
+    // Setup WebSocket event listeners
+    websocketClient.on('user_update', (data) => {
+      // Handle user update events
+      updateUserList();
+      showToast(`User ${data.username} ${data.action}`, 'info');
+    });
+    
+    websocketClient.on('transaction_update', (data) => {
+      // Handle transaction update events
+      updateTransactionList();
+      showToast(`Transaction ${data.id} ${data.status}`, 'info');
+    });
+    
+    websocketClient.on('market_data', (data) => {
+      // Handle market data updates for admin analytics
+      updateMarketInsights(data);
+    });
+    
+    // Connect to WebSocket server
+    websocketClient.connect();
+  }
+  
+  // Update Market Insights based on real-time data
+  function updateMarketInsights(data) {
+    const marketInsights = document.getElementById('market-insights');
+    if (!marketInsights) return;
+    
+    // Update trading volume statistics
+    const volumeData = data.volume || {};
+    const priceData = data.prices || {};
+    
+    marketInsights.innerHTML = `
+      <h3>Market Insights</h3>
+      <div class="market-stats">
+        <div class="stat-card">
+          <h4>24h Trading Volume</h4>
+          <p class="stat-value">${utils.formatCurrency(volumeData.total || 0)}</p>
+          <p class="stat-change ${(volumeData.change || 0) >= 0 ? 'positive' : 'negative'}">
+            ${utils.formatPercentage(volumeData.change || 0)}
+          </p>
+        </div>
+        <div class="stat-card">
+          <h4>Active Trading Pairs</h4>
+          <p class="stat-value">${data.activePairs || 0}</p>
+        </div>
+        <div class="stat-card">
+          <h4>System Load</h4>
+          <p class="stat-value">${data.systemLoad || '0%'}</p>
+        </div>
+      </div>
+    `;
+  }
 
   // Update User List
   const updateUserList = async () => {
     try {
-      const data = await fetchMockAdminData();
+      const data = await fetchAdminData();
       const userList = document.getElementById('user-list');
       if (userList) {
         userList.querySelector('tbody').innerHTML = data.users.map(user => `
@@ -34,8 +115,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <td>${user.email}</td>
             <td class="status-${user.status.toLowerCase()}">${user.status}</td>
             <td>
-              <button class="btn btn-outline suspend-user" data-user-id="${user.id}"><i class="fas fa-ban"></i> ${user.status === 'Active' ? 'Suspend' : 'Activate'}</button>
-              <button class="btn btn-outline view-user" data-user-id="${user.id}"><i class="fas fa-eye"></i> View</button>
+              <button class="btn btn-outline suspend-user" data-user-id="${user.id}">
+                <i class="fas fa-ban"></i> ${user.status === 'Active' ? 'Suspend' : 'Activate'}
+              </button>
+              <button class="btn btn-outline view-user" data-user-id="${user.id}">
+                <i class="fas fa-eye"></i> View
+              </button>
+              <button class="btn btn-outline edit-user" data-user-id="${user.id}">
+                <i class="fas fa-edit"></i> Edit
+              </button>
             </td>
           </tr>
         `).join('');
@@ -46,10 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update Transaction List
+  // Update Transaction List with real-time data
   const updateTransactionList = async () => {
     try {
-      const data = await fetchMockAdminData();
+      const data = await fetchAdminData();
       const transactionList = document.getElementById('transaction-list');
       if (transactionList) {
         transactionList.querySelector('tbody').innerHTML = data.transactions.map(tx => `
@@ -61,10 +149,16 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="status-${tx.status.toLowerCase()}">${tx.status}</td>
             <td>
               ${tx.status === 'Pending' ? `
-                <button class="btn btn-outline approve-tx" data-tx-id="${tx.id}"><i class="fas fa-check"></i> Approve</button>
-                <button class="btn btn-outline reject-tx" data-tx-id="${tx.id}"><i class="fas fa-times"></i> Reject</button>
+                <button class="btn btn-outline approve-tx" data-tx-id="${tx.id}">
+                  <i class="fas fa-check"></i> Approve
+                </button>
+                <button class="btn btn-outline reject-tx" data-tx-id="${tx.id}">
+                  <i class="fas fa-times"></i> Reject
+                </button>
               ` : `
-                <button class="btn btn-outline view-tx" data-tx-id="${tx.id}"><i class="fas fa-eye"></i> View</button>
+                <button class="btn btn-outline view-tx" data-tx-id="${tx.id}">
+                  <i class="fas fa-eye"></i> View
+                </button>
               `}
             </td>
           </tr>
@@ -81,10 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Update Analytics Chart
+  // Update Analytics Chart with real-time data
   const updateAnalyticsChart = async () => {
     try {
-      const data = await fetchMockAdminData();
+      const data = await fetchAdminData();
       const analyticsSection = document.querySelector('.system-analytics');
       if (analyticsSection) {
         analyticsSection.innerHTML = `

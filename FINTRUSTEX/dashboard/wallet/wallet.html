@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinTrustEX - Wallet</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../../assets/js/auth-check.js"></script>
   <link rel="stylesheet" href="../../assets/css/main.css">
   <link rel="stylesheet" href="../../assets/css/wallet.css">
   <link rel="stylesheet" href="../../assets/css/responsive.css">
@@ -106,15 +108,9 @@
     <script src="../../assets/js/wallet.js"></script>
     
     <script>
-      // Check authentication on page load
+      // Update user info in header on page load
       document.addEventListener('DOMContentLoaded', () => {
         if (window.authService) {
-          // Redirect to login if not authenticated
-          if (!authService.isAuthenticated()) {
-            window.location.href = '../../auth.html?redirect=' + encodeURIComponent(window.location.pathname);
-          }
-          
-          // If authenticated, update user info in header
           const user = authService.getCurrentUser();
           if (user) {
             const usernameElement = document.getElementById('username');

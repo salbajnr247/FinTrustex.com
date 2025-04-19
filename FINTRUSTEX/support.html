@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinTrustEX - Support</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="./assets/js/auth-check.js"></script>
   <link rel="stylesheet" href="./assets/css/main.css">
   <link rel="stylesheet" href="./assets/css/support.css">
   <link rel="stylesheet" href="./assets/css/responsive.css">
@@ -14,8 +16,49 @@
   <div class="support-wrapper">
     <header class="navbar" id="navbar-container"></header>
     <main class="support-content">
-      <section class="contact-section card glassmorph" data-aos="fade-up">
-        <h1 class="section-title">Contact Support</h1>
+      <!-- Tab navigation for switching between support options -->
+      <div class="support-tabs">
+        <button class="support-tab active" data-tab="faq">FAQs</button>
+        <button class="support-tab" data-tab="contact">Contact Form</button>
+        <button class="support-tab" data-tab="admin-chat">Live Chat with Admin</button>
+        <button class="support-tab" data-tab="ai-chat">AI Assistant</button>
+      </div>
+      
+      <!-- FAQ Section -->
+      <section class="faq-section support-panel active card glassmorph" id="faq-panel" data-aos="fade-up">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="faq-search">
+          <input type="text" id="faq-search-input" class="glassmorph-input" placeholder="Search FAQs...">
+          <button id="faq-search-btn" class="btn btn-yellow"><i class="fas fa-search"></i></button>
+        </div>
+        <div id="faq-list">
+          <!-- Static Test Content -->
+          <div class="faq-item">
+            <h3 class="faq-question">How do I reset my password?</h3>
+            <div class="faq-answer">Click "Forgot Password" on the login page and follow the instructions to reset your password.</div>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-question">What is 2FA and how do I enable it?</h3>
+            <div class="faq-answer">Two-Factor Authentication (2FA) adds an extra layer of security. Enable it in your account settings.</div>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-question">How do I deposit cryptocurrency?</h3>
+            <div class="faq-answer">Navigate to the Wallet section, select the cryptocurrency you want to deposit, and follow the instructions to generate a deposit address.</div>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-question">What trading fees does FinTrustEX charge?</h3>
+            <div class="faq-answer">FinTrustEX offers competitive trading fees starting at 0.1% for makers and 0.2% for takers. VIP users enjoy reduced fees based on trading volume.</div>
+          </div>
+          <div class="faq-item">
+            <h3 class="faq-question">How do I withdraw funds?</h3>
+            <div class="faq-answer">Go to the Wallet section, select the cryptocurrency you want to withdraw, enter the destination address and amount, then confirm the transaction.</div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Contact Form Section -->
+      <section class="contact-section support-panel card glassmorph" id="contact-panel" data-aos="fade-up">
+        <h2 class="section-title">Contact Support</h2>
         <form id="contact-form">
           <div class="form-group">
             <label for="contact-name">Name</label>
@@ -36,24 +79,102 @@
           <button type="submit" class="btn btn-yellow"><i class="fas fa-paper-plane"></i> Send Message</button>
         </form>
       </section>
-      <section class="faq-section card glassmorph" data-aos="fade-up">
-        <h2 class="section-title">Frequently Asked Questions</h2>
-        <div id="faq-list">
-          <!-- Static Test Content -->
-          <div class="faq-item">
-            <h3 class="faq-question">How do I reset my password?</h3>
-            <div class="faq-answer">Click "Forgot Password" on the login page and follow the instructions to reset your password.</div>
+      
+      <!-- Admin Chat Section -->
+      <section class="chat-section support-panel card glassmorph" id="admin-chat-panel" data-aos="fade-up">
+        <h2 class="section-title">Live Chat with Admin</h2>
+        <div class="chat-container">
+          <div class="chat-status" id="admin-chat-status">
+            <span class="status-indicator online"></span>
+            <span class="status-text">Admin is online</span>
           </div>
-          <div class="faq-item">
-            <h3 class="faq-question">What is 2FA and how do I enable it?</h3>
-            <div class="faq-answer">Two-Factor Authentication (2FA) adds an extra layer of security. Enable it in your account settings.</div>
+          
+          <div class="chat-messages" id="admin-chat-messages">
+            <div class="chat-message system">
+              <p>Welcome to FinTrustEX Support! An admin will assist you shortly.</p>
+              <span class="message-time">10:00 AM</span>
+            </div>
+            
+            <div class="chat-message received">
+              <div class="message-avatar">
+                <img src="./assets/images/admin-avatar.svg" alt="Admin">
+              </div>
+              <div class="message-content">
+                <p>Hello! How can I help you today?</p>
+                <span class="message-time">10:01 AM</span>
+              </div>
+            </div>
+            
+            <!-- More messages will be added dynamically -->
+          </div>
+          
+          <div class="chat-input">
+            <textarea id="admin-chat-input" class="glassmorph-input" placeholder="Type your message..." rows="2"></textarea>
+            <button id="admin-chat-send" class="btn btn-yellow"><i class="fas fa-paper-plane"></i></button>
           </div>
         </div>
       </section>
-      <section class="chat-section card glassmorph" data-aos="fade-up">
-        <h2 class="section-title">Live Chat</h2>
-        <p>Chat with our support team for immediate assistance.</p>
-        <button id="start-chat" class="btn btn-yellow"><i class="fas fa-comment"></i> Start Chat</button>
+      
+      <!-- AI Assistant Chat Section -->
+      <section class="chat-section support-panel card glassmorph" id="ai-chat-panel" data-aos="fade-up">
+        <h2 class="section-title">AI Assistant</h2>
+        <div class="chat-container">
+          <div class="chat-status" id="ai-chat-status">
+            <span class="status-indicator online"></span>
+            <span class="status-text">AI Assistant is always available</span>
+          </div>
+          
+          <div class="chat-messages" id="ai-chat-messages">
+            <div class="chat-message received">
+              <div class="message-avatar">
+                <img src="./assets/images/ai-avatar.svg" alt="AI">
+              </div>
+              <div class="message-content">
+                <p>Hello! I'm FinTrustEX's AI assistant. I can help with basic questions about trading, account management, and platform features. What can I assist you with today?</p>
+                <span class="message-time">10:00 AM</span>
+              </div>
+            </div>
+            
+            <!-- More messages will be added dynamically -->
+          </div>
+          
+          <div class="chat-input">
+            <textarea id="ai-chat-input" class="glassmorph-input" placeholder="Ask the AI assistant..." rows="2"></textarea>
+            <button id="ai-chat-send" class="btn btn-yellow"><i class="fas fa-paper-plane"></i></button>
+          </div>
+          
+          <div class="ai-chat-disclaimer">
+            <p><i class="fas fa-info-circle"></i> The AI assistant provides general information only. For account-specific issues, please use the admin chat or contact form.</p>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Support Ticket History -->
+      <section class="ticket-history card glassmorph" data-aos="fade-up">
+        <h2 class="section-title">Support Ticket History</h2>
+        <div class="ticket-list">
+          <div class="ticket-item">
+            <div class="ticket-info">
+              <span class="ticket-id">Ticket #12345</span>
+              <span class="ticket-date">Apr 15, 2025</span>
+              <span class="ticket-status resolved">Resolved</span>
+            </div>
+            <h3 class="ticket-subject">Withdrawal Issue</h3>
+            <p class="ticket-preview">I'm having trouble with my recent withdrawal...</p>
+            <button class="btn btn-sm btn-outline">View Details</button>
+          </div>
+          
+          <div class="ticket-item">
+            <div class="ticket-info">
+              <span class="ticket-id">Ticket #12346</span>
+              <span class="ticket-date">Apr 10, 2025</span>
+              <span class="ticket-status open">Open</span>
+            </div>
+            <h3 class="ticket-subject">API Access Request</h3>
+            <p class="ticket-preview">I would like to request API access for trading...</p>
+            <button class="btn btn-sm btn-outline">View Details</button>
+          </div>
+        </div>
       </section>
     </main>
     <footer class="footer" id="footer-container"></footer>
@@ -61,10 +182,136 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         AOS.init({ duration: 800 });
+        
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.support-tab');
+        const panels = document.querySelectorAll('.support-panel');
+        
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            // Remove active class from all tabs and panels
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Show corresponding panel
+            const tabName = tab.getAttribute('data-tab');
+            document.getElementById(`${tabName}-panel`).classList.add('active');
+          });
+        });
+        
+        // FAQ functionality
+        const faqItems = document.querySelectorAll('.faq-item');
+        faqItems.forEach(item => {
+          const question = item.querySelector('.faq-question');
+          question.addEventListener('click', () => {
+            item.classList.toggle('expanded');
+          });
+        });
+        
+        // Admin chat functionality
+        const adminChatInput = document.getElementById('admin-chat-input');
+        const adminChatSend = document.getElementById('admin-chat-send');
+        const adminChatMessages = document.getElementById('admin-chat-messages');
+        
+        if (adminChatSend && adminChatInput) {
+          adminChatSend.addEventListener('click', () => {
+            const message = adminChatInput.value.trim();
+            if (message) {
+              // Add user message to chat
+              addChatMessage(adminChatMessages, message, 'sent');
+              adminChatInput.value = '';
+              
+              // Simulate admin response after a short delay
+              setTimeout(() => {
+                addChatMessage(adminChatMessages, "I've received your message. An admin will get back to you as soon as possible.", 'received', './assets/images/admin-avatar.svg');
+              }, 1000);
+            }
+          });
+        }
+        
+        // AI chat functionality
+        const aiChatInput = document.getElementById('ai-chat-input');
+        const aiChatSend = document.getElementById('ai-chat-send');
+        const aiChatMessages = document.getElementById('ai-chat-messages');
+        
+        if (aiChatSend && aiChatInput) {
+          aiChatSend.addEventListener('click', () => {
+            const message = aiChatInput.value.trim();
+            if (message) {
+              // Add user message to chat
+              addChatMessage(aiChatMessages, message, 'sent');
+              aiChatInput.value = '';
+              
+              // Simulate AI response after a short delay
+              setTimeout(() => {
+                // In a real implementation, this would call the OpenAI API
+                const aiResponses = [
+                  "I'm here to help! For detailed account queries, please contact an admin.",
+                  "That's a great question about cryptocurrency trading. Generally, it's important to do your own research and understand the risks involved.",
+                  "You can manage your account settings in the Settings page, accessible from the sidebar.",
+                  "To deposit funds, go to your Wallet page and select the cryptocurrency you want to deposit."
+                ];
+                const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+                addChatMessage(aiChatMessages, randomResponse, 'received', './assets/images/ai-avatar.svg');
+              }, 1000);
+            }
+          });
+        }
+        
+        // Helper function to add a message to chat
+        function addChatMessage(container, message, type, avatar = '') {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          const messageDiv = document.createElement('div');
+          messageDiv.classList.add('chat-message', type);
+          
+          let content = '';
+          if (type === 'received') {
+            content += `<div class="message-avatar"><img src="${avatar}" alt="Avatar"></div>`;
+          }
+          
+          content += `
+            <div class="message-content">
+              <p>${message}</p>
+              <span class="message-time">${timeString}</span>
+            </div>
+          `;
+          
+          messageDiv.innerHTML = content;
+          container.appendChild(messageDiv);
+          
+          // Scroll to bottom
+          container.scrollTop = container.scrollHeight;
+        }
+        
+        // Auto-expand textarea as user types
+        const chatTextareas = document.querySelectorAll('.chat-input textarea');
+        chatTextareas.forEach(textarea => {
+          textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight < 120) ? this.scrollHeight + 'px' : '120px';
+          });
+        });
+        
+        // Allow Enter key to send messages
+        const chatInputs = document.querySelectorAll('.chat-input textarea');
+        chatInputs.forEach(input => {
+          input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              input.closest('.chat-input').querySelector('button').click();
+            }
+          });
+        });
       });
     </script>
     <script src="./assets/js/components.js"></script>
     <script src="./assets/js/main.js"></script>
+    <script src="./assets/js/utils.js"></script>
     <script src="./assets/js/support.js"></script>
   </div>
 </body>

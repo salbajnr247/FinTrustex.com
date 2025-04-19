@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinTrustEX - Admin Dashboard</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../../assets/js/auth-check.js"></script>
   <link rel="stylesheet" href="../../assets/css/main.css">
   <link rel="stylesheet" href="../../assets/css/admin.css">
   <link rel="stylesheet" href="../../assets/css/responsive.css">
@@ -81,9 +83,51 @@
           <div class="system-analytics card glassmorph" data-aos="fade-up">
             <h3>System Analytics</h3>
             <canvas id="analytics-chart"></canvas>
-            <!-- Static Test Content -->
             <p>Total Users: 1,250</p>
             <p>Daily Transactions: 150</p>
+          </div>
+          
+          <!-- New Market Insights Section -->
+          <div id="market-insights" class="market-insights card glassmorph" data-aos="fade-up">
+            <h3>Market Insights</h3>
+            <div class="market-stats">
+              <div class="stat-card">
+                <h4>24h Trading Volume</h4>
+                <p class="stat-value">$24,567,890</p>
+                <p class="stat-change positive">+5.67%</p>
+              </div>
+              <div class="stat-card">
+                <h4>Active Trading Pairs</h4>
+                <p class="stat-value">24</p>
+              </div>
+              <div class="stat-card">
+                <h4>System Load</h4>
+                <p class="stat-value">62%</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Management Tools -->
+          <div class="admin-tools card glassmorph" data-aos="fade-up">
+            <h3>Administrative Tools</h3>
+            <div class="tool-grid">
+              <button class="admin-tool" id="system-config">
+                <i class="fas fa-cogs"></i>
+                <span>System Configuration</span>
+              </button>
+              <button class="admin-tool" id="security-audit">
+                <i class="fas fa-shield-alt"></i>
+                <span>Security Audit</span>
+              </button>
+              <button class="admin-tool" id="backup-data">
+                <i class="fas fa-database"></i>
+                <span>Backup Database</span>
+              </button>
+              <button class="admin-tool" id="market-settings">
+                <i class="fas fa-chart-line"></i>
+                <span>Market Settings</span>
+              </button>
+            </div>
           </div>
         </section>
       </main>

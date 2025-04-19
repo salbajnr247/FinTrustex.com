@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Settings</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="./assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="./assets/css/main.css">
+  <link rel="stylesheet" href="./assets/css/legal.css">
+  <link rel="stylesheet" href="./assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="settings-wrapper">
+    <header class="navbar" id="navbar-container"></header>
+    <main class="settings-content">
+      <section class="profile-section card glassmorph" data-aos="fade-up">
+        <h1 class="section-title">Account Settings</h1>
+        
+        <div class="profile-overview">
+          <div class="profile-avatar">
+            <img src="./assets/images/profile.png" alt="User Profile" id="profile-image">
+            <button class="btn btn-sm btn-yellow change-avatar-btn"><i class="fas fa-camera"></i></button>
+            <input type="file" id="avatar-upload" accept="image/*" hidden>
+          </div>
+          <div class="profile-details">
+            <h3 id="profile-name">John Doe</h3>
+            <p id="profile-email">john.doe@example.com</p>
+            <p>Member since: <span id="profile-joined">April 10, 2025</span></p>
+          </div>
+        </div>
+        
+        <div class="settings-tabs">
+          <button class="settings-tab active" data-tab="personal">Personal Information</button>
+          <button class="settings-tab" data-tab="security">Security</button>
+          <button class="settings-tab" data-tab="preferences">Preferences</button>
+          <button class="settings-tab" data-tab="notifications">Notification Settings</button>
+        </div>
+        
+        <div class="settings-panels">
+          <!-- Personal Information Panel -->
+          <div class="settings-panel active" id="personal-panel">
+            <form id="personal-info-form">
+              <div class="form-group">
+                <label for="full-name">Full Name</label>
+                <input type="text" id="full-name" class="glassmorph-input" value="John Doe">
+              </div>
+              <div class="form-group">
+                <label for="display-name">Display Name</label>
+                <input type="text" id="display-name" class="glassmorph-input" value="JohnD">
+              </div>
+              <div class="form-group">
+                <label for="email-address">Email Address</label>
+                <input type="email" id="email-address" class="glassmorph-input" value="john.doe@example.com">
+              </div>
+              <div class="form-group">
+                <label for="phone-number">Phone Number</label>
+                <input type="tel" id="phone-number" class="glassmorph-input" value="+1 (555) 123-4567">
+              </div>
+              <div class="form-group">
+                <label for="time-zone">Time Zone</label>
+                <select id="time-zone" class="glassmorph-input">
+                  <option value="UTC-8">Pacific Time (UTC-8)</option>
+                  <option value="UTC-5">Eastern Time (UTC-5)</option>
+                  <option value="UTC+0" selected>UTC</option>
+                  <option value="UTC+1">Central European Time (UTC+1)</option>
+                  <option value="UTC+8">China Standard Time (UTC+8)</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-yellow"><i class="fas fa-save"></i> Save Changes</button>
+            </form>
+          </div>
+          
+          <!-- Security Panel -->
+          <div class="settings-panel" id="security-panel">
+            <form id="security-form">
+              <div class="form-group">
+                <label for="current-password">Current Password</label>
+                <input type="password" id="current-password" class="glassmorph-input" placeholder="Enter current password">
+              </div>
+              <div class="form-group">
+                <label for="new-password">New Password</label>
+                <input type="password" id="new-password" class="glassmorph-input" placeholder="Enter new password">
+              </div>
+              <div class="form-group">
+                <label for="confirm-password">Confirm New Password</label>
+                <input type="password" id="confirm-password" class="glassmorph-input" placeholder="Confirm new password">
+              </div>
+              <button type="submit" class="btn btn-yellow"><i class="fas fa-lock"></i> Update Password</button>
+            </form>
+            
+            <div class="security-option">
+              <div class="security-option-info">
+                <h4>Two-Factor Authentication</h4>
+                <p>Add an extra layer of security to your account</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="two-factor-auth">
+                <label for="two-factor-auth"></label>
+              </div>
+            </div>
+            
+            <div class="security-option">
+              <div class="security-option-info">
+                <h4>Login Notifications</h4>
+                <p>Get notified when there is a new login to your account</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="login-notifications" checked>
+                <label for="login-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="security-option">
+              <div class="security-option-info">
+                <h4>API Access</h4>
+                <p>Manage API keys and access permissions</p>
+              </div>
+              <button class="btn btn-outline btn-sm"><i class="fas fa-key"></i> Manage Keys</button>
+            </div>
+          </div>
+          
+          <!-- Preferences Panel -->
+          <div class="settings-panel" id="preferences-panel">
+            <div class="preference-option">
+              <div class="preference-option-info">
+                <h4>Theme</h4>
+                <p>Choose your preferred theme</p>
+              </div>
+              <div class="theme-selector">
+                <label>
+                  <input type="radio" name="theme" value="light">
+                  <span class="theme-option light">Light</span>
+                </label>
+                <label>
+                  <input type="radio" name="theme" value="dark" checked>
+                  <span class="theme-option dark">Dark</span>
+                </label>
+                <label>
+                  <input type="radio" name="theme" value="system">
+                  <span class="theme-option system">System</span>
+                </label>
+              </div>
+            </div>
+            
+            <div class="preference-option">
+              <div class="preference-option-info">
+                <h4>Default Trading Pair</h4>
+                <p>Select your default trading pair</p>
+              </div>
+              <select id="default-pair" class="glassmorph-input">
+                <option value="BTC/USDT" selected>BTC/USDT</option>
+                <option value="ETH/USDT">ETH/USDT</option>
+                <option value="ADA/USDT">ADA/USDT</option>
+              </select>
+            </div>
+            
+            <div class="preference-option">
+              <div class="preference-option-info">
+                <h4>Default Chart Interval</h4>
+                <p>Select your default chart time interval</p>
+              </div>
+              <select id="default-interval" class="glassmorph-input">
+                <option value="1m">1 minute</option>
+                <option value="5m">5 minutes</option>
+                <option value="15m" selected>15 minutes</option>
+                <option value="1h">1 hour</option>
+                <option value="4h">4 hours</option>
+                <option value="1d">1 day</option>
+              </select>
+            </div>
+            
+            <div class="preference-option">
+              <div class="preference-option-info">
+                <h4>Advanced Charts</h4>
+                <p>Enable advanced trading chart features</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="advanced-charts" checked>
+                <label for="advanced-charts"></label>
+              </div>
+            </div>
+            
+            <button class="btn btn-yellow" id="save-preferences"><i class="fas fa-save"></i> Save Preferences</button>
+          </div>
+          
+          <!-- Notification Settings Panel -->
+          <div class="settings-panel" id="notifications-panel">
+            <div class="notification-setting">
+              <div class="notification-setting-info">
+                <h4>Email Notifications</h4>
+                <p>Receive important updates via email</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="email-notifications" checked>
+                <label for="email-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-setting">
+              <div class="notification-setting-info">
+                <h4>Push Notifications</h4>
+                <p>Receive notifications in your browser</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="push-notifications" checked>
+                <label for="push-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-setting">
+              <div class="notification-setting-info">
+                <h4>SMS Notifications</h4>
+                <p>Receive text messages for critical alerts</p>
+              </div>
+              <div class="toggle-switch">
+                <input type="checkbox" id="sms-notifications">
+                <label for="sms-notifications"></label>
+              </div>
+            </div>
+            
+            <h4 class="settings-subheader">Notification Types</h4>
+            
+            <div class="notification-type">
+              <label for="deposit-notifications">Deposits</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="deposit-notifications" checked>
+                <label for="deposit-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-type">
+              <label for="withdrawal-notifications">Withdrawals</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="withdrawal-notifications" checked>
+                <label for="withdrawal-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-type">
+              <label for="trade-notifications">Trade Executions</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="trade-notifications" checked>
+                <label for="trade-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-type">
+              <label for="price-alert-notifications">Price Alerts</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="price-alert-notifications" checked>
+                <label for="price-alert-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-type">
+              <label for="security-notifications">Security Alerts</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="security-notifications" checked>
+                <label for="security-notifications"></label>
+              </div>
+            </div>
+            
+            <div class="notification-type">
+              <label for="news-notifications">Market News</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="news-notifications">
+                <label for="news-notifications"></label>
+              </div>
+            </div>
+            
+            <button class="btn btn-yellow" id="save-notification-settings"><i class="fas fa-save"></i> Save Notification Settings</button>
+          </div>
+        </div>
+      </section>
+      
+      <section class="danger-zone card glassmorph" data-aos="fade-up">
+        <h2 class="section-title">Account Management</h2>
+        <div class="danger-zone-actions">
+          <div class="danger-action">
+            <div class="danger-info">
+              <h4>Deactivate Account</h4>
+              <p>Temporarily deactivate your account. You can reactivate anytime.</p>
+            </div>
+            <button class="btn btn-outline"><i class="fas fa-user-slash"></i> Deactivate</button>
+          </div>
+          <div class="danger-action">
+            <div class="danger-info">
+              <h4>Delete Account</h4>
+              <p>Permanently delete your account and all data. This action cannot be undone.</p>
+            </div>
+            <button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+          </div>
+        </div>
+      </section>
+      
+      <section class="legal-links card glassmorph" data-aos="fade-up">
+        <h2 class="section-title">Legal Information</h2>
+        <div class="legal-links-container">
+          <a href="./legal.html" class="legal-link"><i class="fas fa-file-contract"></i> Terms of Service</a>
+          <a href="./legal.html" class="legal-link"><i class="fas fa-user-shield"></i> Privacy Policy</a>
+          <a href="./legal.html" class="legal-link"><i class="fas fa-balance-scale"></i> Compliance</a>
+        </div>
+      </section>
+    </main>
+    <footer class="footer" id="footer-container"></footer>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        AOS.init({ duration: 800 });
+        
+        // Tab switching functionality
+        const tabs = document.querySelectorAll('.settings-tab');
+        const panels = document.querySelectorAll('.settings-panel');
+        
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            // Remove active class from all tabs and panels
+            tabs.forEach(t => t.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            
+            // Add active class to clicked tab
+            tab.classList.add('active');
+            
+            // Show corresponding panel
+            const tabName = tab.getAttribute('data-tab');
+            document.getElementById(`${tabName}-panel`).classList.add('active');
+          });
+        });
+        
+        // Avatar upload handling
+        const avatarBtn = document.querySelector('.change-avatar-btn');
+        const avatarInput = document.getElementById('avatar-upload');
+        const profileImage = document.getElementById('profile-image');
+        
+        if (avatarBtn && avatarInput) {
+          avatarBtn.addEventListener('click', () => {
+            avatarInput.click();
+          });
+          
+          avatarInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                profileImage.src = event.target.result;
+              };
+              reader.readAsDataURL(e.target.files[0]);
+            }
+          });
+        }
+        
+        // Load user profile data
+        if (window.authService) {
+          const user = authService.getCurrentUser();
+          if (user) {
+            document.getElementById('profile-name').textContent = user.username || user.email;
+            document.getElementById('profile-email').textContent = user.email;
+            document.getElementById('full-name').value = user.fullName || user.username;
+            document.getElementById('display-name').value = user.username;
+            document.getElementById('email-address').value = user.email;
+          }
+        }
+      });
+    </script>
+    <script src="./assets/js/components.js"></script>
+    <script src="./assets/js/main.js"></script>
+    <script src="./assets/js/utils.js"></script>
+  </div>
+</body>
+</html>

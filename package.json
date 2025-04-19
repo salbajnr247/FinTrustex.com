@@ -60,6 +60,7 @@
     "obuf": "^1.1.2",
     "on-finished": "^2.4.1",
     "once": "^1.4.0",
+    "openai": "^4.95.1",
     "parseurl": "^1.3.3",
     "path-to-regexp": "^8.2.0",
     "pg": "^8.14.1",

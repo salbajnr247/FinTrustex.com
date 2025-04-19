@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FinTrustEX - Dashboard</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../assets/js/auth-check.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/dashboard.css">
   <link rel="stylesheet" href="../assets/css/responsive.css">
@@ -43,12 +45,62 @@
             <button id="refresh-data" class="btn btn-yellow"><i class="fas fa-sync"></i> Refresh</button>
             <button id="view-analytics" class="btn btn-outline"><i class="fas fa-chart-line"></i> Analytics</button>
           </div>
-          <div class="dashboard-overview card glassmorph" data-aos="fade-up">
-            <!-- Static Test Content -->
-            <h3>Portfolio Overview</h3>
-            <p>Total Balance: $12,500</p>
-            <p>24h Change: <span class="positive">+2.5%</span></p>
+          <div class="dashboard-grid">
+            <div class="dashboard-overview card glassmorph" data-aos="fade-up">
+              <!-- Static Test Content -->
+              <h3>Portfolio Overview</h3>
+              <p>Total Balance: $12,500</p>
+              <p>24h Change: <span class="positive">+2.5%</span></p>
+            </div>
+            
+            <!-- New Notifications Section -->
+            <div class="notifications-panel card glassmorph" data-aos="fade-up">
+              <div class="notifications-header">
+                <h3>Notifications</h3>
+                <button id="mark-all-read" class="btn btn-sm btn-outline"><i class="fas fa-check-double"></i> Mark All Read</button>
+              </div>
+              <div class="notifications-list" id="notifications-list">
+                <!-- Notification items will be populated dynamically -->
+                <div class="notification-item unread">
+                  <div class="notification-icon deposit">
+                    <i class="fas fa-money-bill-wave"></i>
+                  </div>
+                  <div class="notification-content">
+                    <h4>Deposit Confirmed</h4>
+                    <p>Your deposit of 0.05 BTC has been confirmed</p>
+                    <span class="notification-time">10 minutes ago</span>
+                  </div>
+                  <button class="notification-action"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="notification-item">
+                  <div class="notification-icon login">
+                    <i class="fas fa-user-shield"></i>
+                  </div>
+                  <div class="notification-content">
+                    <h4>New Login</h4>
+                    <p>New login from Chrome on Windows</p>
+                    <span class="notification-time">Yesterday</span>
+                  </div>
+                  <button class="notification-action"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="notification-item">
+                  <div class="notification-icon price">
+                    <i class="fas fa-chart-line"></i>
+                  </div>
+                  <div class="notification-content">
+                    <h4>Price Alert</h4>
+                    <p>BTC has reached your target price of $60,000</p>
+                    <span class="notification-time">2 days ago</span>
+                  </div>
+                  <button class="notification-action"><i class="fas fa-times"></i></button>
+                </div>
+              </div>
+              <div class="notifications-footer">
+                <a href="#" id="view-all-notifications">View All Notifications</a>
+              </div>
+            </div>
           </div>
+          
           <div class="market-tickers card glassmorph" data-aos="fade-up" id="market-tickers">
             <h3>Market Tickers</h3>
             <div class="ticker-item">
@@ -77,19 +129,14 @@
     <script src="../assets/js/market-data-service.js"></script>
     <script src="../assets/js/utils.js"></script>
     <script src="../assets/js/components.js"></script>
+    <script src="../assets/js/notification-service.js"></script>
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/dashboard.js"></script>
     
     <script>
-      // Check authentication on page load
+      // Update user info in header on page load
       document.addEventListener('DOMContentLoaded', () => {
         if (window.authService) {
-          // Redirect to login if not authenticated
-          if (!authService.isAuthenticated()) {
-            window.location.href = '../auth.html?redirect=' + encodeURIComponent(window.location.pathname);
-          }
-          
-          // If authenticated, update user info in header
           const user = authService.getCurrentUser();
           if (user) {
             const usernameElement = document.getElementById('username');

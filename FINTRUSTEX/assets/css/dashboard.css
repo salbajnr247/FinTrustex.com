@@ -1,76 +1,214 @@
-/* Dashboard-specific styles */
-.dashboard-wrapper {
-  display: contents;
+/* Dashboard styles */
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
 }
 
-.main-content {
-  padding: 2rem;
-  flex: 1;
-}
-
-.section-title {
-  color: #f7c948; /* Bybit yellow */
-  margin-bottom: 1rem;
-  font-size: 2rem;
-}
-
-.dashboard-controls {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
+/* Dashboard Overview Card */
 .dashboard-overview {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .dashboard-overview h3 {
-  color: #f7c948;
+  font-size: 1.25rem;
   margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
 .dashboard-overview p {
-  color: #e0e7ff;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
 }
 
+/* Market Tickers Section */
 .market-tickers {
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .market-tickers h3 {
-  color: #f7c948;
+  font-size: 1.25rem;
   margin-bottom: 1rem;
+  color: var(--text-primary);
 }
 
 .ticker-item {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e0e7ff;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
 }
 
-.ticker-item span {
-  flex: 1;
+.ticker-item:last-child {
+  border-bottom: none;
 }
 
+/* Controls */
+.dashboard-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+  gap: 0.75rem;
+}
+
+/* Positive/Negative Values */
 .positive {
-  color: #4caf50;
+  color: var(--success);
 }
 
 .negative {
-  color: #f44336;
+  color: var(--danger);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .dashboard-controls {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+/* Notifications Panel */
+.notifications-panel {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 400px;
+}
 
-  .ticker-item {
-    font-size: 0.9rem;
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.notifications-header h3 {
+  font-size: 1.25rem;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.notifications-list {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0;
+}
+
+.notification-item {
+  display: flex;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  opacity: 0.7;
+  transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.notification-item.unread {
+  opacity: 1;
+  background-color: rgba(var(--primary-rgb), 0.1);
+}
+
+.notification-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.notification-icon.deposit {
+  background-color: rgba(var(--success-rgb), 0.15);
+  color: var(--success);
+}
+
+.notification-icon.withdrawal {
+  background-color: rgba(var(--warning-rgb), 0.15);
+  color: var(--warning);
+}
+
+.notification-icon.login {
+  background-color: rgba(var(--info-rgb), 0.15);
+  color: var(--info);
+}
+
+.notification-icon.system {
+  background-color: rgba(var(--secondary-rgb), 0.15);
+  color: var(--secondary);
+}
+
+.notification-icon.price {
+  background-color: rgba(var(--primary-rgb), 0.15);
+  color: var(--primary);
+}
+
+.notification-content {
+  flex: 1;
+}
+
+.notification-content h4 {
+  font-size: 0.95rem;
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.notification-content p {
+  font-size: 0.85rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.notification-action {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  align-self: flex-start;
+  padding: 0.25rem;
+}
+
+.notification-item:hover .notification-action {
+  opacity: 1;
+}
+
+.notifications-footer {
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+  border-top: 1px solid var(--border-color);
+}
+
+.notifications-footer a {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.notifications-footer a:hover {
+  text-decoration: underline;
+}
+
+.btn.btn-sm {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.5rem;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dashboard-controls {
+    flex-wrap: wrap;
   }
 }
