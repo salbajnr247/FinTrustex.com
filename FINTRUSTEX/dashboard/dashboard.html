@@ -73,9 +73,39 @@
       });
     </script>
     <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/auth-service.js"></script>
+    <script src="../assets/js/market-data-service.js"></script>
+    <script src="../assets/js/utils.js"></script>
     <script src="../assets/js/components.js"></script>
     <script src="../assets/js/main.js"></script>
     <script src="../assets/js/dashboard.js"></script>
+    
+    <script>
+      // Check authentication on page load
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.authService) {
+          // Redirect to login if not authenticated
+          if (!authService.isAuthenticated()) {
+            window.location.href = '../auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+          
+          // If authenticated, update user info in header
+          const user = authService.getCurrentUser();
+          if (user) {
+            const usernameElement = document.getElementById('username');
+            const profileNameElement = document.querySelector('.profile-name');
+            
+            if (usernameElement) {
+              usernameElement.textContent = user.username || user.email;
+            }
+            
+            if (profileNameElement) {
+              profileNameElement.textContent = user.username || 'Trader';
+            }
+          }
+        }
+      });
+    </script>
   </div>
 </body>
 </html>
