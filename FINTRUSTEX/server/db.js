@@ -1,9 +1,7 @@
-const { Pool, neonConfig } = require('@neondatabase/serverless');
-const { drizzle } = require('drizzle-orm/neon-serverless');
-const ws = require('ws');
-
-// Configure neon to use websockets
-neonConfig.webSocketConstructor = ws;
+const { Pool } = require('pg');
+const { drizzle } = require('drizzle-orm/pg');
+const schema = require('../shared/schema');
+require('dotenv').config();
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -12,6 +10,15 @@ if (!process.env.DATABASE_URL) {
 }
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool);
+const db = drizzle(pool, { schema });
+
+// Check connection and log errors
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client', err);
+  process.exit(-1);
+});
+
+// Log configuration for debugging
+console.log(`Database configured with ${process.env.DATABASE_URL ? 'provided' : 'missing'} connection string`);
 
 module.exports = { pool, db };

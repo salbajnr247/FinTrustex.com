@@ -1,7 +1,7 @@
 async function initWallet() {
   try {
-    // Fetch Data
-    const data = await fetchMockData('wallet');
+    // Fetch Data from API
+    const data = await fetchApiData('wallet');
 
     // Update Portfolio Overview
     const overview = document.querySelector('.portfolio-overview');

@@ -1,295 +1,150 @@
+const { users, wallets, orders, transactions } = require('../shared/schema');
 const { db } = require('./db');
 const { eq, and } = require('drizzle-orm');
 
-// Storage interface for database operations
+// Database Storage Implementation
 class DatabaseStorage {
   // User methods
   async getUser(id) {
-    try {
-      const [user] = await db.execute(`
-        SELECT * FROM users WHERE id = $1
-      `, [id]);
-      return user || undefined;
-    } catch (error) {
-      console.error('Error getting user:', error);
-      throw error;
-    }
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByUsername(username) {
-    try {
-      const [user] = await db.execute(`
-        SELECT * FROM users WHERE username = $1
-      `, [username]);
-      return user || undefined;
-    } catch (error) {
-      console.error('Error getting user by username:', error);
-      throw error;
-    }
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user || undefined;
   }
 
   async getUserByEmail(email) {
-    try {
-      const [user] = await db.execute(`
-        SELECT * FROM users WHERE email = $1
-      `, [email]);
-      return user || undefined;
-    } catch (error) {
-      console.error('Error getting user by email:', error);
-      throw error;
-    }
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
-  async createUser(userData) {
-    try {
-      const { username, email, passwordHash, firstName, lastName, companyName, role = 'user', isVerified = false } = userData;
-      
-      const [user] = await db.execute(`
-        INSERT INTO users (username, email, password_hash, first_name, last_name, company_name, role, is_verified)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
-      `, [username, email, passwordHash, firstName, lastName, companyName, role, isVerified]);
-      
-      return user;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
-    }
+  async createUser(insertUser) {
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
+    return user;
   }
 
   // Wallet methods
   async getWallet(id) {
-    try {
-      const [wallet] = await db.execute(`
-        SELECT * FROM wallets WHERE id = $1
-      `, [id]);
-      return wallet || undefined;
-    } catch (error) {
-      console.error('Error getting wallet:', error);
-      throw error;
-    }
+    const [wallet] = await db.select().from(wallets).where(eq(wallets.id, id));
+    return wallet || undefined;
   }
 
   async getWalletsByUserId(userId) {
-    try {
-      const wallets = await db.execute(`
-        SELECT * FROM wallets WHERE user_id = $1
-      `, [userId]);
-      return wallets;
-    } catch (error) {
-      console.error('Error getting wallets by user ID:', error);
-      throw error;
-    }
+    return await db.select().from(wallets).where(eq(wallets.userId, userId));
   }
 
   async getWalletByUserIdAndCurrency(userId, currency) {
-    try {
-      const [wallet] = await db.execute(`
-        SELECT * FROM wallets WHERE user_id = $1 AND currency = $2
-      `, [userId, currency]);
-      return wallet || undefined;
-    } catch (error) {
-      console.error('Error getting wallet by user ID and currency:', error);
-      throw error;
-    }
+    const [wallet] = await db.select().from(wallets).where(
+      and(
+        eq(wallets.userId, userId),
+        eq(wallets.currency, currency)
+      )
+    );
+    return wallet || undefined;
   }
 
-  async createWallet(walletData) {
-    try {
-      const { userId, currency, balance = '0' } = walletData;
-      
-      const [wallet] = await db.execute(`
-        INSERT INTO wallets (user_id, currency, balance)
-        VALUES ($1, $2, $3)
-        RETURNING *
-      `, [userId, currency, balance]);
-      
-      return wallet;
-    } catch (error) {
-      console.error('Error creating wallet:', error);
-      throw error;
-    }
+  async createWallet(wallet) {
+    const [newWallet] = await db
+      .insert(wallets)
+      .values(wallet)
+      .returning();
+    return newWallet;
   }
 
   async updateWalletBalance(id, newBalance) {
-    try {
-      const now = new Date();
-      
-      const [wallet] = await db.execute(`
-        UPDATE wallets
-        SET balance = $1, updated_at = $2
-        WHERE id = $3
-        RETURNING *
-      `, [newBalance, now, id]);
-      
-      return wallet;
-    } catch (error) {
-      console.error('Error updating wallet balance:', error);
-      throw error;
-    }
+    const [updatedWallet] = await db
+      .update(wallets)
+      .set({ balance: newBalance, updatedAt: new Date() })
+      .where(eq(wallets.id, id))
+      .returning();
+    return updatedWallet;
   }
 
   // Order methods
   async getOrder(id) {
-    try {
-      const [order] = await db.execute(`
-        SELECT * FROM orders WHERE id = $1
-      `, [id]);
-      return order || undefined;
-    } catch (error) {
-      console.error('Error getting order:', error);
-      throw error;
-    }
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
   }
 
   async getOrdersByUserId(userId) {
-    try {
-      const orders = await db.execute(`
-        SELECT * FROM orders WHERE user_id = $1
-      `, [userId]);
-      return orders;
-    } catch (error) {
-      console.error('Error getting orders by user ID:', error);
-      throw error;
-    }
+    return await db.select().from(orders).where(eq(orders.userId, userId));
   }
 
-  async createOrder(orderData) {
-    try {
-      const { 
-        userId, type, status = 'pending', baseCurrency, quoteCurrency, 
-        amount, price, totalValue, fee = null 
-      } = orderData;
-      
-      const [order] = await db.execute(`
-        INSERT INTO orders (
-          user_id, type, status, base_currency, quote_currency, 
-          amount, price, total_value, fee
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING *
-      `, [
-        userId, type, status, baseCurrency, quoteCurrency, 
-        amount, price, totalValue, fee
-      ]);
-      
-      return order;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
-    }
+  async createOrder(order) {
+    const [newOrder] = await db
+      .insert(orders)
+      .values(order)
+      .returning();
+    return newOrder;
   }
 
   async updateOrderStatus(id, status) {
-    try {
-      const now = new Date();
-      let completedAt = null;
-      
-      if (status === 'completed') {
-        completedAt = now;
-      }
-      
-      const [order] = await db.execute(`
-        UPDATE orders
-        SET status = $1, updated_at = $2, completed_at = $3
-        WHERE id = $4
-        RETURNING *
-      `, [status, now, completedAt, id]);
-      
-      return order;
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      throw error;
+    const now = new Date();
+    const updates = { 
+      status, 
+      updatedAt: now 
+    };
+    
+    // If the order is being marked as completed, set the completedAt field
+    if (status === 'completed') {
+      updates.completedAt = now;
     }
+    
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(updates)
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder;
   }
 
   // Transaction methods
   async getTransaction(id) {
-    try {
-      const [transaction] = await db.execute(`
-        SELECT * FROM transactions WHERE id = $1
-      `, [id]);
-      return transaction || undefined;
-    } catch (error) {
-      console.error('Error getting transaction:', error);
-      throw error;
-    }
+    const [transaction] = await db.select().from(transactions).where(eq(transactions.id, id));
+    return transaction || undefined;
   }
 
   async getTransactionsByUserId(userId) {
-    try {
-      const transactions = await db.execute(`
-        SELECT * FROM transactions WHERE user_id = $1
-      `, [userId]);
-      return transactions;
-    } catch (error) {
-      console.error('Error getting transactions by user ID:', error);
-      throw error;
-    }
+    return await db.select().from(transactions).where(eq(transactions.userId, userId));
   }
 
   async getTransactionsByWalletId(walletId) {
-    try {
-      const transactions = await db.execute(`
-        SELECT * FROM transactions WHERE wallet_id = $1
-      `, [walletId]);
-      return transactions;
-    } catch (error) {
-      console.error('Error getting transactions by wallet ID:', error);
-      throw error;
-    }
+    return await db.select().from(transactions).where(eq(transactions.walletId, walletId));
   }
 
-  async createTransaction(transactionData) {
-    try {
-      const { 
-        userId, walletId, type, status = 'pending', 
-        amount, currency, txHash = null, description = null 
-      } = transactionData;
-      
-      const [transaction] = await db.execute(`
-        INSERT INTO transactions (
-          user_id, wallet_id, type, status, 
-          amount, currency, tx_hash, description
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *
-      `, [
-        userId, walletId, type, status, 
-        amount, currency, txHash, description
-      ]);
-      
-      return transaction;
-    } catch (error) {
-      console.error('Error creating transaction:', error);
-      throw error;
-    }
+  async createTransaction(transaction) {
+    const [newTransaction] = await db
+      .insert(transactions)
+      .values(transaction)
+      .returning();
+    return newTransaction;
   }
 
   async updateTransactionStatus(id, status) {
-    try {
-      const now = new Date();
-      let completedAt = null;
-      
-      if (status === 'completed') {
-        completedAt = now;
-      }
-      
-      const [transaction] = await db.execute(`
-        UPDATE transactions
-        SET status = $1, updated_at = $2, completed_at = $3
-        WHERE id = $4
-        RETURNING *
-      `, [status, now, completedAt, id]);
-      
-      return transaction;
-    } catch (error) {
-      console.error('Error updating transaction status:', error);
-      throw error;
+    const now = new Date();
+    const updates = { 
+      status, 
+      updatedAt: now 
+    };
+    
+    // If the transaction is being marked as completed, set the completedAt field
+    if (status === 'completed') {
+      updates.completedAt = now;
     }
+    
+    const [updatedTransaction] = await db
+      .update(transactions)
+      .set(updates)
+      .where(eq(transactions.id, id))
+      .returning();
+    return updatedTransaction;
   }
 }
 
 // Export a singleton instance
-const storage = new DatabaseStorage();
-module.exports = { storage, DatabaseStorage };
+exports.storage = new DatabaseStorage();

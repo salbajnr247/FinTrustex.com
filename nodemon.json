@@ -1,0 +1,6 @@
+{
+  "watch": ["FINTRUSTEX/server/", "FINTRUSTEX/shared/"],
+  "ext": "js,ts,json",
+  "ignore": ["node_modules", ".git", "dist"],
+  "exec": "node FINTRUSTEX/server/index.js"
+}

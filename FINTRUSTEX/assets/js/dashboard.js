@@ -1,7 +1,7 @@
 async function initDashboard() {
   try {
-    // Fetch Data
-    const data = await fetchMockData('dashboard');
+    // Fetch Data from API
+    const data = await fetchApiData('dashboard');
 
     // Update Portfolio Overview
     const overview = document.querySelector('.dashboard-overview');
