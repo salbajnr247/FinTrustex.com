@@ -106,6 +106,8 @@
   .btn {
     padding: 0.4rem 0.8rem;
     font-size: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .card {

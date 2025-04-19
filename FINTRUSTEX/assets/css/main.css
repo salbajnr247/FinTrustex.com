@@ -61,6 +61,12 @@ body {
 .btn-outline:hover {
   background: var(--accent-color);
   color: var(--primary-bg);
+  box-shadow: 0 4px 12px rgba(247, 201, 72, 0.2);
+}
+
+.btn-outline:active {
+  background: darken(var(--accent-color), 10%);
+  transform: translateY(2px);
 }
 
 .btn-yellow {
