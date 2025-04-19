@@ -88,23 +88,169 @@
     <footer class="footer" id="footer-container"></footer>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        AOS.init({ duration: 800 });
-        const ctx = document.getElementById('price-chart').getContext('2d');
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: ['1', '2', '3'],
-            datasets: [{ label: 'BTC/USDT', data: [60000, 61000, 60500], borderColor: '#f7c948' }]
-          },
-          options: { plugins: { legend: { labels: { color: '#e0e7ff' } } }, scales: { x: { ticks: { color: '#e0e7ff' } }, y: { ticks: { color: '#e0e7ff' } } } }
-        });
-      });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.0.0/dist/lightweight-charts.standalone.production.js"></script>
+    
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth-service.js"></script>
+    <script src="../../assets/js/market-data-service.js"></script>
+    <script src="../../assets/js/utils.js"></script>
     <script src="../../assets/js/components.js"></script>
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/trading.js"></script>
+    
+    <script>
+      // Check authentication on page load
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.authService) {
+          // Redirect to login if not authenticated
+          if (!authService.isAuthenticated()) {
+            window.location.href = '../../auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+          } else {
+            // If authenticated, update user info in header
+            const user = authService.getCurrentUser();
+            if (user) {
+              const usernameElement = document.getElementById('username');
+              const profileNameElement = document.querySelector('.profile-name');
+              
+              if (usernameElement) {
+                usernameElement.textContent = user.username || user.email;
+              }
+              
+              if (profileNameElement) {
+                profileNameElement.textContent = user.username || 'Trader';
+              }
+            }
+            
+            // Initialize trading components
+            // This will be called from trading.js
+          }
+        }
+        
+        // Initialize AOS animations
+        AOS.init({ duration: 800 });
+      });
+      
+      // Connect to WebSocket server for real-time updates
+      const connectToWebSocket = () => {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        
+        try {
+          const socket = new WebSocket(wsUrl);
+          
+          socket.onopen = () => {
+            console.log('Connected to WebSocket server');
+            
+            // Subscribe to price updates
+            socket.send(JSON.stringify({
+              type: 'subscribe',
+              channel: 'price_updates'
+            }));
+          };
+          
+          socket.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              console.log('WebSocket message received:', data);
+              
+              // Handle different message types
+              switch (data.type) {
+                case 'price_update':
+                  handlePriceUpdate(data.data);
+                  break;
+                case 'order_update':
+                  handleOrderUpdate(data.data);
+                  break;
+                case 'transaction_update':
+                  handleTransactionUpdate(data.data);
+                  break;
+                case 'ping':
+                  // Respond to ping with pong
+                  socket.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+                  break;
+              }
+            } catch (error) {
+              console.error('Error processing WebSocket message:', error);
+            }
+          };
+          
+          socket.onclose = (event) => {
+            console.log('WebSocket connection closed:', event);
+            
+            // Attempt to reconnect after a short delay
+            setTimeout(connectToWebSocket, 5000);
+          };
+          
+          socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+          };
+          
+          return socket;
+        } catch (error) {
+          console.error('Failed to connect to WebSocket:', error);
+          return null;
+        }
+      };
+      
+      // Handle price updates
+      function handlePriceUpdate(data) {
+        // Update price display
+        const pairs = data.pairs;
+        if (!pairs || !Array.isArray(pairs)) return;
+        
+        // Find the current pair in the dropdown
+        const pairSelect = document.getElementById('pair');
+        const currentPair = pairSelect ? pairSelect.value : 'BTC/USDT';
+        
+        // Find matching pair data
+        const pairData = pairs.find(p => p.symbol === currentPair);
+        if (pairData) {
+          // Update price on UI
+          updatePriceDisplay(pairData);
+        }
+      }
+      
+      // Update price display
+      function updatePriceDisplay(pairData) {
+        // Update current price
+        const priceDisplay = document.querySelector('.chart-container h3');
+        if (priceDisplay) {
+          priceDisplay.innerHTML = `
+            ${pairData.symbol}: ${utils.formatCurrency(pairData.price)} 
+            <span class="${pairData.change >= 0 ? 'positive' : 'negative'}">
+              ${utils.formatPercentage(pairData.change)}
+            </span>
+          `;
+        }
+        
+        // Update input placeholder
+        const priceInput = document.getElementById('price');
+        if (priceInput) {
+          priceInput.placeholder = `Price (current: ${utils.formatCurrency(pairData.price)})`;
+        }
+      }
+      
+      // Handle order updates
+      function handleOrderUpdate(data) {
+        // Refresh order history
+        if (typeof updateOrderHistory === 'function') {
+          updateOrderHistory(data);
+        }
+      }
+      
+      // Handle transaction updates
+      function handleTransactionUpdate(data) {
+        // Refresh transaction history
+        if (typeof updateTransactionHistory === 'function') {
+          updateTransactionHistory(data);
+        }
+      }
+      
+      // Connect to WebSocket when the page loads
+      document.addEventListener('DOMContentLoaded', connectToWebSocket);
+    </script>
   </div>
 </body>
 </html>

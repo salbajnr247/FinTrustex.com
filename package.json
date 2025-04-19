@@ -5,6 +5,7 @@
   "dependencies": {
     "@types/express": "^5.0.1",
     "@types/node": "^22.14.1",
+    "@types/ws": "^8.18.1",
     "accepts": "^2.0.0",
     "body-parser": "^2.2.0",
     "buffer-from": "^1.1.2",

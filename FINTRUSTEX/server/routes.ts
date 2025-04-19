@@ -1,6 +1,11 @@
-import express, { Request, Response, NextFunction } from 'express';
-import { WebSocketServer } from 'ws';
-import http from 'http';
+import express from 'express';
+import { WebSocketServer, WebSocket } from 'ws';
+
+// Types
+type Request = express.Request;
+type Response = express.Response;
+type NextFunction = express.NextFunction;
+import * as http from 'http';
 import { storage } from './storage';
 import { getUserById } from './routes/users';
 import { getWallets, getWalletById, createWallet, updateWalletBalance } from './routes/wallets';

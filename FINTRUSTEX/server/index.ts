@@ -1,10 +1,12 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
+import http from 'http';
 import 'dotenv/config';
 import * as userRoutes from './routes/users';
 import * as walletRoutes from './routes/wallets';
 import * as orderRoutes from './routes/orders';
 import * as transactionRoutes from './routes/transactions';
+import apiRouter, { setupWebSocketServer } from './routes';
 import path from 'path';
 import { pool } from './db';
 
@@ -103,9 +105,18 @@ async function startServer() {
     // Check database connection before starting the server
     await initDatabase();
     
-    app.listen(serverPort, '0.0.0.0', () => {
+    // Create HTTP server
+    const server = http.createServer(app);
+    
+    // Setup WebSocket server
+    const wss = setupWebSocketServer(server);
+    console.log('WebSocket server initialized');
+    
+    // Start HTTP server
+    server.listen(serverPort, '0.0.0.0', () => {
       console.log(`Server running on port ${serverPort}`);
       console.log(`API available at http://localhost:${serverPort}/api`);
+      console.log(`WebSocket available at ws://localhost:${serverPort}/ws`);
       console.log(`Frontend available at http://localhost:${serverPort}`);
     });
   } catch (error) {
