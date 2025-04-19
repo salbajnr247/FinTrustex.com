@@ -3,14 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec ts-node server/index.ts",
+    "dev": "nodemon --exec node -r esbuild-register server/index.ts",
     "build": "node build.js",
     "start": "node dist/server/index.js",
-    "db:setup": "node setup-database.js",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:migrate": "ts-node server/db-migrate.ts",
-    "postinstall": "npm run db:setup"
+    "db:migrate": "ts-node server/db-migrate.ts"
   },
   "keywords": ["crypto", "trading", "broker", "api"],
   "author": "",

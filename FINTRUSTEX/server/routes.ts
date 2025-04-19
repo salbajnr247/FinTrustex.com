@@ -1,10 +1,9 @@
-import express from 'express';
-import { WebSocketServer, WebSocket } from 'ws';
+import express, { Router } from 'express';
+import { WebSocketServer } from 'ws';
+import * as WebSocket from 'ws';
 
-// Types
-type Request = express.Request;
-type Response = express.Response;
-type NextFunction = express.NextFunction;
+// Type imports from express
+import { Request, Response, NextFunction } from 'express';
 import * as http from 'http';
 import { storage } from './storage';
 import { getUserById } from './routes/users';
@@ -12,7 +11,7 @@ import { getWallets, getWalletById, createWallet, updateWalletBalance } from './
 import { getOrders, getOrderById, createOrder, updateOrderStatus } from './routes/orders';
 import { getTransactions, getTransactionById, createTransaction, updateTransactionStatus } from './routes/transactions';
 
-const router = express.Router();
+const router = Router();
 
 // User routes
 router.get('/users/:id', async (req: Request, res: Response) => {
@@ -74,7 +73,7 @@ export function setupWebSocketServer(httpServer: http.Server) {
 
     // Set up ping interval to keep connection alive
     const pingInterval = setInterval(() => {
-      if (ws.readyState === ws.OPEN) {
+      if (ws.readyState === 1) { // 1 = OPEN state
         ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
       }
     }, 30000);
@@ -123,7 +122,7 @@ export function setupWebSocketServer(httpServer: http.Server) {
   // Broadcast function for sending data to all connected clients
   const broadcast = (data: any) => {
     wss.clients.forEach((client) => {
-      if (client.readyState === client.OPEN) {
+      if (client.readyState === 1) { // 1 = OPEN state
         client.send(JSON.stringify(data));
       }
     });

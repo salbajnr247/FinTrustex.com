@@ -41,8 +41,41 @@
           <h1 class="section-title">Trading</h1>
           <div class="trading-grid">
             <div class="chart-container card glassmorph">
-              <canvas id="price-chart"></canvas>
-              <p>Test Chart Placeholder</p>
+              <div class="chart-header">
+                <h3 id="current-price">BTC/USDT: Loading...</h3>
+                <div class="chart-controls">
+                  <div class="chart-intervals">
+                    <button class="chart-interval-option" data-interval="1m">1m</button>
+                    <button class="chart-interval-option" data-interval="5m">5m</button>
+                    <button class="chart-interval-option active" data-interval="15m">15m</button>
+                    <button class="chart-interval-option" data-interval="1h">1h</button>
+                    <button class="chart-interval-option" data-interval="4h">4h</button>
+                    <button class="chart-interval-option" data-interval="1d">1d</button>
+                  </div>
+                  <div class="chart-indicators">
+                    <button class="chart-indicator-option" data-indicator="bollinger">BB</button>
+                    <button class="chart-indicator-option" data-indicator="ma">MA</button>
+                    <button class="chart-indicator-option" data-indicator="rsi">RSI</button>
+                  </div>
+                </div>
+              </div>
+              <div id="trading-chart" style="height: 500px;"></div>
+              <div class="chart-footer">
+                <div class="chart-stats">
+                  <div class="stat">
+                    <span class="stat-label">24h High:</span>
+                    <span id="high-price" class="stat-value">--</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">24h Low:</span>
+                    <span id="low-price" class="stat-value">--</span>
+                  </div>
+                  <div class="stat">
+                    <span class="stat-label">24h Volume:</span>
+                    <span id="volume" class="stat-value">--</span>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="order-book card glassmorph">
               <h3>Order Book</h3>

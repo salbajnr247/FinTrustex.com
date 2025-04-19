@@ -1,317 +1,388 @@
 /**
- * Market Data Service
- * Provides real-time market data using WebSockets
+ * FINTRUSTEX Market Data Service
+ * Provides market data for the application from various sources
  */
+
+import websocketClient from './websocket-client.js';
+import { formatCurrency, formatPercentage } from './utils.js';
 
 class MarketDataService {
   constructor() {
-    this.connections = {};
-    this.subscriptions = {};
-    this.callbacks = {};
-    this.reconnectAttempts = {};
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 3000;
-    this.initialized = false;
-  }
-
-  /**
-   * Initialize the market data service
-   */
-  init() {
-    if (this.initialized) return;
-    
-    // Initialize Binance connection
-    this.connectBinance();
-    
-    this.initialized = true;
-    console.log('Market Data Service initialized');
-  }
-
-  /**
-   * Connect to Binance WebSocket
-   */
-  connectBinance() {
-    try {
-      // Create connection to Binance WebSocket
-      const binanceSocket = new WebSocket('wss://stream.binance.com:9443/ws');
-      
-      // Store connection
-      this.connections.binance = binanceSocket;
-      this.reconnectAttempts.binance = 0;
-      
-      // Set up event handlers
-      binanceSocket.onopen = () => {
-        console.log('Connected to Binance WebSocket');
-        this.resubscribeToBinance();
-      };
-      
-      binanceSocket.onclose = (event) => {
-        console.log('Binance WebSocket connection closed', event);
-        this.handleReconnect('binance');
-      };
-      
-      binanceSocket.onerror = (error) => {
-        console.error('Binance WebSocket error:', error);
-      };
-      
-      binanceSocket.onmessage = (event) => {
-        this.handleBinanceMessage(event);
-      };
-    } catch (error) {
-      console.error('Failed to connect to Binance WebSocket:', error);
-      this.handleReconnect('binance');
-    }
-  }
-
-  /**
-   * Handle reconnection logic
-   * @param {string} provider - Provider name
-   */
-  handleReconnect(provider) {
-    const attempts = this.reconnectAttempts[provider] || 0;
-    
-    if (attempts < this.maxReconnectAttempts) {
-      this.reconnectAttempts[provider] = attempts + 1;
-      const delay = this.reconnectDelay * Math.pow(2, attempts);
-      
-      console.log(`Attempting to reconnect to ${provider} in ${delay}ms (Attempt ${attempts + 1}/${this.maxReconnectAttempts})`);
-      
-      setTimeout(() => {
-        if (provider === 'binance') {
-          this.connectBinance();
-        }
-      }, delay);
-    } else {
-      console.error(`Maximum reconnection attempts reached for ${provider}`);
-    }
-  }
-
-  /**
-   * Parse and handle Binance WebSocket messages
-   * @param {MessageEvent} event - WebSocket message event
-   */
-  handleBinanceMessage(event) {
-    try {
-      const data = JSON.parse(event.data);
-      
-      // Handle different message types
-      if (data.e === '24hrTicker') {
-        this.notifySubscribers('ticker', data.s, data);
-      } else if (data.e === 'trade') {
-        this.notifySubscribers('trade', data.s, data);
-      } else if (data.e === 'kline') {
-        this.notifySubscribers('kline', `${data.s}_${data.k.i}`, data);
-      } else if (data.e === 'depthUpdate') {
-        this.notifySubscribers('orderbook', data.s, data);
-      }
-    } catch (error) {
-      console.error('Failed to parse Binance message:', error);
-    }
-  }
-
-  /**
-   * Re-subscribe to Binance streams after reconnection
-   */
-  resubscribeToBinance() {
-    if (!this.connections.binance || this.connections.binance.readyState !== WebSocket.OPEN) {
-      return;
-    }
-    
-    // Get active Binance subscriptions
-    const binanceSubscriptions = Object.keys(this.subscriptions)
-      .filter(key => key.startsWith('binance:'))
-      .map(key => this.subscriptions[key]);
-    
-    if (binanceSubscriptions.length === 0) {
-      return;
-    }
-    
-    // Create subscription message
-    const subscribeMsg = {
-      method: 'SUBSCRIBE',
-      params: binanceSubscriptions,
-      id: Date.now()
+    this.isInitialized = false;
+    this.marketData = {
+      pairs: new Map(),
+      tickers: new Map(),
+      orderbooks: new Map(),
+      tradingPairs: [],
+      lastUpdate: null
     };
     
-    // Send subscription
-    this.connections.binance.send(JSON.stringify(subscribeMsg));
-    console.log('Resubscribed to Binance streams:', binanceSubscriptions);
+    this.listeners = {
+      marketUpdate: [],
+      tickerUpdate: [],
+      orderbookUpdate: [],
+      tradeUpdate: []
+    };
+
+    this.activeSubscriptions = new Set();
+
+    // Bind methods
+    this.initialize = this.initialize.bind(this);
+    this.handlePriceUpdate = this.handlePriceUpdate.bind(this);
+    this.handleOrderbookUpdate = this.handleOrderbookUpdate.bind(this);
+    this.handleTradeUpdate = this.handleTradeUpdate.bind(this);
+    this.subscribeToPair = this.subscribeToPair.bind(this);
+    this.unsubscribeFromPair = this.unsubscribeFromPair.bind(this);
+    this.fetchTradingPairs = this.fetchTradingPairs.bind(this);
+    this.fetchMarketOverview = this.fetchMarketOverview.bind(this);
+    this.getTradingPair = this.getTradingPair.bind(this);
+    this.getOrderbook = this.getOrderbook.bind(this);
+    this.getTicker = this.getTicker.bind(this);
+    this.getMarketData = this.getMarketData.bind(this);
+    this.notifyListeners = this.notifyListeners.bind(this);
+    this.addListener = this.addListener.bind(this);
+    this.removeListener = this.removeListener.bind(this);
   }
 
   /**
-   * Subscribe to market data
-   * @param {string} type - Data type (ticker, trade, kline, orderbook)
-   * @param {string} symbol - Trading pair symbol
-   * @param {string} interval - Interval for kline data
-   * @param {Function} callback - Callback function for data updates
-   * @returns {string} - Subscription ID
+   * Initialize Market Data Service
+   * @returns {Promise} - Initialization promise
    */
-  subscribe(type, symbol, interval = null, callback) {
-    if (!this.initialized) {
-      this.init();
+  async initialize() {
+    if (this.isInitialized) {
+      return Promise.resolve();
     }
     
-    // Generate subscription ID
-    const subId = `${type}_${symbol}${interval ? `_${interval}` : ''}_${Date.now()}`;
-    
-    // Format symbol for Binance
-    const formattedSymbol = symbol.replace('/', '').toLowerCase();
-    
-    // Define stream based on type
-    let stream;
-    switch (type) {
-      case 'ticker':
-        stream = `${formattedSymbol}@ticker`;
-        break;
-      case 'trade':
-        stream = `${formattedSymbol}@trade`;
-        break;
-      case 'kline':
-        if (!interval) throw new Error('Interval is required for kline data');
-        stream = `${formattedSymbol}@kline_${interval}`;
-        break;
-      case 'orderbook':
-        stream = `${formattedSymbol}@depth20@100ms`;
-        break;
-      default:
-        throw new Error(`Unsupported data type: ${type}`);
+    try {
+      console.log('Initializing Market Data Service...');
+      
+      // Connect to WebSocket server
+      await websocketClient.connect();
+      
+      // Register event handlers
+      websocketClient.on('price_update', this.handlePriceUpdate);
+      websocketClient.on('orderbook_update', this.handleOrderbookUpdate);
+      websocketClient.on('trade_update', this.handleTradeUpdate);
+      
+      // Subscribe to market data updates
+      websocketClient.subscribe('market_data');
+      
+      // Load initial market data
+      await this.fetchTradingPairs();
+      await this.fetchMarketOverview();
+      
+      this.isInitialized = true;
+      console.log('Market Data Service initialized');
+      
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Failed to initialize Market Data Service:', error);
+      return Promise.reject(error);
     }
+  }
+
+  /**
+   * Handle price update from WebSocket
+   * @param {Object} data - Price update data
+   */
+  handlePriceUpdate(data) {
+    console.log('Received price update:', data);
     
-    // Store subscription
-    this.subscriptions[`binance:${subId}`] = stream;
-    
-    // Store callback
-    const callbackKey = `${type}_${symbol}${interval ? `_${interval}` : ''}`;
-    if (!this.callbacks[callbackKey]) {
-      this.callbacks[callbackKey] = [];
+    if (data && data.pairs) {
+      data.pairs.forEach(pair => {
+        this.marketData.pairs.set(pair.symbol, {
+          ...this.marketData.pairs.get(pair.symbol) || {},
+          ...pair,
+          lastUpdate: new Date()
+        });
+        
+        // Update ticker data
+        this.marketData.tickers.set(pair.symbol, {
+          ...this.marketData.tickers.get(pair.symbol) || {},
+          price: pair.price,
+          change: pair.change || 0,
+          high24h: pair.high24h || null,
+          low24h: pair.low24h || null,
+          volume24h: pair.volume24h || null,
+          lastUpdate: new Date()
+        });
+      });
+      
+      this.marketData.lastUpdate = new Date();
+      
+      // Notify listeners
+      this.notifyListeners('marketUpdate', this.marketData);
+      this.notifyListeners('tickerUpdate', this.marketData.tickers);
     }
-    this.callbacks[callbackKey].push({ id: subId, callback });
-    
-    // Subscribe to stream
-    if (this.connections.binance && this.connections.binance.readyState === WebSocket.OPEN) {
-      const subscribeMsg = {
-        method: 'SUBSCRIBE',
-        params: [stream],
-        id: Date.now()
+  }
+
+  /**
+   * Handle orderbook update from WebSocket
+   * @param {Object} data - Orderbook update data
+   */
+  handleOrderbookUpdate(data) {
+    if (data && data.symbol) {
+      const currentOrderbook = this.marketData.orderbooks.get(data.symbol) || {
+        asks: [],
+        bids: [],
+        lastUpdate: null
       };
-      this.connections.binance.send(JSON.stringify(subscribeMsg));
-    }
-    
-    return subId;
-  }
-
-  /**
-   * Unsubscribe from market data
-   * @param {string} subscriptionId - Subscription ID
-   */
-  unsubscribe(subscriptionId) {
-    // Find subscription
-    const binanceKey = `binance:${subscriptionId}`;
-    const stream = this.subscriptions[binanceKey];
-    
-    if (!stream) {
-      console.warn(`Subscription not found: ${subscriptionId}`);
-      return;
-    }
-    
-    // Remove subscription
-    delete this.subscriptions[binanceKey];
-    
-    // Find and remove callback
-    for (const [key, callbacks] of Object.entries(this.callbacks)) {
-      const index = callbacks.findIndex(cb => cb.id === subscriptionId);
-      if (index !== -1) {
-        callbacks.splice(index, 1);
-        if (callbacks.length === 0) {
-          delete this.callbacks[key];
-        }
-        break;
-      }
-    }
-    
-    // Unsubscribe from stream
-    if (this.connections.binance && this.connections.binance.readyState === WebSocket.OPEN) {
-      const unsubscribeMsg = {
-        method: 'UNSUBSCRIBE',
-        params: [stream],
-        id: Date.now()
-      };
-      this.connections.binance.send(JSON.stringify(unsubscribeMsg));
-    }
-  }
-
-  /**
-   * Notify subscribers of data updates
-   * @param {string} type - Data type
-   * @param {string} symbol - Trading pair symbol
-   * @param {Object} data - Market data
-   */
-  notifySubscribers(type, symbol, data) {
-    const key = `${type}_${symbol}`;
-    const callbacks = this.callbacks[key] || [];
-    
-    // Notify all subscribers
-    callbacks.forEach(({ callback }) => {
-      try {
-        callback(data);
-      } catch (error) {
-        console.error('Error in market data callback:', error);
-      }
-    });
-  }
-
-  /**
-   * Get the current connection status
-   * @returns {Object} - Connection status
-   */
-  getStatus() {
-    const status = {};
-    
-    for (const [provider, connection] of Object.entries(this.connections)) {
-      let state;
-      switch (connection.readyState) {
-        case WebSocket.CONNECTING:
-          state = 'connecting';
-          break;
-        case WebSocket.OPEN:
-          state = 'connected';
-          break;
-        case WebSocket.CLOSING:
-          state = 'closing';
-          break;
-        case WebSocket.CLOSED:
-          state = 'disconnected';
-          break;
-        default:
-          state = 'unknown';
+      
+      // Process asks (sell orders)
+      if (data.asks) {
+        data.asks.forEach(ask => {
+          const [price, amount] = ask;
+          const index = currentOrderbook.asks.findIndex(item => item[0] === price);
+          
+          if (amount === 0 && index !== -1) {
+            // Remove price level if amount is 0
+            currentOrderbook.asks.splice(index, 1);
+          } else if (amount > 0) {
+            if (index !== -1) {
+              // Update existing price level
+              currentOrderbook.asks[index] = ask;
+            } else {
+              // Add new price level
+              currentOrderbook.asks.push(ask);
+              // Sort asks ascending by price
+              currentOrderbook.asks.sort((a, b) => a[0] - b[0]);
+            }
+          }
+        });
       }
       
-      status[provider] = state;
+      // Process bids (buy orders)
+      if (data.bids) {
+        data.bids.forEach(bid => {
+          const [price, amount] = bid;
+          const index = currentOrderbook.bids.findIndex(item => item[0] === price);
+          
+          if (amount === 0 && index !== -1) {
+            // Remove price level if amount is 0
+            currentOrderbook.bids.splice(index, 1);
+          } else if (amount > 0) {
+            if (index !== -1) {
+              // Update existing price level
+              currentOrderbook.bids[index] = bid;
+            } else {
+              // Add new price level
+              currentOrderbook.bids.push(bid);
+              // Sort bids descending by price
+              currentOrderbook.bids.sort((a, b) => b[0] - a[0]);
+            }
+          }
+        });
+      }
+      
+      currentOrderbook.lastUpdate = new Date();
+      this.marketData.orderbooks.set(data.symbol, currentOrderbook);
+      
+      // Notify listeners
+      this.notifyListeners('orderbookUpdate', {
+        symbol: data.symbol,
+        orderbook: currentOrderbook
+      });
     }
-    
-    return status;
   }
 
   /**
-   * Close all connections
+   * Handle trade update from WebSocket
+   * @param {Object} data - Trade update data
    */
-  close() {
-    for (const [provider, connection] of Object.entries(this.connections)) {
-      try {
-        connection.close();
-        console.log(`Closed ${provider} connection`);
-      } catch (error) {
-        console.error(`Error closing ${provider} connection:`, error);
-      }
+  handleTradeUpdate(data) {
+    if (data && data.trades && data.symbol) {
+      // Notify listeners
+      this.notifyListeners('tradeUpdate', {
+        symbol: data.symbol,
+        trades: data.trades
+      });
+    }
+  }
+
+  /**
+   * Subscribe to market data for a specific trading pair
+   * @param {string} symbol - Trading pair symbol (e.g. 'BTC/USDT')
+   */
+  subscribeToPair(symbol) {
+    if (!symbol) return;
+    
+    const channel = `market:${symbol}`;
+    if (!this.activeSubscriptions.has(channel)) {
+      websocketClient.subscribe(channel);
+      this.activeSubscriptions.add(channel);
+      console.log(`Subscribed to market data for ${symbol}`);
+    }
+  }
+
+  /**
+   * Unsubscribe from market data for a specific trading pair
+   * @param {string} symbol - Trading pair symbol (e.g. 'BTC/USDT')
+   */
+  unsubscribeFromPair(symbol) {
+    if (!symbol) return;
+    
+    const channel = `market:${symbol}`;
+    if (this.activeSubscriptions.has(channel)) {
+      websocketClient.unsubscribe(channel);
+      this.activeSubscriptions.delete(channel);
+      console.log(`Unsubscribed from market data for ${symbol}`);
+    }
+  }
+
+  /**
+   * Fetch available trading pairs
+   * @returns {Promise<Array>} - Trading pairs
+   */
+  async fetchTradingPairs() {
+    try {
+      // In a real implementation, fetch from API
+      // For now, use common trading pairs
+      const pairs = [
+        { symbol: 'BTC/USDT', baseCurrency: 'BTC', quoteCurrency: 'USDT' },
+        { symbol: 'ETH/USDT', baseCurrency: 'ETH', quoteCurrency: 'USDT' },
+        { symbol: 'XRP/USDT', baseCurrency: 'XRP', quoteCurrency: 'USDT' },
+        { symbol: 'ADA/USDT', baseCurrency: 'ADA', quoteCurrency: 'USDT' },
+        { symbol: 'SOL/USDT', baseCurrency: 'SOL', quoteCurrency: 'USDT' },
+        { symbol: 'DOT/USDT', baseCurrency: 'DOT', quoteCurrency: 'USDT' },
+        { symbol: 'DOGE/USDT', baseCurrency: 'DOGE', quoteCurrency: 'USDT' },
+        { symbol: 'AVAX/USDT', baseCurrency: 'AVAX', quoteCurrency: 'USDT' },
+        { symbol: 'LINK/USDT', baseCurrency: 'LINK', quoteCurrency: 'USDT' },
+        { symbol: 'MATIC/USDT', baseCurrency: 'MATIC', quoteCurrency: 'USDT' },
+      ];
+      
+      this.marketData.tradingPairs = pairs;
+      
+      // Initialize pairs data
+      pairs.forEach(pair => {
+        if (!this.marketData.pairs.has(pair.symbol)) {
+          this.marketData.pairs.set(pair.symbol, {
+            ...pair,
+            price: null,
+            change: null,
+            lastUpdate: null
+          });
+        }
+      });
+      
+      return pairs;
+    } catch (error) {
+      console.error('Failed to fetch trading pairs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch market overview data
+   * @returns {Promise<Map>} - Market data
+   */
+  async fetchMarketOverview() {
+    try {
+      // In a real implementation, make a REST API call
+      // For now, use simulated data
+      setTimeout(() => {
+        const data = {
+          pairs: [
+            { symbol: 'BTC/USDT', price: 60000 + Math.random() * 5000, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'ETH/USDT', price: 3000 + Math.random() * 300, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'XRP/USDT', price: 0.5 + Math.random() * 0.1, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'ADA/USDT', price: 0.8 + Math.random() * 0.1, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'SOL/USDT', price: 100 + Math.random() * 20, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'DOT/USDT', price: 20 + Math.random() * 5, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'DOGE/USDT', price: 0.15 + Math.random() * 0.05, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'AVAX/USDT', price: 35 + Math.random() * 10, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'LINK/USDT', price: 15 + Math.random() * 5, change: (Math.random() * 10 - 5).toFixed(2) },
+            { symbol: 'MATIC/USDT', price: 1.2 + Math.random() * 0.3, change: (Math.random() * 10 - 5).toFixed(2) }
+          ]
+        };
+        
+        this.handlePriceUpdate(data);
+      }, 500);
+      
+      return this.marketData;
+    } catch (error) {
+      console.error('Failed to fetch market overview:', error);
+      return this.marketData;
+    }
+  }
+
+  /**
+   * Get trading pair data
+   * @param {string} symbol - Trading pair symbol
+   * @returns {Object} - Pair data
+   */
+  getTradingPair(symbol) {
+    return this.marketData.pairs.get(symbol) || null;
+  }
+
+  /**
+   * Get orderbook data
+   * @param {string} symbol - Trading pair symbol
+   * @returns {Object} - Orderbook data
+   */
+  getOrderbook(symbol) {
+    return this.marketData.orderbooks.get(symbol) || { asks: [], bids: [], lastUpdate: null };
+  }
+
+  /**
+   * Get ticker data
+   * @param {string} symbol - Trading pair symbol
+   * @returns {Object} - Ticker data
+   */
+  getTicker(symbol) {
+    return this.marketData.tickers.get(symbol) || null;
+  }
+
+  /**
+   * Get all market data
+   * @returns {Object} - Market data
+   */
+  getMarketData() {
+    return this.marketData;
+  }
+
+  /**
+   * Notify listeners of an event
+   * @param {string} event - Event name
+   * @param {any} data - Event data
+   */
+  notifyListeners(event, data) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(listener => {
+        try {
+          listener(data);
+        } catch (error) {
+          console.error(`Error in market data ${event} listener:`, error);
+        }
+      });
+    }
+  }
+
+  /**
+   * Add event listener
+   * @param {string} event - Event name
+   * @param {Function} listener - Event listener function
+   */
+  addListener(event, listener) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
     }
     
-    this.connections = {};
-    this.initialized = false;
+    this.listeners[event].push(listener);
+    return () => this.removeListener(event, listener); // Return unsubscribe function
+  }
+
+  /**
+   * Remove event listener
+   * @param {string} event - Event name
+   * @param {Function} listener - Event listener function to remove
+   */
+  removeListener(event, listener) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(l => l !== listener);
+    }
   }
 }
 
-// Create a singleton instance
+// Create singleton instance
 const marketDataService = new MarketDataService();
-
-// Make the service globally accessible
-window.marketDataService = marketDataService;
+export default marketDataService;

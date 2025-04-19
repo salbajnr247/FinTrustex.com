@@ -1,246 +1,45 @@
 /**
- * Authentication Service
- * Handles user authentication, session management, and security
+ * FINTRUSTEX Authentication Service
+ * Handles user authentication, token management, and secure session storage
  */
 
 class AuthService {
   constructor() {
-    // Storage keys
-    this.TOKEN_KEY = 'auth_token';
-    this.USER_KEY = 'auth_user';
-    this.REFRESH_TOKEN_KEY = 'auth_refresh_token';
-    
-    // Session data
-    this.token = localStorage.getItem(this.TOKEN_KEY) || null;
-    this.user = null;
-    this.refreshToken = localStorage.getItem(this.REFRESH_TOKEN_KEY) || null;
-    
-    // Token refresh
-    this.refreshInterval = null;
-    this.tokenExpiryTime = null;
-    
-    // Initialize
-    this.init();
-  }
-
-  /**
-   * Initialize authentication service
-   */
-  init() {
-    // Load user data from storage
-    const storedUser = localStorage.getItem(this.USER_KEY);
-    if (storedUser) {
-      try {
-        this.user = JSON.parse(storedUser);
-      } catch (error) {
-        console.error('Failed to parse stored user data:', error);
-        this.clearSession();
-      }
-    }
-    
-    // Set up token in API service
-    if (this.token && window.api) {
-      window.api.setAuthHeader(this.token);
-    }
-    
-    // Set up token refresh if needed
-    this.setupTokenRefresh();
-  }
-
-  /**
-   * Set up automatic token refresh
-   */
-  setupTokenRefresh() {
-    if (!this.token) return;
-    
-    // Clear any existing refresh interval
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
-    }
-    
-    // Parse JWT to get expiry time
-    try {
-      const payloadBase64 = this.token.split('.')[1];
-      const payload = JSON.parse(atob(payloadBase64));
-      
-      if (payload.exp) {
-        // Token expiry time in milliseconds
-        this.tokenExpiryTime = payload.exp * 1000;
-        
-        // Calculate refresh time (5 minutes before expiry)
-        const now = Date.now();
-        const timeUntilRefresh = Math.max(0, this.tokenExpiryTime - now - 5 * 60 * 1000);
-        
-        if (timeUntilRefresh > 0) {
-          console.log(`Token will refresh in ${Math.round(timeUntilRefresh / 60000)} minutes`);
-          
-          // Set up refresh timeout
-          setTimeout(() => this.refreshToken(), timeUntilRefresh);
-        } else {
-          // Token already expired or about to expire, refresh now
-          this.refreshToken();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to parse JWT token:', error);
-    }
-  }
-
-  /**
-   * Refresh authentication token
-   * @returns {Promise<boolean>} - Success status
-   */
-  async refreshToken() {
-    if (!this.refreshToken) return false;
-    
-    try {
-      // Call refresh token API
-      const response = await window.api.auth.refreshToken(this.refreshToken);
-      
-      if (response && response.token) {
-        // Update tokens
-        this.setSession(response.token, this.user, response.refreshToken);
-        return true;
-      }
-      
-      throw new Error('Invalid refresh token response');
-    } catch (error) {
-      console.error('Failed to refresh token:', error);
-      
-      // If refresh fails, user needs to log in again
-      this.clearSession();
-      return false;
-    }
-  }
-
-  /**
-   * Set authentication session
-   * @param {string} token - JWT token
-   * @param {Object} user - User data
-   * @param {string} refreshToken - Refresh token
-   */
-  setSession(token, user, refreshToken = null) {
-    // Update properties
-    this.token = token;
-    this.user = user;
-    this.refreshToken = refreshToken;
-    
-    // Store in local storage
-    localStorage.setItem(this.TOKEN_KEY, token);
-    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
-    
-    if (refreshToken) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    }
-    
-    // Update API service
-    if (window.api) {
-      window.api.setAuthHeader(token);
-    }
-    
-    // Set up token refresh
-    this.setupTokenRefresh();
-    
-    // Dispatch auth event
-    this.dispatchAuthEvent('login');
-  }
-
-  /**
-   * Clear authentication session
-   */
-  clearSession() {
-    // Clear properties
+    this.currentUser = null;
     this.token = null;
-    this.user = null;
     this.refreshToken = null;
-    this.tokenExpiryTime = null;
+    this.tokenExpiry = null;
+    this.refreshTimeout = null;
     
-    // Clear from storage
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.USER_KEY);
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    
-    // Remove from API service
-    if (window.api) {
-      window.api.removeAuthHeader();
-    }
-    
-    // Clear refresh interval
-    if (this.refreshInterval) {
-      clearInterval(this.refreshInterval);
-      this.refreshInterval = null;
-    }
-    
-    // Dispatch auth event
-    this.dispatchAuthEvent('logout');
+    // Initialize authentication state
+    this.initAuth();
   }
 
   /**
-   * Check if user is authenticated
-   * @returns {boolean} - Authentication status
+   * Initialize authentication state from storage
    */
-  isAuthenticated() {
-    return !!this.token;
-  }
-
-  /**
-   * Get current user data
-   * @returns {Object|null} - User data
-   */
-  getCurrentUser() {
-    return this.user;
-  }
-
-  /**
-   * Check if current user has a specific role
-   * @param {string} role - Role to check
-   * @returns {boolean} - Whether user has the role
-   */
-  hasRole(role) {
-    if (!this.user || !this.user.roles) return false;
-    return this.user.roles.includes(role);
-  }
-
-  /**
-   * Check if current user has permission
-   * @param {string} permission - Permission to check
-   * @returns {boolean} - Whether user has the permission
-   */
-  hasPermission(permission) {
-    if (!this.user || !this.user.permissions) return false;
-    return this.user.permissions.includes(permission);
-  }
-
-  /**
-   * Get auth token
-   * @returns {string|null} - JWT token
-   */
-  getToken() {
-    return this.token;
-  }
-
-  /**
-   * Login user
-   * @param {Object} credentials - Login credentials
-   * @returns {Promise<Object>} - Login response
-   */
-  async login(credentials) {
+  initAuth() {
     try {
-      const response = await window.api.auth.login(credentials);
+      // Get auth data from storage
+      const authData = this.getAuthFromStorage();
       
-      if (response && response.token) {
-        this.setSession(
-          response.token,
-          response.user,
-          response.refreshToken || null
-        );
+      if (authData) {
+        // Set current user and tokens
+        this.currentUser = authData.user;
+        this.token = authData.token;
+        this.refreshToken = authData.refreshToken;
+        this.tokenExpiry = authData.tokenExpiry;
+        
+        // Setup token refresh if expiry is set
+        if (this.tokenExpiry) {
+          this.setupTokenRefresh();
+        }
+        
+        console.log('Auth initialized successfully');
       }
-      
-      return response;
     } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      console.error('Failed to initialize auth:', error);
+      this.clearAuth();
     }
   }
 
@@ -251,7 +50,24 @@ class AuthService {
    */
   async register(userData) {
     try {
-      return await window.api.auth.register(userData);
+      // Validate user data
+      if (!userData.email || !utils.isValidEmail(userData.email)) {
+        throw new Error('Valid email address is required');
+      }
+      
+      if (!userData.password) {
+        throw new Error('Password is required');
+      }
+      
+      const passwordValidation = utils.validatePassword(userData.password);
+      if (!passwordValidation.valid) {
+        throw new Error('Password does not meet security requirements');
+      }
+      
+      // Call registration API
+      const response = await api.register(userData);
+      
+      return response;
     } catch (error) {
       console.error('Registration failed:', error);
       throw error;
@@ -259,29 +75,354 @@ class AuthService {
   }
 
   /**
-   * Logout current user
+   * Login user
+   * @param {Object} credentials - Login credentials
+   * @returns {Promise<Object>} - Login response
+   */
+  async login(credentials) {
+    try {
+      // Validate credentials
+      if (!credentials.email || !credentials.password) {
+        throw new Error('Email and password are required');
+      }
+      
+      // Call login API
+      const response = await api.login(credentials);
+      
+      // Set authentication data
+      if (response && response.token) {
+        this.setAuth(response.user, response.token, response.refreshToken, response.tokenExpiry);
+        
+        // Update storage
+        this.saveAuthToStorage();
+        
+        return response;
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Set authentication data
+   * @param {Object} user - User data
+   * @param {string} token - JWT token
+   * @param {string} refreshToken - Refresh token
+   * @param {number|string} tokenExpiry - Token expiry timestamp
+   */
+  setAuth(user, token, refreshToken, tokenExpiry) {
+    this.currentUser = user;
+    this.token = token;
+    this.refreshToken = refreshToken;
+    
+    // Convert expiry to number if it's a string
+    if (tokenExpiry && typeof tokenExpiry === 'string') {
+      this.tokenExpiry = new Date(tokenExpiry).getTime();
+    } else {
+      this.tokenExpiry = tokenExpiry;
+    }
+    
+    // Set authorization header for API requests
+    if (window.api && typeof api.setAuthHeader === 'function') {
+      api.setAuthHeader(token);
+    }
+    
+    // Setup token refresh
+    this.setupTokenRefresh();
+  }
+
+  /**
+   * Logout user
    * @returns {Promise<void>}
    */
   async logout() {
     try {
+      // Call logout API
       if (this.isAuthenticated()) {
-        await window.api.auth.logout();
+        await api.logout();
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('Error during logout:', error);
     } finally {
-      this.clearSession();
+      // Clear authentication data
+      this.clearAuth();
+    }
+  }
+
+  /**
+   * Clear authentication data
+   */
+  clearAuth() {
+    this.currentUser = null;
+    this.token = null;
+    this.refreshToken = null;
+    this.tokenExpiry = null;
+    
+    // Clear token refresh timeout
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+    
+    // Remove authorization header
+    if (window.api && typeof api.removeAuthHeader === 'function') {
+      api.removeAuthHeader();
+    }
+    
+    // Clear storage
+    this.clearAuthFromStorage();
+  }
+
+  /**
+   * Check if user is authenticated
+   * @returns {boolean} - Is authenticated
+   */
+  isAuthenticated() {
+    return !!(this.token && this.currentUser);
+  }
+
+  /**
+   * Get current user
+   * @returns {Object|null} - Current user
+   */
+  getCurrentUser() {
+    return this.currentUser;
+  }
+
+  /**
+   * Get current token
+   * @returns {string|null} - Current token
+   */
+  getToken() {
+    return this.token;
+  }
+
+  /**
+   * Check if token is valid
+   * @returns {boolean} - Is token valid
+   */
+  isTokenValid() {
+    if (!this.token || !this.tokenExpiry) {
+      return false;
+    }
+    
+    // Check if token is expired
+    const now = Date.now();
+    return now < this.tokenExpiry;
+  }
+
+  /**
+   * Setup token refresh
+   */
+  setupTokenRefresh() {
+    // Clear existing timeout
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
+    }
+    
+    // Check if token expiry is set
+    if (!this.tokenExpiry) {
+      return;
+    }
+    
+    // Calculate time until refresh (refresh 5 minutes before expiry)
+    const now = Date.now();
+    const refreshTime = this.tokenExpiry - now - (5 * 60 * 1000);
+    
+    // If token is already expired or will expire in less than 1 minute, refresh immediately
+    if (refreshTime < 60000) {
+      this.refreshAccessToken();
+      return;
+    }
+    
+    // Set up refresh timeout
+    this.refreshTimeout = setTimeout(() => {
+      this.refreshAccessToken();
+    }, refreshTime);
+    
+    console.log(`Token refresh scheduled in ${Math.round(refreshTime / 60000)} minutes`);
+  }
+
+  /**
+   * Refresh access token
+   * @returns {Promise<boolean>} - Refresh success
+   */
+  async refreshAccessToken() {
+    // If no refresh token, cannot refresh
+    if (!this.refreshToken) {
+      return false;
+    }
+    
+    try {
+      // Call refresh token API
+      const response = await this.callRefreshToken();
+      
+      // Set new tokens
+      if (response && response.token) {
+        this.setAuth(
+          response.user || this.currentUser,
+          response.token,
+          response.refreshToken || this.refreshToken,
+          response.tokenExpiry
+        );
+        
+        // Update storage
+        this.saveAuthToStorage();
+        
+        console.log('Token refreshed successfully');
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      
+      // If refresh fails with 401 or 403, clear auth
+      if (error.status === 401 || error.status === 403) {
+        this.clearAuth();
+      }
+      
+      return false;
+    }
+  }
+
+  /**
+   * Call refresh token API
+   * @returns {Promise<Object>} - Refresh token response
+   */
+  async callRefreshToken() {
+    // This is a stub - in a real application, this would call the refresh token API
+    return new Promise((resolve, reject) => {
+      // Simulate API call
+      setTimeout(() => {
+        if (this.refreshToken) {
+          // Simulate successful token refresh
+          const newTokenExpiry = Date.now() + (60 * 60 * 1000); // 1 hour
+          resolve({
+            token: `new_token_${Date.now()}`,
+            refreshToken: this.refreshToken,
+            tokenExpiry: newTokenExpiry,
+            user: this.currentUser
+          });
+        } else {
+          reject(new Error('No refresh token available'));
+        }
+      }, 300);
+    });
+  }
+
+  /**
+   * Save authentication data to storage
+   */
+  saveAuthToStorage() {
+    try {
+      const authData = {
+        user: this.currentUser,
+        token: this.token,
+        refreshToken: this.refreshToken,
+        tokenExpiry: this.tokenExpiry
+      };
+      
+      // Save to local storage
+      localStorage.setItem('auth', btoa(JSON.stringify(authData)));
+    } catch (error) {
+      console.error('Failed to save auth to storage:', error);
+    }
+  }
+
+  /**
+   * Get authentication data from storage
+   * @returns {Object|null} - Auth data
+   */
+  getAuthFromStorage() {
+    try {
+      // Get from local storage
+      const authString = localStorage.getItem('auth');
+      
+      if (!authString) {
+        return null;
+      }
+      
+      // Decode and parse
+      const authData = JSON.parse(atob(authString));
+      
+      // Check if token is expired
+      if (authData.tokenExpiry && Date.now() > authData.tokenExpiry) {
+        // Token is expired, try to refresh
+        // For now, just clear auth
+        this.clearAuthFromStorage();
+        return null;
+      }
+      
+      return authData;
+    } catch (error) {
+      console.error('Failed to get auth from storage:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Clear authentication data from storage
+   */
+  clearAuthFromStorage() {
+    try {
+      // Remove from local storage
+      localStorage.removeItem('auth');
+    } catch (error) {
+      console.error('Failed to clear auth from storage:', error);
+    }
+  }
+
+  /**
+   * Verify current token
+   * @returns {Promise<boolean>} - Is token valid
+   */
+  async verifyToken() {
+    // If not authenticated, return false
+    if (!this.isAuthenticated()) {
+      return false;
+    }
+    
+    try {
+      // Call verify token API
+      await api.verifyToken();
+      return true;
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      
+      // If verification fails with 401 or 403, try to refresh token
+      if (error.status === 401 || error.status === 403) {
+        // Try to refresh token
+        const refreshSuccess = await this.refreshAccessToken();
+        
+        // If refresh succeeds, token is valid
+        return refreshSuccess;
+      }
+      
+      return false;
     }
   }
 
   /**
    * Request password reset
    * @param {string} email - User email
-   * @returns {Promise<Object>} - Password reset response
+   * @returns {Promise<Object>} - Reset request response
    */
   async requestPasswordReset(email) {
     try {
-      return await window.api.auth.requestPasswordReset(email);
+      // Validate email
+      if (!email || !utils.isValidEmail(email)) {
+        throw new Error('Valid email address is required');
+      }
+      
+      // Call password reset API
+      const response = await api.requestPasswordReset(email);
+      
+      return response;
     } catch (error) {
       console.error('Password reset request failed:', error);
       throw error;
@@ -289,18 +430,36 @@ class AuthService {
   }
 
   /**
-   * Complete password reset
+   * Reset password
    * @param {string} token - Reset token
    * @param {string} newPassword - New password
-   * @returns {Promise<Object>} - Reset completion response
+   * @returns {Promise<Object>} - Reset response
    */
   async resetPassword(token, newPassword) {
     try {
-      return await window.api.auth.resetPassword(token, newPassword);
+      // Validate password
+      const passwordValidation = utils.validatePassword(newPassword);
+      if (!passwordValidation.valid) {
+        throw new Error('Password does not meet security requirements');
+      }
+      
+      // Call reset password API
+      const response = await api.resetPassword(token, newPassword);
+      
+      return response;
     } catch (error) {
       console.error('Password reset failed:', error);
       throw error;
     }
+  }
+
+  /**
+   * Check password strength
+   * @param {string} password - Password to check
+   * @returns {Object} - Password strength
+   */
+  checkPasswordStrength(password) {
+    return utils.validatePassword(password);
   }
 
   /**
@@ -310,15 +469,15 @@ class AuthService {
    */
   async updateProfile(profileData) {
     try {
-      const response = await window.api.user.updateProfile(profileData);
+      // Call update profile API
+      const response = await api.updateProfile(profileData);
       
-      // Update stored user data
-      if (response && this.user) {
-        this.user = { ...this.user, ...response };
-        localStorage.setItem(this.USER_KEY, JSON.stringify(this.user));
+      // Update current user with new data
+      if (response && this.currentUser) {
+        this.currentUser = { ...this.currentUser, ...response };
         
-        // Dispatch profile update event
-        this.dispatchAuthEvent('profile-update');
+        // Update storage
+        this.saveAuthToStorage();
       }
       
       return response;
@@ -329,18 +488,43 @@ class AuthService {
   }
 
   /**
+   * Update security settings
+   * @param {Object} securityData - Security data
+   * @returns {Promise<Object>} - Update response
+   */
+  async updateSecurity(securityData) {
+    try {
+      // Validate current password
+      if (!securityData.currentPassword) {
+        throw new Error('Current password is required');
+      }
+      
+      // If new password is provided, validate it
+      if (securityData.newPassword) {
+        const passwordValidation = utils.validatePassword(securityData.newPassword);
+        if (!passwordValidation.valid) {
+          throw new Error('New password does not meet security requirements');
+        }
+      }
+      
+      // Call update security API
+      const response = await api.updateSecurity(securityData);
+      
+      return response;
+    } catch (error) {
+      console.error('Security update failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Enable two-factor authentication
-   * @returns {Promise<Object>} - 2FA setup response
+   * @returns {Promise<Object>} - 2FA setup data
    */
   async enableTwoFactor() {
     try {
-      const response = await window.api.user.enableTwoFactor();
-      
-      // Update stored user data
-      if (response && this.user) {
-        this.user = { ...this.user, twoFactorEnabled: true };
-        localStorage.setItem(this.USER_KEY, JSON.stringify(this.user));
-      }
+      // Call enable 2FA API
+      const response = await api.enableTwoFactor();
       
       return response;
     } catch (error) {
@@ -350,18 +534,56 @@ class AuthService {
   }
 
   /**
+   * Verify two-factor authentication
+   * @param {string} code - Verification code
+   * @returns {Promise<Object>} - Verification response
+   */
+  async verifyTwoFactor(code) {
+    try {
+      // Validate code
+      if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+        throw new Error('Valid 6-digit code is required');
+      }
+      
+      // Call verify 2FA API
+      const response = await api.verifyTwoFactor(code);
+      
+      // Update user data if successful
+      if (response && response.user) {
+        this.currentUser = response.user;
+        
+        // Update storage
+        this.saveAuthToStorage();
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to verify 2FA:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Disable two-factor authentication
-   * @param {string} code - 2FA code
-   * @returns {Promise<Object>} - 2FA disable response
+   * @param {string} code - Verification code
+   * @returns {Promise<Object>} - Disable response
    */
   async disableTwoFactor(code) {
     try {
-      const response = await window.api.user.disableTwoFactor(code);
+      // Validate code
+      if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+        throw new Error('Valid 6-digit code is required');
+      }
       
-      // Update stored user data
-      if (response && this.user) {
-        this.user = { ...this.user, twoFactorEnabled: false };
-        localStorage.setItem(this.USER_KEY, JSON.stringify(this.user));
+      // Call disable 2FA API
+      const response = await api.disableTwoFactor(code);
+      
+      // Update user data if successful
+      if (response && response.user) {
+        this.currentUser = response.user;
+        
+        // Update storage
+        this.saveAuthToStorage();
       }
       
       return response;
@@ -372,42 +594,24 @@ class AuthService {
   }
 
   /**
-   * Change user password
-   * @param {string} currentPassword - Current password
-   * @param {string} newPassword - New password
-   * @returns {Promise<Object>} - Password change response
+   * Get security activity log
+   * @returns {Promise<Array>} - Activity log
    */
-  async changePassword(currentPassword, newPassword) {
+  async getActivityLog() {
     try {
-      return await window.api.user.updateSecurity({
-        currentPassword,
-        newPassword
-      });
+      // Call activity log API
+      const response = await api.getActivityLog();
+      
+      return response;
     } catch (error) {
-      console.error('Password change failed:', error);
+      console.error('Failed to get activity log:', error);
       throw error;
     }
-  }
-
-  /**
-   * Dispatch authentication event
-   * @param {string} type - Event type
-   */
-  dispatchAuthEvent(type) {
-    const event = new CustomEvent('auth', {
-      detail: {
-        type,
-        user: this.user,
-        authenticated: this.isAuthenticated()
-      }
-    });
-    
-    document.dispatchEvent(event);
   }
 }
 
 // Create a singleton instance
 const authService = new AuthService();
 
-// Make the service globally accessible
+// Make it globally available
 window.authService = authService;

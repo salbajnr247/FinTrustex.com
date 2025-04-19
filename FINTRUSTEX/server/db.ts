@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/pg';
+import { drizzle } from 'drizzle-orm/pg-pool';
 import * as schema from "../shared/schema";
 import 'dotenv/config';
 

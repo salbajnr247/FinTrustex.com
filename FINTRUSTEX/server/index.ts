@@ -1,6 +1,6 @@
 import express from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import http from 'http';
+import * as http from 'http';
 import 'dotenv/config';
 import * as userRoutes from './routes/users';
 import * as walletRoutes from './routes/wallets';
@@ -10,9 +10,8 @@ import apiRouter, { setupWebSocketServer } from './routes';
 import path from 'path';
 import { pool } from './db';
 
-// Express 5 has type incompatibilities with TypeScript
-// This is a workaround to avoid TypeScript errors
-const app: any = express();
+// Create Express application
+const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Database connection check
