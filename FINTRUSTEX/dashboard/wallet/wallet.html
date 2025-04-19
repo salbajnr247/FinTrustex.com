@@ -96,14 +96,41 @@
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         AOS.init({ duration: 800 });
-        QRCode.toCanvas(document.getElementById('btc-qr'), '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', { width: 100 }, (err) => {
-          if (err) console.error('QR Code Error:', err);
-        });
       });
     </script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth-service.js"></script>
+    <script src="../../assets/js/utils.js"></script>
     <script src="../../assets/js/components.js"></script>
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/wallet.js"></script>
+    
+    <script>
+      // Check authentication on page load
+      document.addEventListener('DOMContentLoaded', () => {
+        if (window.authService) {
+          // Redirect to login if not authenticated
+          if (!authService.isAuthenticated()) {
+            window.location.href = '../../auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+          }
+          
+          // If authenticated, update user info in header
+          const user = authService.getCurrentUser();
+          if (user) {
+            const usernameElement = document.getElementById('username');
+            const profileNameElement = document.querySelector('.profile-name');
+            
+            if (usernameElement) {
+              usernameElement.textContent = user.username || user.email;
+            }
+            
+            if (profileNameElement) {
+              profileNameElement.textContent = user.username || 'Trader';
+            }
+          }
+        }
+      });
+    </script>
   </div>
 </body>
 </html>

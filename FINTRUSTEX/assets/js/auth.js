@@ -13,19 +13,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Mock API Data for Ticker
-  const fetchMockTickerData = async () => {
-    return [
-      { pair: 'BTC/USDT', price: 60000, change: 1.2 },
-      { pair: 'ETH/USDT', price: 2500, change: -0.8 },
-      { pair: 'ADA/USDT', price: 0.35, change: 0.5 }
-    ];
-  };
-
   // Update Crypto Ticker
   const updateTicker = async () => {
     try {
-      const tickerData = await fetchMockTickerData();
+      // Get market data from API
+      const tickerData = await api.market.getMarkets();
       const tickerContainer = document.getElementById('crypto-ticker');
       if (tickerContainer) {
         tickerContainer.innerHTML = tickerData.map(ticker => `
@@ -47,44 +39,131 @@ document.addEventListener('DOMContentLoaded', () => {
   // Login Form Submission
   const loginForm = document.getElementById('login-form');
   if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
+    loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
       const twoFaCode = document.getElementById('login-2fa').value;
 
-      // Mock 2FA check
-      if (twoFaCode && twoFaCode.length !== 6) {
-        showToast('Invalid 2FA code', 'error');
+      // Simple client-side validation
+      if (!email || !password) {
+        showToast('Please enter both email and password', 'error');
         return;
       }
 
-      // Mock login logic
-      showToast(`Logged in as ${email}${twoFaCode ? ' with 2FA' : ''}`, 'success');
-      // Navigate to dashboard
-      window.location.href = './dashboard/dashboard.html';
+      // 2FA code validation (if provided)
+      if (twoFaCode && twoFaCode.length !== 6) {
+        showToast('2FA code must be 6 digits', 'error');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Logging in...';
+
+        // Login with API
+        const credentials = {
+          email,
+          password,
+          ...(twoFaCode && { twoFactorCode: twoFaCode })
+        };
+
+        // Call the API
+        const loginResponse = await api.auth.login(credentials);
+
+        // Save session data
+        if (window.authService) {
+          authService.setSession(loginResponse.token, loginResponse.user);
+        } else {
+          // Fallback if auth service isn't loaded
+          localStorage.setItem('auth_token', loginResponse.token);
+          localStorage.setItem('auth_user', JSON.stringify(loginResponse.user));
+        }
+
+        showToast(`Welcome back, ${loginResponse.user.username || email}!`, 'success');
+        
+        // Get redirect URL from query parameters or go to dashboard
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectUrl = urlParams.get('redirect') || './dashboard/dashboard.html';
+        window.location.href = redirectUrl;
+      } catch (error) {
+        console.error('Login error:', error);
+        showToast(error.message || 'Login failed. Please check your credentials.', 'error');
+        
+        // Reset button
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
     });
   }
 
   // Register Form Submission
   const registerForm = document.getElementById('register-form');
   if (registerForm) {
-    registerForm.addEventListener('submit', (e) => {
+    registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const username = document.getElementById('register-username').value;
       const email = document.getElementById('register-email').value;
       const password = document.getElementById('register-password').value;
       const confirmPassword = document.getElementById('register-confirm-password').value;
 
+      // Simple client-side validation
+      if (!username || !email || !password) {
+        showToast('Please fill in all fields', 'error');
+        return;
+      }
+
+      // Password validation
       if (password !== confirmPassword) {
         showToast('Passwords do not match', 'error');
         return;
       }
 
-      // Mock registration logic
-      showToast(`Registered as ${username}`, 'success');
-      // Switch to login tab
-      document.querySelector('.tab-btn[data-tab="login"]').click();
+      if (password.length < 8) {
+        showToast('Password must be at least 8 characters', 'error');
+        return;
+      }
+
+      try {
+        // Show loading state
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Registering...';
+
+        // Register with API
+        const userData = {
+          username,
+          email,
+          password
+        };
+
+        // Call the API
+        await api.auth.register(userData);
+
+        showToast(`Account created successfully! Please log in.`, 'success');
+        
+        // Switch to login tab and pre-fill email
+        document.querySelector('.tab-btn[data-tab="login"]').click();
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-password').focus();
+        
+        // Reset button
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      } catch (error) {
+        console.error('Registration error:', error);
+        showToast(error.message || 'Registration failed. Please try again.', 'error');
+        
+        // Reset button
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+      }
     });
   }
 
