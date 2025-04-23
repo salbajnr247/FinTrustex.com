@@ -1,10 +1,19 @@
 {
-  "workflow": {
-    "name": "Start FinTrustEX",
-    "command": "cd FINTRUSTEX && ./start.sh",
-    "auto_start": true,
-    "environment": {
-      "PORT": "3000"
+  "runs": [
+    {
+      "name": "FinTrustEX Server",
+      "command": "cd FINTRUSTEX && node server-start.js",
+      "restartOn": {
+        "files": [
+          "FINTRUSTEX/server/**/*.js",
+          "FINTRUSTEX/server/**/*.ts",
+          "FINTRUSTEX/shared/**/*.js",
+          "FINTRUSTEX/shared/**/*.ts"
+        ]
+      },
+      "ports": {
+        "3000": "open"
+      }
     }
-  }
+  ]
 }

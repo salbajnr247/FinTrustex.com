@@ -30,30 +30,43 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'API is running', timestamp: new Date().toISOString() });
 });
 
+// Define project root to avoid duplication
+const PROJECT_ROOT = path.join(process.cwd());
+
 // Route to serve the main HTML file
 app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'index.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/index.html'));
+});
+
+// Serve assets correctly by ensuring proper path recognition
+app.get('/assets/*', (req, res) => {
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX', req.path));
 });
 
 // Handle frontend routes with specific routes instead of wildcard
 app.get('/dashboard', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'dashboard', 'dashboard.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/dashboard/dashboard.html'));
+});
+
+// Also handle the trailing slash version to prevent redirects
+app.get('/dashboard/', (req, res) => {
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/dashboard/dashboard.html'));
 });
 
 app.get('/auth', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'auth.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/auth.html'));
 });
 
 app.get('/legal', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'legal.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/legal.html'));
 });
 
 app.get('/support', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'support.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/support.html'));
 });
 
 app.get('/settings', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'settings.html'));
+  res.sendFile(path.join(PROJECT_ROOT, 'FINTRUSTEX/settings.html'));
 });
 
 // Create HTTP server
