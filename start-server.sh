@@ -1,3 +1,2 @@
 #!/bin/bash
-cd FINTRUSTEX
-node server-start.js
+cd FINTRUSTEX && node server-start.js

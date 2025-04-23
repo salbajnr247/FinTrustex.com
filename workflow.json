@@ -1,5 +1,3 @@
 {
-  "commands": {
-    "Build and Run Server": "cd FINTRUSTEX && node run-server.js"
-  }
+  "run": "cd FINTRUSTEX && node server-start.js"
 }
