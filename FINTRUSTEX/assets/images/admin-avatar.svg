@@ -1,22 +1,24 @@
-<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="50" cy="50" r="50" fill="#2A6EBB"/>
-  
-  <!-- Head -->
-  <circle cx="50" cy="40" r="20" fill="#FFFFFF"/>
-  
-  <!-- Body -->
-  <path d="M30 85 Q50 65 70 85" fill="#FFFFFF"/>
-  
-  <!-- Tie -->
-  <path d="M50 60 L45 70 L50 85 L55 70 L50 60" fill="#D32F2F"/>
-  
-  <!-- Headset -->
-  <path d="M30 35 Q30 25 50 25 Q70 25 70 35" stroke="#333333" stroke-width="3" fill="none"/>
-  <rect x="25" y="35" width="5" height="10" rx="2" fill="#333333"/>
-  <rect x="70" y="35" width="5" height="10" rx="2" fill="#333333"/>
-  
-  <!-- Microphone -->
-  <rect x="70" y="37" width="3" height="8" rx="1" fill="#333333"/>
-  <path d="M73 41 Q78 41 78 37" stroke="#333333" stroke-width="2" fill="none"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Admin Avatar</title>
+    <defs>
+        <linearGradient x1="0%" y1="0%" x2="100%" y2="100%" id="adminGradient">
+            <stop stop-color="#FF5722" offset="0%"></stop>
+            <stop stop-color="#FF9800" offset="100%"></stop>
+        </linearGradient>
+    </defs>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle fill="url(#adminGradient)" cx="20" cy="20" r="20"></circle>
+        <!-- Face shape -->
+        <circle fill="#FFFFFF" cx="20" cy="16" r="8"></circle>
+        <!-- Hair -->
+        <path d="M20,8 C15.5817,8 12,11.5817 12,16 C12,16.5 12.0506,16.9684 12.1469,17.4194 C12.8906,16.5335 14.3781,16 16.5,16 C18.5,16 28,16 28,16 C28,16 28,13.5 26.5,12 C25,10.5 22.5,8 20,8 Z" fill="#FFFFFF"></path>
+        <!-- Headset -->
+        <path d="M12,16 C12,16 10,16 10,19 L10,21 C10,21 11,21 11,20 L11,18 C11,18 11,17 12,17" fill="#FFFFFF"></path>
+        <path d="M28,16 C28,16 30,16 30,19 L30,21 C30,21 29,21 29,20 L29,18 C29,18 29,17 28,17" fill="#FFFFFF"></path>
+        <rect x="10" y="18" width="1" height="3" rx="0.5" fill="#FFFFFF"></rect>
+        <rect x="29" y="18" width="1" height="3" rx="0.5" fill="#FFFFFF"></rect>
+        <!-- Bowtie/Tie -->
+        <path d="M20,24 L17,28 L20,32 L23,28 L20,24 Z" fill="#FFFFFF"></path>
+    </g>
 </svg>

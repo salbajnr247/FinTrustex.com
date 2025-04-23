@@ -9,6 +9,7 @@ declare module 'express' {
     query: Record<string, string>;
     body: any;
     headers: Record<string, string>;
+    openai?: any; // For OpenAI API instance
     [key: string]: any;
   }
   

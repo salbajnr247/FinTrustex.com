@@ -7,8 +7,9 @@ import * as walletRoutes from './routes/wallets';
 import * as orderRoutes from './routes/orders';
 import * as transactionRoutes from './routes/transactions';
 import apiRouter, { setupWebSocketServer } from './routes';
+import aiRouter from './routes/ai';
 import path from 'path';
-import { pool } from './db';
+import { client } from './db';
 
 // Create Express application
 const app = express();
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 3000;
 // Database connection check
 async function initDatabase() {
   try {
-    await pool.query('SELECT NOW()');
+    await client`SELECT NOW()`;
     console.log('Database connection successful!');
   } catch (error) {
     console.error('Failed to connect to database:', error);
@@ -76,6 +77,9 @@ app.post('/api/transactions', transactionRoutes.createTransaction);
 app.get('/api/transactions', transactionRoutes.getTransactions);
 app.get('/api/transactions/:id', transactionRoutes.getTransactionById);
 app.put('/api/transactions/:id/status', transactionRoutes.updateTransactionStatus);
+
+// AI Chat routes
+app.use('/api/ai', aiRouter);
 
 // Serve static files from the current directory
 app.use(express.static('.'));

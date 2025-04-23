@@ -1,6 +1,8 @@
 import express, { Router } from 'express';
 import { WebSocketServer } from 'ws';
-import * as WebSocket from 'ws';
+
+// WebSocket connection states
+const WS_OPEN = 1; // WebSocket.OPEN constant value
 
 // Type imports from express
 import { Request, Response, NextFunction } from 'express';
@@ -10,6 +12,16 @@ import { getUserById } from './routes/users';
 import { getWallets, getWalletById, createWallet, updateWalletBalance } from './routes/wallets';
 import { getOrders, getOrderById, createOrder, updateOrderStatus } from './routes/orders';
 import { getTransactions, getTransactionById, createTransaction, updateTransactionStatus } from './routes/transactions';
+import aiRouter from './routes/ai';
+
+// Add OpenAI to Express Request
+declare global {
+  namespace Express {
+    interface Request {
+      openai?: any;
+    }
+  }
+}
 
 const router = Router();
 
@@ -54,6 +66,9 @@ router.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// AI routes
+router.use('/ai', aiRouter);
+
 // Setup WebSocket server for real-time updates
 export function setupWebSocketServer(httpServer: http.Server) {
   const wss = new WebSocketServer({ 
@@ -73,7 +88,7 @@ export function setupWebSocketServer(httpServer: http.Server) {
 
     // Set up ping interval to keep connection alive
     const pingInterval = setInterval(() => {
-      if (ws.readyState === 1) { // 1 = OPEN state
+      if (ws.readyState === WS_OPEN) { // WebSocket OPEN state (1)
         ws.send(JSON.stringify({ type: 'ping', timestamp: new Date().toISOString() }));
       }
     }, 30000);
@@ -122,7 +137,7 @@ export function setupWebSocketServer(httpServer: http.Server) {
   // Broadcast function for sending data to all connected clients
   const broadcast = (data: any) => {
     wss.clients.forEach((client) => {
-      if (client.readyState === 1) { // 1 = OPEN state
+      if (client.readyState === WebSocket.OPEN) { // Use WebSocket.OPEN instead of hardcoded 1
         client.send(JSON.stringify(data));
       }
     });

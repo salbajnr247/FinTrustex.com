@@ -1,24 +1,18 @@
-const { Pool } = require('pg');
-const { drizzle } = require('drizzle-orm/pg-pool');
-const schema = require('../shared/schema');
-require('dotenv').config();
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.db = exports.client = void 0;
+
+const postgres = require("postgres");
+const { drizzle } = require("drizzle-orm/postgres-js");
+const schema = require("../shared/schema");
+require("dotenv/config");
 
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+    throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool, { schema });
-
-// Check connection and log errors
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle PostgreSQL client', err);
-  process.exit(-1);
-});
+exports.client = postgres(process.env.DATABASE_URL);
+exports.db = drizzle(exports.client, { schema });
 
 // Log configuration for debugging
 console.log(`Database configured with ${process.env.DATABASE_URL ? 'provided' : 'missing'} connection string`);
-
-module.exports = { pool, db };
