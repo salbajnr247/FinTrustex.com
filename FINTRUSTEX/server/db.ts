@@ -1,5 +1,5 @@
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "../shared/schema";
 import 'dotenv/config';
 
@@ -9,8 +9,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const client = postgres(process.env.DATABASE_URL);
-export const db = drizzle(client, { schema });
+// Create a connection pool
+export const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+});
+
+export const db = drizzle(pool, { schema });
 
 // Log configuration for debugging
 console.log(`Database configured with ${process.env.DATABASE_URL ? 'provided' : 'missing'} connection string`);
