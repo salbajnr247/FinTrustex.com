@@ -1,0 +1,4 @@
+[run]
+display = "Start FinTrustEX"
+command = "cd FINTRUSTEX && node -r esbuild-register server/simplified-server.js"
+watch = ["FINTRUSTEX/**"]

@@ -1,0 +1,10 @@
+{
+  "workflow": {
+    "name": "Start FinTrustEX",
+    "command": "cd FINTRUSTEX && ./start.sh",
+    "auto_start": true,
+    "environment": {
+      "PORT": "3000"
+    }
+  }
+}

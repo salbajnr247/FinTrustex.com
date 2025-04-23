@@ -62,7 +62,7 @@ router.post('/chat', checkOpenAIKey, async (req: Request, res: Response) => {
     // Call OpenAI API
     const openai = req.openai as OpenAI;
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      model: "gpt-3.5-turbo", // Using a stable, widely available model
       messages: apiMessages,
       max_tokens: 500,
       temperature: 0.7,

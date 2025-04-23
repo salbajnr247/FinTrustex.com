@@ -1,5 +1,5 @@
-import express from 'express';
-import type { Request, Response, NextFunction } from 'express';
+import express, { json, urlencoded } from 'express';
+import type { Request, Response, NextFunction, Express } from 'express';
 import * as http from 'http';
 import 'dotenv/config';
 import * as userRoutes from './routes/users';
@@ -12,7 +12,7 @@ import path from 'path';
 import { client } from './db';
 
 // Create Express application
-const app = express();
+const app: express.Application = express();
 const PORT = process.env.PORT || 3000;
 
 // Database connection check
