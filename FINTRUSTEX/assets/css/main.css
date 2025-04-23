@@ -1,15 +1,17 @@
-/* Root variables for consistent theming */
+/* Root variables for consistent theming - Bybit Yellow and Black Theme */
 :root {
-  --primary-bg: #1a1f2b; /* Dark blue-gray */
-  --card-bg: rgba(255, 255, 255, 0.05); /* Glassmorphism */
-  --accent-color: #f7c948; /* Bybit yellow */
-  --text-color: #e0e7ff; /* Light text */
-  --border-color: rgba(255, 255, 255, 0.1);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --primary-bg: #121212; /* Pure black background like Bybit */
+  --card-bg: #1a1a1a; /* Slightly lighter black for cards */
+  --accent-color: #f6ca45; /* Bybit yellow */
+  --accent-secondary: #f8d573; /* Lighter yellow for hover effects */
+  --text-color: #ffffff; /* Pure white text */
+  --text-secondary: #b4b4b4; /* Secondary text color */
+  --border-color: #2a2a2a; /* Dark gray border */
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   --glass-blur: blur(10px);
   --transition: all 0.3s ease;
-  --positive-color: #4caf50;
-  --negative-color: #f44336;
+  --positive-color: #04aa6d; /* Green for positive values */
+  --negative-color: #e63946; /* Red for negative values */
 }
 
 /* Reset */
@@ -47,25 +49,26 @@ body {
 }
 
 .btn:hover {
-  background: #e6b738;
+  background: var(--accent-secondary);
   transform: translateY(-2px);
-  box-shadow: 0 0 10px rgba(247, 201, 72, 0.3); /* Subtle neon glow */
+  box-shadow: 0 0 15px rgba(246, 202, 69, 0.4); /* Brighter yellow glow */
 }
 
 .btn-outline {
   background: transparent;
-  border: 1px solid var(--accent-color);
+  border: 2px solid var(--accent-color);
   color: var(--accent-color);
+  font-weight: bold;
 }
 
 .btn-outline:hover {
   background: var(--accent-color);
-  color: var(--primary-bg);
-  box-shadow: 0 4px 12px rgba(247, 201, 72, 0.2);
+  color: #000000; /* Black text on yellow background - Bybit style */
+  box-shadow: 0 4px 15px rgba(246, 202, 69, 0.3);
 }
 
 .btn-outline:active {
-  background: darken(var(--accent-color), 10%);
+  background: #e6b738; /* Darker yellow when pressed */
   transform: translateY(2px);
 }
 
@@ -76,27 +79,46 @@ body {
 
 .card {
   background: var(--card-bg);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 6px; /* Bybit uses sharper corners */
   padding: 1.5rem;
   box-shadow: var(--shadow);
   animation: fadeIn 0.5s ease-in;
+  transition: var(--transition);
+}
+
+.card:hover {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+}
+
+.card-yellow-accent {
+  border-left: 3px solid var(--accent-color);
+}
+
+.card-hover-accent:hover {
+  border-color: var(--accent-color);
 }
 
 .glassmorph {
   background: var(--card-bg);
-  backdrop-filter: var(--glass-blur);
   border: 1px solid var(--border-color);
 }
 
 .glassmorph-input {
-  background: rgba(255, 255, 255, 0.1);
+  background: #252525; /* Darker input fields like Bybit */
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 0.5rem;
+  border-radius: 6px;
+  padding: 0.8rem;
   color: var(--text-color);
   width: 100%;
+  transition: var(--transition);
+}
+
+.glassmorph-input:focus {
+  border-color: var(--accent-color);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--accent-color);
 }
 
 /* Navbar */
@@ -305,12 +327,16 @@ body {
   to { transform: translateX(0); }
 }
 
-/* Theme Toggle */
+/* Theme Toggle - Light Bybit style */
 .light-theme {
-  --primary-bg: #f0f2f5;
-  --card-bg: rgba(0, 0, 0, 0.05);
-  --text-color: #1a1f2b;
-  --border-color: rgba(0, 0, 0, 0.1);
+  --primary-bg: #ffffff; /* White background */
+  --card-bg: #f9f9f9; /* Light gray for cards */
+  --accent-color: #f6ca45; /* Keep the same yellow */
+  --accent-secondary: #f8d573; /* Keep the same light yellow */
+  --text-color: #000000; /* Black text */
+  --text-secondary: #666666; /* Dark gray for secondary text */
+  --border-color: #e0e0e0; /* Light gray border */
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive Design */

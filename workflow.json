@@ -1,19 +1,5 @@
 {
-  "runs": [
-    {
-      "name": "FinTrustEX Server",
-      "command": "cd FINTRUSTEX && node server-start.js",
-      "restartOn": {
-        "files": [
-          "FINTRUSTEX/server/**/*.js",
-          "FINTRUSTEX/server/**/*.ts",
-          "FINTRUSTEX/shared/**/*.js",
-          "FINTRUSTEX/shared/**/*.ts"
-        ]
-      },
-      "ports": {
-        "3000": "open"
-      }
-    }
-  ]
+  "commands": {
+    "Build and Run Server": "cd FINTRUSTEX && node run-server.js"
+  }
 }
