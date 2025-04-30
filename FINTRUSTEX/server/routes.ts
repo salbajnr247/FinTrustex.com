@@ -13,12 +13,17 @@ import { getWallets, getWalletById, createWallet, updateWalletBalance } from './
 import { getOrders, getOrderById, createOrder, updateOrderStatus } from './routes/orders';
 import { getTransactions, getTransactionById, createTransaction, updateTransactionStatus } from './routes/transactions';
 import aiRouter from './routes/ai';
+import investmentRouter from './routes/investments';
+import notificationRouter from './routes/notifications';
+import userSettingsRouter from './routes/user-settings';
 
 // Add OpenAI to Express Request
 declare global {
   namespace Express {
     interface Request {
       openai?: any;
+      user?: any; // User object from authentication middleware
+      session?: any; // Session object for storing temporary data
     }
   }
 }
@@ -68,6 +73,15 @@ router.get('/health', (req: Request, res: Response) => {
 
 // AI routes
 router.use('/ai', aiRouter);
+
+// Investment routes
+router.use('/api', investmentRouter);
+
+// Notification routes
+router.use('/api', notificationRouter);
+
+// User settings routes (2FA, language, KYC)
+router.use('/api', userSettingsRouter);
 
 // Setup WebSocket server for real-time updates
 export function setupWebSocketServer(httpServer: http.Server) {

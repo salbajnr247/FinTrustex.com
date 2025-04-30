@@ -1,9 +1,12 @@
 import { 
-  users, wallets, orders, transactions,
+  users, wallets, orders, transactions, investmentPackages, userInvestments, notifications, kycStatusEnum,
   type User, type InsertUser,
   type Wallet, type InsertWallet,
   type Order, type InsertOrder,
-  type Transaction, type InsertTransaction
+  type Transaction, type InsertTransaction,
+  type InvestmentPackage, type InsertInvestmentPackage,
+  type UserInvestment, type InsertUserInvestment,
+  type Notification, type InsertNotification
 } from "../shared/schema";
 import { db } from "./db";
 import { eq, and } from "drizzle-orm";
@@ -15,6 +18,9 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
+  updateUserLanguage(id: number, language: string): Promise<User>;
+  updateUserKycStatus(id: number, status: typeof kycStatusEnum.enumValues[number]): Promise<User>;
   
   // Wallet methods
   getWallet(id: number): Promise<Wallet | undefined>;
@@ -35,6 +41,28 @@ export interface IStorage {
   getTransactionsByWalletId(walletId: number): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
   updateTransactionStatus(id: number, status: string): Promise<Transaction>;
+  
+  // Investment Package methods
+  getInvestmentPackage(id: number): Promise<InvestmentPackage | undefined>;
+  getAllInvestmentPackages(activeOnly?: boolean): Promise<InvestmentPackage[]>;
+  createInvestmentPackage(pkg: InsertInvestmentPackage): Promise<InvestmentPackage>;
+  updateInvestmentPackage(id: number, updates: Partial<InvestmentPackage>): Promise<InvestmentPackage>;
+  toggleInvestmentPackageStatus(id: number, isActive: boolean): Promise<InvestmentPackage>;
+  
+  // User Investment methods
+  getUserInvestment(id: number): Promise<UserInvestment | undefined>;
+  getUserInvestmentsByUserId(userId: number): Promise<UserInvestment[]>;
+  createUserInvestment(investment: InsertUserInvestment): Promise<UserInvestment>;
+  updateUserInvestmentStatus(id: number, status: 'active' | 'completed' | 'cancelled'): Promise<UserInvestment>;
+  completeUserInvestment(id: number, actualReturn: string): Promise<UserInvestment>;
+  
+  // Notification methods
+  getNotification(id: number): Promise<Notification | undefined>;
+  getNotificationsByUserId(userId: number): Promise<Notification[]>;
+  getUnreadNotificationsByUserId(userId: number): Promise<Notification[]>;
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  markNotificationAsRead(id: number): Promise<Notification>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
 }
 
 // Database Storage Implementation
@@ -61,6 +89,33 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async updateUserLanguage(id: number, language: string): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ preferredLanguage: language })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
+  
+  async updateUserKycStatus(id: number, status: typeof kycStatusEnum.enumValues[number]): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ kycStatus: status })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
   }
 
   // Wallet methods
@@ -178,6 +233,128 @@ export class DatabaseStorage implements IStorage {
       .where(eq(transactions.id, id))
       .returning();
     return updatedTransaction;
+  }
+  
+  // Investment Package methods
+  async getInvestmentPackage(id: number): Promise<InvestmentPackage | undefined> {
+    const [investmentPackage] = await db.select().from(investmentPackages).where(eq(investmentPackages.id, id));
+    return investmentPackage || undefined;
+  }
+  
+  async getAllInvestmentPackages(activeOnly: boolean = false): Promise<InvestmentPackage[]> {
+    if (activeOnly) {
+      return await db.select().from(investmentPackages).where(eq(investmentPackages.isActive, true));
+    }
+    return await db.select().from(investmentPackages);
+  }
+  
+  async createInvestmentPackage(pkg: InsertInvestmentPackage): Promise<InvestmentPackage> {
+    const [newPackage] = await db
+      .insert(investmentPackages)
+      .values(pkg)
+      .returning();
+    return newPackage;
+  }
+  
+  async updateInvestmentPackage(id: number, updates: Partial<InvestmentPackage>): Promise<InvestmentPackage> {
+    const [updatedPackage] = await db
+      .update(investmentPackages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(investmentPackages.id, id))
+      .returning();
+    return updatedPackage;
+  }
+  
+  async toggleInvestmentPackageStatus(id: number, isActive: boolean): Promise<InvestmentPackage> {
+    const [updatedPackage] = await db
+      .update(investmentPackages)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(investmentPackages.id, id))
+      .returning();
+    return updatedPackage;
+  }
+  
+  // User Investment methods
+  async getUserInvestment(id: number): Promise<UserInvestment | undefined> {
+    const [userInvestment] = await db.select().from(userInvestments).where(eq(userInvestments.id, id));
+    return userInvestment || undefined;
+  }
+  
+  async getUserInvestmentsByUserId(userId: number): Promise<UserInvestment[]> {
+    return await db.select().from(userInvestments).where(eq(userInvestments.userId, userId));
+  }
+  
+  async createUserInvestment(investment: InsertUserInvestment): Promise<UserInvestment> {
+    const [newInvestment] = await db
+      .insert(userInvestments)
+      .values(investment)
+      .returning();
+    return newInvestment;
+  }
+  
+  async updateUserInvestmentStatus(id: number, status: 'active' | 'completed' | 'cancelled'): Promise<UserInvestment> {
+    const [updatedInvestment] = await db
+      .update(userInvestments)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(userInvestments.id, id))
+      .returning();
+    return updatedInvestment;
+  }
+  
+  async completeUserInvestment(id: number, actualReturn: string): Promise<UserInvestment> {
+    const now = new Date();
+    const [completedInvestment] = await db
+      .update(userInvestments)
+      .set({ 
+        status: 'completed', 
+        actualReturn, 
+        endDate: now,
+        updatedAt: now 
+      })
+      .where(eq(userInvestments.id, id))
+      .returning();
+    return completedInvestment;
+  }
+  
+  // Notification methods
+  async getNotification(id: number): Promise<Notification | undefined> {
+    const [notification] = await db.select().from(notifications).where(eq(notifications.id, id));
+    return notification || undefined;
+  }
+  
+  async getNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return await db.select().from(notifications).where(eq(notifications.userId, userId));
+  }
+  
+  async getUnreadNotificationsByUserId(userId: number): Promise<Notification[]> {
+    return await db
+      .select()
+      .from(notifications)
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  }
+  
+  async createNotification(notification: InsertNotification): Promise<Notification> {
+    const [newNotification] = await db
+      .insert(notifications)
+      .values(notification)
+      .returning();
+    return newNotification;
+  }
+  
+  async markNotificationAsRead(id: number): Promise<Notification> {
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(eq(notifications.id, id))
+      .returning();
+    return updatedNotification;
+  }
+  
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
   }
 }
 
