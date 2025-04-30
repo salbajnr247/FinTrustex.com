@@ -5,7 +5,15 @@ exports.setupWebSocketServer = void 0;
 const express_1 = require("express");
 const ws_1 = require("ws");
 const WebSocket = require("ws");
+const authRoutes = require('./routes/auth');
+const securityRoutes = require('./routes/security');
 const router = (0, express_1.Router)();
+
+// Use authentication routes
+router.use('/auth', authRoutes);
+
+// Use security routes
+router.use('/security', securityRoutes);
 
 // Health check
 router.get('/health', (req, res) => {

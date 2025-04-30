@@ -1,0 +1,428 @@
+/* Security-specific styles for FinTrustEX */
+
+/* Security Settings Page */
+.security-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.security-item:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.security-item-info {
+  flex: 1;
+}
+
+.security-item-info h3 {
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.security-item-info p {
+  color: var(--muted-text-color);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.security-item-action {
+  margin-left: 1rem;
+}
+
+.status {
+  margin-top: 0.5rem;
+}
+
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.status-indicator i {
+  margin-right: 0.5rem;
+}
+
+.status-indicator.enabled {
+  color: #4CAF50;
+}
+
+.status-indicator.disabled {
+  color: #9e9e9e;
+}
+
+/* Password Change Form */
+.password-change-form, .disable-2fa-form {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Activity Log */
+.activity-log {
+  margin-top: 1rem;
+}
+
+.activity-log-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  margin-right: 1rem;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-icon i {
+  font-size: 1.2rem;
+  color: var(--accent-color);
+}
+
+.activity-details {
+  flex: 1;
+}
+
+.activity-description {
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.activity-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.8rem;
+  color: var(--muted-text-color);
+}
+
+.activity-time, .activity-ip {
+  display: flex;
+  align-items: center;
+}
+
+.activity-time:before {
+  content: "\f017";
+  font-family: "Font Awesome 5 Free";
+  margin-right: 0.5rem;
+}
+
+.activity-ip:before {
+  content: "\f3c5";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-right: 0.5rem;
+}
+
+.error-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  text-align: center;
+  color: #ff6b6b;
+}
+
+.error-message i {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+/* 2FA Setup Page */
+.setup-steps {
+  margin-top: 2rem;
+}
+
+.setup-step {
+  display: none;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.setup-step.active {
+  display: block;
+}
+
+.setup-step h3 {
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.authenticator-apps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.app-link {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--text-color);
+  transition: all 0.3s ease;
+}
+
+.app-link i {
+  margin-right: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.app-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.qr-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+#qr-code {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+#qr-code-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem 0;
+}
+
+#qr-code-loading .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#manual-entry {
+  text-align: center;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.secret-code {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  user-select: all;
+}
+
+.link-container {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.link-container a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.link-container a:hover {
+  text-decoration: underline;
+}
+
+.btn-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.verification-form {
+  margin: 2rem 0;
+  max-width: 300px;
+}
+
+.verification-input {
+  font-family: 'Fira Code', monospace;
+  font-size: 1.5rem;
+  letter-spacing: 10px;
+  padding: 0.75rem;
+  width: 100%;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+}
+
+.verification-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+}
+
+.verification-form small {
+  color: var(--muted-text-color);
+  font-size: 0.8rem;
+}
+
+#verification-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 5px;
+  font-size: 0.9rem;
+}
+
+#verification-message.error {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff6b6b;
+}
+
+#verification-message.success {
+  background: rgba(0, 255, 0, 0.1);
+  color: #69db7c;
+}
+
+.success-container {
+  text-align: center;
+  padding: 2rem;
+}
+
+.success-container i {
+  font-size: 4rem;
+  color: #69db7c;
+  margin-bottom: 1.5rem;
+}
+
+.recovery-codes {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.recovery-codes h4 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+}
+
+.codes-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin: 1.5rem 0;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+}
+
+.codes-container div {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  user-select: all;
+}
+
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.copy-btn i {
+  font-size: 1rem;
+  color: inherit;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .authenticator-apps {
+    flex-direction: column;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+  }
+  
+  .codes-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .verification-input {
+    font-size: 1.2rem;
+    letter-spacing: 5px;
+  }
+  
+  .secret-code {
+    font-size: 0.9rem;
+    word-break: break-all;
+  }
+}

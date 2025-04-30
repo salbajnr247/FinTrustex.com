@@ -23,20 +23,48 @@
         <form id="login-form" class="auth-form active">
           <h2>Login</h2>
           <div class="form-group">
-            <label for="login-email">Email</label>
-            <input type="email" id="login-email" class="glassmorph-input" placeholder="Enter your email" required>
+            <label for="login-email">Email or Username</label>
+            <input type="text" id="login-email" class="glassmorph-input" placeholder="Enter your email or username" required>
           </div>
           <div class="form-group">
             <label for="login-password">Password</label>
             <input type="password" id="login-password" class="glassmorph-input" placeholder="Enter your password" required>
           </div>
-          <div class="form-group">
-            <label for="login-2fa">2FA Code (Optional)</label>
-            <input type="text" id="login-2fa" class="glassmorph-input" placeholder="Enter 2FA code">
-          </div>
           <button type="submit" class="btn btn-yellow"><i class="fas fa-sign-in-alt"></i> Login</button>
           <a href="#" class="forgot-password">Forgot Password?</a>
         </form>
+        
+        <!-- 2FA Verification Form (Hidden by default) -->
+        <form id="verify-2fa-form" class="auth-form">
+          <h2>Two-Factor Authentication</h2>
+          <p class="auth-message">Please enter the verification code from your authenticator app.</p>
+          <div class="form-group">
+            <label for="verification-code">Verification Code</label>
+            <input type="text" id="verification-code" class="verification-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="000000" required>
+            <small>The code refreshes every 30 seconds</small>
+          </div>
+          <button type="submit" class="btn btn-yellow"><i class="fas fa-shield-alt"></i> Verify</button>
+          <div class="auth-links">
+            <a href="#" id="use-recovery-code">Use Recovery Code</a>
+            <a href="#" id="cancel-2fa">Cancel Login</a>
+          </div>
+        </form>
+        
+        <!-- Recovery Code Form (Hidden by default) -->
+        <form id="recovery-code-form" class="auth-form">
+          <h2>Recovery Code</h2>
+          <p class="auth-message">If you've lost access to your authenticator app, you can use one of your recovery codes.</p>
+          <div class="form-group">
+            <label for="recovery-code">Recovery Code</label>
+            <input type="text" id="recovery-code" class="glassmorph-input" placeholder="Enter your recovery code (e.g., ABCD-EFGH-IJKL-MNOP)" required>
+          </div>
+          <button type="submit" class="btn btn-yellow"><i class="fas fa-key"></i> Submit</button>
+          <div class="auth-links">
+            <a href="#" id="back-to-2fa">Back to 2FA Verification</a>
+            <a href="#" id="cancel-recovery">Cancel Login</a>
+          </div>
+        </form>
+        
         <!-- Register Form -->
         <form id="register-form" class="auth-form">
           <h2>Register</h2>

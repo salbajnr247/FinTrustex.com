@@ -510,6 +510,76 @@ const admin = {
   }
 };
 
+// Security API
+const security = {
+  /**
+   * Initiate 2FA setup
+   * @param {string} userId - User ID
+   * @returns {Promise<Object>} - 2FA setup data including secret and QR code URL
+   */
+  async initiate2FA(userId) {
+    return apiRequest('/security/2fa/setup', 'POST', { userId });
+  },
+
+  /**
+   * Verify 2FA code during setup
+   * @param {string} userId - User ID
+   * @param {string} code - Verification code
+   * @param {string} secret - Secret key
+   * @returns {Promise<Object>} - Verification result and recovery codes
+   */
+  async verify2FA(userId, code, secret) {
+    return apiRequest('/security/2fa/verify', 'POST', { userId, code, secret });
+  },
+
+  /**
+   * Disable 2FA
+   * @param {string} userId - User ID
+   * @param {string} code - Verification code
+   * @returns {Promise<Object>} - Disable confirmation
+   */
+  async disable2FA(userId, code) {
+    return apiRequest('/security/2fa/disable', 'POST', { userId, code });
+  },
+
+  /**
+   * Verify 2FA code during login
+   * @param {string} userId - User ID
+   * @param {string} code - Verification code
+   * @returns {Promise<Object>} - Verification result
+   */
+  async verify2FALogin(userId, code) {
+    return apiRequest('/security/2fa/login', 'POST', { userId, code });
+  },
+
+  /**
+   * Use recovery code to bypass 2FA
+   * @param {string} userId - User ID
+   * @param {string} recoveryCode - Recovery code
+   * @returns {Promise<Object>} - Recovery result
+   */
+  async useRecoveryCode(userId, recoveryCode) {
+    return apiRequest('/security/2fa/recovery', 'POST', { userId, recoveryCode });
+  },
+  
+  /**
+   * Get security settings
+   * @returns {Promise<Object>} - Security settings
+   */
+  async getSecuritySettings() {
+    return apiRequest('/security/settings', 'GET');
+  },
+  
+  /**
+   * Update password
+   * @param {Object} passwordData - Password data
+   * @returns {Promise<Object>} - Update confirmation
+   */
+  async updatePassword(passwordData) {
+    return apiRequest('/security/password', 'PUT', passwordData);
+  }
+};
+
 // Export API
 const api = {
   setAuthHeader,
@@ -520,7 +590,8 @@ const api = {
   trading,
   transactions,
   user,
-  admin
+  admin,
+  security
 };
 
 // Make API globally accessible

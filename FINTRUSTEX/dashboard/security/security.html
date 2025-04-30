@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Security Settings</title>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/security.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="dashboard-wrapper">
+    <!-- Sidebar will be loaded by components.js -->
+    <aside id="sidebar-container" class="sidebar"></aside>
+    
+    <main class="dashboard-main">
+      <!-- Header will be loaded by components.js -->
+      <header id="header-container" class="dashboard-header"></header>
+      
+      <div class="dashboard-content">
+        <section class="content-header">
+          <h1>Security Settings</h1>
+          <nav class="breadcrumb">
+            <ol>
+              <li><a href="../dashboard.html">Dashboard</a></li>
+              <li>Security</li>
+            </ol>
+          </nav>
+        </section>
+        
+        <section class="content-body">
+          <!-- Password Security -->
+          <div class="card glassmorph">
+            <div class="card-header">
+              <h2>Password Security</h2>
+              <p>Manage your password and keep your account secure.</p>
+            </div>
+            <div class="card-content">
+              <div class="security-item">
+                <div class="security-item-info">
+                  <h3>Change Password</h3>
+                  <p>It's recommended to change your password regularly for increased security.</p>
+                </div>
+                <div class="security-item-action">
+                  <button class="btn btn-primary" id="change-password-btn">Update Password</button>
+                </div>
+              </div>
+              
+              <!-- Password Change Form (Hidden initially) -->
+              <div class="password-change-form" id="password-form" style="display: none;">
+                <form id="change-password-form">
+                  <div class="form-group">
+                    <label for="current-password">Current Password</label>
+                    <input type="password" id="current-password" class="glassmorph-input" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" class="glassmorph-input" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input type="password" id="confirm-password" class="glassmorph-input" required>
+                  </div>
+                  <div class="password-strength" id="password-strength">
+                    <div class="strength-meter">
+                      <div class="strength-meter-fill" id="strength-meter-fill"></div>
+                    </div>
+                    <div class="strength-text" id="strength-text">Password strength</div>
+                  </div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancel-password-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Two-Factor Authentication -->
+          <div class="card glassmorph">
+            <div class="card-header">
+              <h2>Two-Factor Authentication (2FA)</h2>
+              <p>Add an extra layer of security to your account.</p>
+            </div>
+            <div class="card-content">
+              <div class="security-item">
+                <div class="security-item-info">
+                  <h3>Authenticator App</h3>
+                  <p>Protect your account with a time-based one-time password (TOTP) from an authenticator app.</p>
+                  <div class="status" id="2fa-status">
+                    <!-- Status will be updated by JavaScript -->
+                    <span class="status-indicator disabled"><i class="fas fa-times-circle"></i> Not Enabled</span>
+                  </div>
+                </div>
+                <div class="security-item-action">
+                  <button class="btn btn-primary" id="setup-2fa-btn">Setup 2FA</button>
+                  <button class="btn btn-danger" id="disable-2fa-btn" style="display: none;">Disable 2FA</button>
+                </div>
+              </div>
+              
+              <!-- 2FA Disable Confirmation (Hidden initially) -->
+              <div class="disable-2fa-form" id="disable-2fa-form" style="display: none;">
+                <h3>Disable Two-Factor Authentication</h3>
+                <p>For security reasons, please enter your 2FA verification code to confirm:</p>
+                <form id="disable-2fa-confirm-form">
+                  <div class="form-group">
+                    <label for="disable-2fa-code">Verification Code</label>
+                    <input type="text" id="disable-2fa-code" class="verification-input" maxlength="6" autocomplete="off" required>
+                    <small>Enter the 6-digit code from your authenticator app</small>
+                  </div>
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-secondary" id="cancel-disable-2fa">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Confirm Disable</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Session Security -->
+          <div class="card glassmorph">
+            <div class="card-header">
+              <h2>Session Security</h2>
+              <p>Manage your active sessions.</p>
+            </div>
+            <div class="card-content">
+              <div class="security-item">
+                <div class="security-item-info">
+                  <h3>Active Sessions</h3>
+                  <p>You are currently logged in on this device. If you suspect unauthorized access, log out all other sessions.</p>
+                </div>
+                <div class="security-item-action">
+                  <button class="btn btn-warning" id="logout-sessions-btn">Log Out All Other Sessions</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Account Activity -->
+          <div class="card glassmorph">
+            <div class="card-header">
+              <h2>Account Activity</h2>
+              <p>Review recent account activity for suspicious actions.</p>
+            </div>
+            <div class="card-content">
+              <div class="activity-log" id="activity-log">
+                <div class="activity-log-loading">
+                  <div class="spinner"></div>
+                  <p>Loading activity log...</p>
+                </div>
+                <!-- Activity log will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  
+  <script src="../../assets/js/api.js"></script>
+  <script src="../../assets/js/auth-service.js"></script>
+  <script src="../../assets/js/auth-check.js"></script>
+  <script src="../../assets/js/components.js"></script>
+  <script src="../../assets/js/main.js"></script>
+  <script src="../../assets/js/security.js"></script>
+</body>
+</html>

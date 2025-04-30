@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Two-Factor Authentication Setup</title>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../../assets/css/security.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="dashboard-wrapper">
+    <!-- Sidebar will be loaded by components.js -->
+    <aside id="sidebar-container" class="sidebar"></aside>
+    
+    <main class="dashboard-main">
+      <!-- Header will be loaded by components.js -->
+      <header id="header-container" class="dashboard-header"></header>
+      
+      <div class="dashboard-content">
+        <section class="content-header">
+          <h1>Two-Factor Authentication Setup</h1>
+          <nav class="breadcrumb">
+            <ol>
+              <li><a href="../dashboard.html">Dashboard</a></li>
+              <li><a href="./security.html">Security</a></li>
+              <li>2FA Setup</li>
+            </ol>
+          </nav>
+        </section>
+        
+        <section class="content-body">
+          <div class="card glassmorph">
+            <div class="card-header">
+              <h2>Enhance Your Account Security</h2>
+              <p>Two-factor authentication adds an extra layer of security to your account by requiring a verification code in addition to your password.</p>
+            </div>
+            
+            <div class="setup-steps">
+              <div class="setup-step active" id="step-1">
+                <h3>Step 1: Install an Authenticator App</h3>
+                <p>Download and install an authenticator app on your mobile device:</p>
+                <div class="authenticator-apps">
+                  <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2" target="_blank" class="app-link">
+                    <i class="fab fa-google"></i> Google Authenticator
+                  </a>
+                  <a href="https://apps.apple.com/us/app/google-authenticator/id388497605" target="_blank" class="app-link">
+                    <i class="fab fa-apple"></i> Google Authenticator (iOS)
+                  </a>
+                  <a href="https://authy.com/download/" target="_blank" class="app-link">
+                    <i class="fas fa-mobile-alt"></i> Authy
+                  </a>
+                </div>
+                <button class="btn btn-primary next-step" data-next="step-2">Next</button>
+              </div>
+              
+              <div class="setup-step" id="step-2">
+                <h3>Step 2: Scan QR Code</h3>
+                <p>Open your authenticator app and scan this QR code:</p>
+                <div class="qr-container">
+                  <div id="qr-code-loading">
+                    <div class="spinner"></div>
+                    <p>Generating secure code...</p>
+                  </div>
+                  <div id="qr-code" style="display: none;"></div>
+                  <div id="manual-entry" style="display: none;">
+                    <p>If you can't scan the QR code, enter this code manually:</p>
+                    <div class="secret-code" id="secret-code"></div>
+                    <button class="btn btn-outline copy-btn" id="copy-code">
+                      <i class="fas fa-copy"></i> Copy Code
+                    </button>
+                  </div>
+                  <div class="link-container">
+                    <a href="#" id="toggle-manual">Can't scan? Enter code manually</a>
+                  </div>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary prev-step" data-prev="step-1">Back</button>
+                  <button class="btn btn-primary next-step" data-next="step-3">Next</button>
+                </div>
+              </div>
+              
+              <div class="setup-step" id="step-3">
+                <h3>Step 3: Verify Code</h3>
+                <p>Enter the 6-digit verification code from your authenticator app:</p>
+                <div class="verification-form">
+                  <div class="form-group">
+                    <input type="text" id="verification-code" class="verification-input" placeholder="000000" maxlength="6" autocomplete="off">
+                    <small>The code refreshes every 30 seconds</small>
+                  </div>
+                  <div id="verification-message"></div>
+                </div>
+                <div class="btn-group">
+                  <button class="btn btn-secondary prev-step" data-prev="step-2">Back</button>
+                  <button class="btn btn-primary" id="verify-btn">Verify and Activate</button>
+                </div>
+              </div>
+              
+              <div class="setup-step" id="step-success">
+                <div class="success-container">
+                  <i class="fas fa-check-circle"></i>
+                  <h3>Two-Factor Authentication Enabled!</h3>
+                  <p>Your account is now more secure. You'll need to enter a verification code each time you log in.</p>
+                  <div class="recovery-codes">
+                    <h4>Recovery Codes</h4>
+                    <p>Save these recovery codes in a secure place. You can use them to access your account if you lose your device.</p>
+                    <div class="codes-container" id="recovery-codes"></div>
+                    <button class="btn btn-outline copy-btn" id="copy-recovery-codes">
+                      <i class="fas fa-copy"></i> Copy All Codes
+                    </button>
+                  </div>
+                  <a href="./security.html" class="btn btn-primary">Back to Security Settings</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  
+  <script src="../../assets/js/api.js"></script>
+  <script src="../../assets/js/auth-service.js"></script>
+  <script src="../../assets/js/auth-check.js"></script>
+  <script src="../../assets/js/components.js"></script>
+  <script src="../../assets/js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="../../assets/js/2fa-setup.js"></script>
+</body>
+</html>
