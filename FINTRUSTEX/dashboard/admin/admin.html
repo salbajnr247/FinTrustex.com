@@ -54,10 +54,10 @@
                     <td>trader1@example.com</td>
                     <td class="status-active">Active</td>
                     <td>
-                      <button class="btn btn-outline suspend-user">
-                        <i class="fas fa-ban"></i> Suspend
+                      <button class="btn btn-outline restrict-user" data-userid="USR12345">
+                        <i class="fas fa-ban"></i> Restrict
                       </button>
-                      <button class="btn btn-outline view-user">
+                      <button class="btn btn-outline view-user" data-userid="USR12345">
                         <i class="fas fa-eye"></i> View
                       </button>
                     </td>
@@ -168,6 +168,198 @@
       <button id="export-transactions-csv" class="btn btn-outline">
         <i class="fas fa-download"></i> Export Transactions
       </button>
+
+      <!-- User Restriction Modal -->
+      <div class="modal" id="user-restriction-modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Restrict User Account</h2>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="restriction-form">
+              <input type="hidden" id="restriction-user-id" name="userId">
+              
+              <div class="form-group">
+                <label for="restriction-username">Username</label>
+                <input type="text" id="restriction-username" class="form-control" readonly>
+              </div>
+              
+              <div class="form-group">
+                <label for="restriction-status">Restriction Type</label>
+                <select id="restriction-status" class="form-control" required>
+                  <option value="">Select Restriction Type</option>
+                  <option value="restricted">Restricted (Limited Access)</option>
+                  <option value="suspended">Suspended (No Access)</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="restriction-reason">Reason for Restriction</label>
+                <textarea id="restriction-reason" class="form-control" rows="4" required placeholder="Provide a detailed reason for this restriction. This will be visible to the user."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" id="cancel-restriction">Cancel</button>
+            <button class="btn btn-yellow" id="submit-restriction">Restrict Account</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User Unrestriction Modal -->
+      <div class="modal" id="user-unrestriction-modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Remove Account Restriction</h2>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <form id="unrestriction-form">
+              <input type="hidden" id="unrestriction-user-id" name="userId">
+              
+              <div class="form-group">
+                <label for="unrestriction-username">Username</label>
+                <input type="text" id="unrestriction-username" class="form-control" readonly>
+              </div>
+              
+              <div class="form-group">
+                <label for="current-restriction">Current Restriction</label>
+                <input type="text" id="current-restriction" class="form-control" readonly>
+              </div>
+              
+              <div class="form-group">
+                <label for="current-reason">Current Reason</label>
+                <textarea id="current-reason" class="form-control" rows="2" readonly></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="unrestriction-reason">Reason for Removing Restriction</label>
+                <textarea id="unrestriction-reason" class="form-control" rows="4" required placeholder="Provide a reason for removing this restriction (for audit purposes)."></textarea>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" id="cancel-unrestriction">Cancel</button>
+            <button class="btn btn-yellow" id="submit-unrestriction">Remove Restriction</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User Restriction History Modal -->
+      <div class="modal" id="restriction-history-modal">
+        <div class="modal-content modal-lg">
+          <div class="modal-header">
+            <h2>Account Restriction History</h2>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="user-info-container">
+              <div class="user-info">
+                <h3 id="history-username">Username</h3>
+                <p id="history-user-id">User ID</p>
+                <p id="history-email">Email</p>
+              </div>
+              <div class="user-status">
+                <div id="history-status-badge" class="status-badge">Active</div>
+              </div>
+            </div>
+            
+            <table class="restriction-history-table" id="restriction-history-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Action</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Admin</th>
+                </tr>
+              </thead>
+              <tbody id="restriction-history-body">
+                <!-- Will be filled dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" id="close-history">Close</button>
+            <button class="btn btn-yellow" id="view-user-details">View User Details</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- User Details Modal -->
+      <div class="modal" id="user-details-modal">
+        <div class="modal-content modal-lg">
+          <div class="modal-header">
+            <h2>User Details</h2>
+            <span class="close-modal">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="user-details-grid">
+              <div class="user-profile-section">
+                <div class="user-avatar">
+                  <i class="fas fa-user-circle"></i>
+                </div>
+                <h3 id="details-username">Username</h3>
+                <p id="details-user-id">User ID</p>
+                <div id="details-status-badge" class="status-badge">Active</div>
+              </div>
+              
+              <div class="user-info-section">
+                <h4>Account Information</h4>
+                <div class="info-row">
+                  <span>Email:</span>
+                  <span id="details-email">email@example.com</span>
+                </div>
+                <div class="info-row">
+                  <span>Joined:</span>
+                  <span id="details-joined">Jan 1, 2023</span>
+                </div>
+                <div class="info-row">
+                  <span>KYC Status:</span>
+                  <span id="details-kyc">Verified</span>
+                </div>
+                <div class="info-row">
+                  <span>2FA:</span>
+                  <span id="details-2fa">Enabled</span>
+                </div>
+              </div>
+              
+              <div class="user-actions-section">
+                <h4>Admin Actions</h4>
+                <button class="btn btn-outline" id="details-view-history">
+                  <i class="fas fa-history"></i> View Restriction History
+                </button>
+                <button class="btn btn-outline" id="details-view-transactions">
+                  <i class="fas fa-exchange-alt"></i> View Transactions
+                </button>
+                <button class="btn btn-yellow" id="details-toggle-restriction">
+                  <i class="fas fa-ban"></i> Restrict Account
+                </button>
+              </div>
+              
+              <div class="user-wallets-section">
+                <h4>User Wallets</h4>
+                <table class="wallet-table" id="user-wallets-table">
+                  <thead>
+                    <tr>
+                      <th>Currency</th>
+                      <th>Balance</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="user-wallets-body">
+                    <!-- Will be filled dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-outline" id="close-user-details">Close</button>
+          </div>
+        </div>
+      </div>
 
       <footer class="footer" id="footer-container"></footer>
       <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>

@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   document.getElementById('withdraw-funds')?.addEventListener('click', () => {
-    window.location.hash = 'withdraw';
+    window.location.href = 'withdraw.html';
   });
   
   document.getElementById('add-wallet')?.addEventListener('click', showAddWalletModal);
@@ -300,16 +300,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       walletCard.querySelector('[data-action="withdraw"]').addEventListener('click', () => {
         const currency = walletCard.querySelector('[data-action="withdraw"]').dataset.currency;
-        window.location.hash = 'withdraw';
+        window.location.href = 'withdraw.html';
         
-        // After navigation, set the selected currency
-        setTimeout(() => {
-          const currencySelect = document.getElementById('withdraw-currency');
-          if (currencySelect) {
-            currencySelect.value = currency.toLowerCase();
-            currencySelect.dispatchEvent(new Event('change'));
-          }
-        }, 100);
+        // Store selected currency in sessionStorage to be used when withdraw page loads
+        sessionStorage.setItem('selectedWithdrawCurrency', currency.toLowerCase());
       });
       
       // More options button

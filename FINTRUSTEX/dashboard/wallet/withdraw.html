@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Withdraw Funds</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../../assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/wallet.css">
+  <link rel="stylesheet" href="../../assets/css/withdraw.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="wallet-wrapper">
+    <header class="navbar" id="navbar-container">
+      <div class="navbar" role="banner">
+        <div class="navbar-left">
+          <button class="hamburger" aria-label="Toggle sidebar" id="hamburger-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <div class="logo">FinTrustEX</div>
+        </div>
+        <h2 class="greeting">Welcome back, <span id="username">User</span> 👋</h2>
+        <div class="nav-actions">
+          <button class="btn deposit" data-nav="/dashboard/wallet/deposit" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw active" data-nav="/dashboard/wallet/withdraw" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" data-nav="/dashboard/trading" aria-label="Start trading">Trade Now</button>
+          <button class="btn theme-toggle" aria-label="Toggle dark/light mode" id="theme-toggle">Toggle Theme</button>
+          <div class="profile">
+            <img src="/assets/images/profile.png" alt="User Profile" class="profile-img">
+            <span class="profile-name">Trader!</span>
+          </div>
+        </div>
+      </div>
+    </header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container"></aside>
+      <main class="main-content">
+        <section id="withdraw-page">
+          <h1 class="section-title">Withdraw Funds</h1>
+          <a href="../wallet/wallet.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Wallet</a>
+          
+          <div class="withdraw-container">
+            <!-- Withdrawal Type Selection -->
+            <div class="withdraw-type-selector card glassmorph">
+              <h3>Select Withdrawal Method</h3>
+              <div class="withdraw-type-options">
+                <div class="withdraw-type-option active" data-withdraw-type="crypto">
+                  <i class="fas fa-coins"></i>
+                  <span>Crypto</span>
+                </div>
+                <div class="withdraw-type-option" data-withdraw-type="bank">
+                  <i class="fas fa-university"></i>
+                  <span>Bank Transfer</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Crypto Withdrawal Form -->
+            <div class="card glassmorph withdraw-card" id="crypto-withdraw-form">
+              <h3>Crypto Withdrawal</h3>
+              <form id="crypto-withdraw-form">
+                <div class="form-group">
+                  <label for="crypto-currency">Select Currency</label>
+                  <select id="crypto-currency" class="glassmorph-input" required>
+                    <option value="">Select currency</option>
+                    <option value="btc">Bitcoin (BTC)</option>
+                    <option value="eth">Ethereum (ETH)</option>
+                    <option value="usdt">Tether (USDT)</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="crypto-address">Recipient Address</label>
+                  <input type="text" id="crypto-address" class="glassmorph-input" placeholder="Enter crypto wallet address" required>
+                  <small class="form-hint">Please double-check the address before submitting</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="crypto-amount">Amount</label>
+                  <div class="amount-input-container">
+                    <input type="number" id="crypto-amount" class="glassmorph-input" placeholder="0.00" step="0.00000001" min="0" required>
+                    <span class="currency-code" id="crypto-currency-code">BTC</span>
+                    <button type="button" class="btn btn-small" id="crypto-max-amount-btn">MAX</button>
+                  </div>
+                  <div class="balance-info">
+                    <span>Available: </span>
+                    <span id="crypto-available-balance">0.00</span>
+                    <span id="crypto-available-currency">BTC</span>
+                  </div>
+                </div>
+                
+                <div class="fee-info">
+                  <div class="fee-row">
+                    <span>Network Fee:</span>
+                    <span id="crypto-network-fee">0.0001 BTC</span>
+                  </div>
+                  <div class="fee-row">
+                    <span>You will receive:</span>
+                    <span id="crypto-receive-amount">0.00 BTC</span>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="crypto-2fa">2FA Code</label>
+                  <input type="text" id="crypto-2fa" class="glassmorph-input" placeholder="Enter 2FA code" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+                  <small class="form-hint">Required if 2FA is enabled on your account</small>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" id="cancel-crypto-withdraw">Cancel</button>
+                  <button type="submit" class="btn btn-yellow">Withdraw Funds</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Bank Transfer Withdrawal Form -->
+            <div class="card glassmorph withdraw-card hidden" id="bank-withdraw-form">
+              <h3>Bank Transfer Withdrawal</h3>
+              <form id="bank-withdraw-form">
+                <div class="form-group">
+                  <label for="bank-currency">Select Currency</label>
+                  <select id="bank-currency" class="glassmorph-input" required>
+                    <option value="">Select currency</option>
+                    <option value="usd">US Dollar (USD)</option>
+                    <option value="eur">Euro (EUR)</option>
+                    <option value="gbp">British Pound (GBP)</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="bank-name">Bank Name</label>
+                  <input type="text" id="bank-name" class="glassmorph-input" placeholder="Enter bank name" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="account-holder">Account Holder Name</label>
+                  <input type="text" id="account-holder" class="glassmorph-input" placeholder="Enter account holder name" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="account-number">Account Number / IBAN</label>
+                  <input type="text" id="account-number" class="glassmorph-input" placeholder="Enter account number or IBAN" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="swift-code">SWIFT / BIC Code</label>
+                  <input type="text" id="swift-code" class="glassmorph-input" placeholder="Enter SWIFT/BIC code" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="bank-amount">Amount</label>
+                  <div class="amount-input-container">
+                    <input type="number" id="bank-amount" class="glassmorph-input" placeholder="0.00" step="0.01" min="0" required>
+                    <span class="currency-code" id="bank-currency-code">USD</span>
+                    <button type="button" class="btn btn-small" id="bank-max-amount-btn">MAX</button>
+                  </div>
+                  <div class="balance-info">
+                    <span>Available: </span>
+                    <span id="bank-available-balance">0.00</span>
+                    <span id="bank-available-currency">USD</span>
+                  </div>
+                </div>
+                
+                <div class="fee-info">
+                  <div class="fee-row">
+                    <span>Processing Fee:</span>
+                    <span id="bank-processing-fee">$25.00</span>
+                  </div>
+                  <div class="fee-row">
+                    <span>You will receive:</span>
+                    <span id="bank-receive-amount">$0.00</span>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="bank-2fa">2FA Code</label>
+                  <input type="text" id="bank-2fa" class="glassmorph-input" placeholder="Enter 2FA code" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+                  <small class="form-hint">Required if 2FA is enabled on your account</small>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" id="cancel-bank-withdraw">Cancel</button>
+                  <button type="submit" class="btn btn-yellow">Withdraw Funds</button>
+                </div>
+              </form>
+            </div>
+            
+            <!-- Withdrawal Information Card -->
+            <div class="card glassmorph withdraw-info-card">
+              <h3>Withdrawal Information</h3>
+              <div class="info-item">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                  <h4>Processing Time</h4>
+                  <p class="crypto-info">Crypto withdrawals are typically processed within 1-2 hours, but may take longer during high network congestion.</p>
+                  <p class="bank-info hidden">Bank transfers usually take 1-3 business days to complete, depending on your bank and location.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-file-alt"></i>
+                <div>
+                  <h4>Minimum Withdrawal</h4>
+                  <p id="min-withdrawal" class="crypto-info">The minimum withdrawal amount for BTC is 0.001 BTC.</p>
+                  <p id="min-bank-withdrawal" class="bank-info hidden">The minimum bank withdrawal amount is $100 USD.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-shield-alt"></i>
+                <div>
+                  <h4>Security</h4>
+                  <p>For security reasons, large withdrawals may require additional verification and approval from our team.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-history"></i>
+                <div>
+                  <h4>Recent Withdrawals</h4>
+                  <div id="recent-withdrawals">
+                    <!-- Recent withdrawals will be populated by JavaScript -->
+                    <p class="no-data">No recent withdrawals</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Withdrawal Status Section -->
+          <div class="card glassmorph withdrawal-status-section">
+            <h3>Withdrawal Status</h3>
+            <div class="withdrawal-status-table-container">
+              <table class="withdrawal-status-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Destination</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="withdrawal-status-table-body">
+                  <!-- Withdrawal status rows will be populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+            <div class="withdrawal-status-empty" id="withdrawal-status-empty">
+              <i class="fas fa-inbox"></i>
+              <p>No pending withdrawals</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container"></footer>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmation-modal">
+      <div class="modal-content glassmorph">
+        <div class="modal-header">
+          <h3>Confirm Withdrawal</h3>
+          <button class="close-modal" id="close-confirmation-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Please confirm your withdrawal details:</p>
+          <div class="confirmation-details">
+            <div class="confirmation-row">
+              <span>Type:</span>
+              <span id="confirm-type">Crypto Withdrawal</span>
+            </div>
+            <div class="confirmation-row">
+              <span>Amount:</span>
+              <span id="confirm-amount">0.1 BTC</span>
+            </div>
+            <div class="confirmation-row">
+              <span>Fee:</span>
+              <span id="confirm-fee">0.0001 BTC</span>
+            </div>
+            <div class="confirmation-row">
+              <span>You will receive:</span>
+              <span id="confirm-receive">0.0999 BTC</span>
+            </div>
+            <div class="confirmation-row">
+              <span>Destination:</span>
+              <span id="confirm-destination">bc1q...</span>
+            </div>
+          </div>
+          <div class="confirmation-warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <p>Please verify all details carefully. Withdrawals cannot be reversed once processed.</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="cancel-confirmation">Cancel</button>
+          <button class="btn btn-yellow" id="confirm-withdrawal">Confirm Withdrawal</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal" id="success-modal">
+      <div class="modal-content glassmorph">
+        <div class="modal-header">
+          <h3>Withdrawal Submitted</h3>
+          <button class="close-modal" id="close-success-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <p>Your withdrawal request has been successfully submitted.</p>
+          <p>Withdrawal ID: <span id="withdrawal-id">W123456789</span></p>
+          <p>You can track the status of your withdrawal in the "Withdrawal Status" section.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-yellow" id="close-success">Done</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Error Modal -->
+    <div class="modal" id="error-modal">
+      <div class="modal-content glassmorph">
+        <div class="modal-header">
+          <h3>Withdrawal Error</h3>
+          <button class="close-modal" id="close-error-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="error-icon">
+            <i class="fas fa-times-circle"></i>
+          </div>
+          <p>There was an error processing your withdrawal request:</p>
+          <p id="error-message" class="error-message">Error details will appear here.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" id="close-error">Close</button>
+          <button class="btn btn-yellow" id="retry-withdrawal">Try Again</button>
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script src="../../assets/js/auth-service.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/withdraw.js"></script>
+  </div>
+</body>
+</html>

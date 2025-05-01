@@ -15,6 +15,9 @@ export const kycStatusEnum = pgEnum('kyc_status', ['not_submitted', 'pending', '
 // Enum for investment package status
 export const investmentStatusEnum = pgEnum('investment_status', ['active', 'completed', 'cancelled']);
 
+// Account status enum
+export const accountStatusEnum = pgEnum('account_status', ['active', 'restricted', 'suspended']);
+
 // Users table
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -26,6 +29,11 @@ export const users = pgTable('users', {
   companyName: text('company_name'),
   role: text('role').default('user'),
   isVerified: boolean('is_verified').default(false),
+  isAdmin: boolean('is_admin').default(false),
+  accountStatus: accountStatusEnum('account_status').default('active'),
+  restrictionReason: text('restriction_reason'),
+  restrictedAt: timestamp('restricted_at'),
+  restrictedBy: integer('restricted_by'),
   twoFactorEnabled: boolean('two_factor_enabled').default(false),
   twoFactorSecret: text('two_factor_secret'),
   twoFactorMethod: text('two_factor_method').default('email'), // email, sms, app
@@ -33,6 +41,8 @@ export const users = pgTable('users', {
   kycStatus: kycStatusEnum('kyc_status').default('not_submitted'),
   kycDocuments: jsonb('kyc_documents'),
   preferredLanguage: text('preferred_language').default('en'),
+  stripeCustomerId: text('stripe_customer_id'),
+  stripeSubscriptionId: text('stripe_subscription_id'),
   createdAt: timestamp('created_at').defaultNow(),
   lastLoginAt: timestamp('last_login_at'),
 });
@@ -172,8 +182,10 @@ export const transactions = pgTable('transactions', {
   status: text('status').notNull().default('pending'),
   amount: numeric('amount').notNull(),
   currency: text('currency').notNull(),
+  method: text('method'), // bank, crypto, card, etc.
   txHash: text('tx_hash'), // blockchain transaction hash
   description: text('description'),
+  metadata: jsonb('metadata'), // Additional data (bank details, crypto addresses, fees, etc.)
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   completedAt: timestamp('completed_at'),
@@ -247,3 +259,63 @@ export type InsertUserInvestment = z.infer<typeof insertUserInvestmentSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Admin Logs table for audit trail
+export const adminLogs = pgTable('admin_logs', {
+  id: serial('id').primaryKey(),
+  adminId: integer('admin_id').notNull().references(() => users.id),
+  action: text('action').notNull(), // withdrawal_approve, withdrawal_reject, user_restrict, etc.
+  targetId: text('target_id').notNull(), // ID of the affected resource (transaction ID, user ID, etc.)
+  details: jsonb('details'), // Additional information about the action
+  timestamp: timestamp('timestamp').defaultNow(),
+});
+
+// Admin Logs relationships
+export const adminLogsRelations = relations(adminLogs, ({ one }) => ({
+  admin: one(users, {
+    fields: [adminLogs.adminId],
+    references: [users.id],
+  }),
+}));
+
+// Admin Logs schema for inserting
+export const insertAdminLogSchema = createInsertSchema(adminLogs).omit({
+  id: true,
+  timestamp: true,
+});
+
+export type AdminLog = typeof adminLogs.$inferSelect;
+export type InsertAdminLog = z.infer<typeof insertAdminLogSchema>;
+
+// Account Restrictions History table
+export const accountRestrictions = pgTable('account_restrictions', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  adminId: integer('admin_id').notNull().references(() => users.id),
+  actionType: text('action_type').notNull(), // restrict, unrestrict
+  status: text('status').notNull(), // active, restricted, suspended
+  reason: text('reason').notNull(),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Account Restrictions relationships
+export const accountRestrictionsRelations = relations(accountRestrictions, ({ one }) => ({
+  user: one(users, {
+    fields: [accountRestrictions.userId],
+    references: [users.id],
+  }),
+  admin: one(users, {
+    fields: [accountRestrictions.adminId],
+    references: [users.id],
+    relationName: 'admin_user'
+  }),
+}));
+
+// Account Restrictions schema for inserting
+export const insertAccountRestrictionSchema = createInsertSchema(accountRestrictions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AccountRestriction = typeof accountRestrictions.$inferSelect;
+export type InsertAccountRestriction = z.infer<typeof insertAccountRestrictionSchema>;

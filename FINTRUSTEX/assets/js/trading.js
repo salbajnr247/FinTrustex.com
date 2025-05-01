@@ -1,996 +1,1267 @@
 /**
- * FINTRUSTEX Trading Interface
+ * FinTrustEX Trading Interface
  * Handles trading charts, order book, and order placement
+ * Maintains consistent yellow/black theme across the application
  */
 
-import websocketClient from './websocket-client.js';
-import marketDataService from './market-data-service.js';
-import authService from './auth-service.js';
-import * as utils from './utils.js';
-
-// Initialize chart
-let tradingChart = null;
-let currentSymbol = 'BTC/USDT';
-let currentInterval = '15m';
-let candleSeries = null;
-
-// Initialize components when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  if (authService.isAuthenticated()) {
-    initTrading();
-  }
+// Initialize on load
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize trading components
+  initTradingPairSelector();
+  initTradingChart();
+  initOrderForms();
+  initOrderTabs();
+  initSlider();
+  initOrderBookDisplay();
+  initTradeHistory();
+  initChartIntervalButtons();
+  initChartIndicatorButtons();
+  
+  // Connect to WebSocket for real-time updates
+  initWebSocketConnection();
+  
+  // Load user wallet data
+  loadUserWalletData();
 });
 
 /**
- * Initialize trading interface
+ * Initialize the trading pair selector dropdown
  */
-function initTrading() {
-  // Initialize chart
-  initChart();
+function initTradingPairSelector() {
+  const pairSelector = document.getElementById('pair');
+  if (!pairSelector) return;
   
-  // Initialize market data service
-  initMarketDataListeners();
-  
-  // Initialize order book
-  updateOrderBook();
-  
-  // Initialize trading pairs dropdown
-  initTradingPairs();
-  
-  // Initialize trade form
-  initTradeForm();
-  
-  // Fetch trade history
-  updateTradeHistory();
-  
-  // Initialize chart interval buttons
-  initChartIntervals();
-  
-  // Initialize chart indicators
-  initChartIndicators();
+  pairSelector.addEventListener('change', function() {
+    const selectedPair = this.value;
+    updateTradingPair(selectedPair);
+  });
 }
 
 /**
- * Initialize trading chart
+ * Update all UI elements when trading pair changes
  */
-function initChart() {
-  // Get chart container
-  const chartContainer = document.getElementById('trading-chart');
-  
-  if (!chartContainer) {
-    console.error('Chart container not found');
-    return;
+function updateTradingPair(pair) {
+  // Update header
+  const currentPriceEl = document.querySelector('#current-price');
+  if (currentPriceEl) {
+    currentPriceEl.innerHTML = `${pair}: <span class="price-value">Loading...</span>`;
   }
   
-  // Create trading chart using lightweight-charts library
-  tradingChart = LightweightCharts.createChart(chartContainer, {
+  // Update chart
+  loadChartData(pair);
+  
+  // Update order book
+  fetchOrderBook(pair);
+  
+  // Update form labels for selected pair
+  const [base, quote] = pair.split('/');
+  
+  const amountLabel = document.querySelector('.input-label:nth-of-type(1)');
+  if (amountLabel) amountLabel.textContent = base;
+  
+  const priceLabel = document.querySelector('.input-label:nth-of-type(2)');
+  if (priceLabel) priceLabel.textContent = quote;
+  
+  // Update buttons
+  const buyButton = document.getElementById('buy-button');
+  if (buyButton) buyButton.textContent = `Buy ${base}`;
+  
+  const sellButton = document.getElementById('sell-button'); 
+  if (sellButton) sellButton.textContent = `Sell ${base}`;
+  
+  // Update available balance
+  updateAvailableBalance(pair);
+}
+
+/**
+ * Initialize the trading chart
+ */
+function initTradingChart() {
+  const chartContainer = document.getElementById('trading-chart');
+  if (!chartContainer) return;
+  
+  // Create chart using lightweight-charts
+  const chart = LightweightCharts.createChart(chartContainer, {
     width: chartContainer.clientWidth,
-    height: chartContainer.clientHeight,
+    height: 450,
     layout: {
-      background: { color: 'transparent' },
+      background: { type: 'solid', color: '#1a1a1a' },
       textColor: '#d1d4dc',
     },
     grid: {
-      vertLines: { color: 'rgba(42, 46, 57, 0.5)' },
-      horzLines: { color: 'rgba(42, 46, 57, 0.5)' },
+      vertLines: { color: 'rgba(42, 46, 57, 0.2)' },
+      horzLines: { color: 'rgba(42, 46, 57, 0.2)' },
     },
     crosshair: {
       mode: LightweightCharts.CrosshairMode.Normal,
     },
-    priceScale: {
-      borderColor: 'rgba(197, 203, 206, 0.8)',
+    rightPriceScale: {
+      borderColor: 'rgba(197, 203, 206, 0.4)',
     },
     timeScale: {
-      borderColor: 'rgba(197, 203, 206, 0.8)',
+      borderColor: 'rgba(197, 203, 206, 0.4)',
       timeVisible: true,
     },
     watermark: {
       visible: true,
-      text: 'FINTRUSTEX',
-      color: 'rgba(256, 256, 256, 0.1)',
       fontSize: 36,
       horzAlign: 'center',
       vertAlign: 'center',
-    }
+      color: 'rgba(247, 201, 72, 0.1)',
+      text: 'FINTRUSTEX',
+    },
   });
   
-  // Create candlestick series
-  candleSeries = tradingChart.addCandlestickSeries({
-    upColor: '#4bffb5',
-    downColor: '#ff4976',
-    borderDownColor: '#ff4976',
-    borderUpColor: '#4bffb5',
-    wickDownColor: '#838ca1',
-    wickUpColor: '#838ca1',
+  // Create candlestick series with yellow/black theme
+  const candleSeries = chart.addCandlestickSeries({
+    upColor: '#f7c948',
+    downColor: '#000000',
+    borderUpColor: '#f7c948',
+    borderDownColor: '#000000',
+    wickUpColor: 'rgba(247, 201, 72, 0.5)',
+    wickDownColor: 'rgba(255, 255, 255, 0.3)',
   });
   
-  // Set initial data
-  loadChartData(currentSymbol, currentInterval);
+  // Add example data
+  const exampleData = generateExampleCandlestickData();
+  candleSeries.setData(exampleData);
   
-  // Handle window resize
+  // Resize handler
   window.addEventListener('resize', () => {
-    if (tradingChart) {
-      tradingChart.resize(
-        chartContainer.clientWidth,
-        chartContainer.clientHeight
-      );
-    }
+    chart.resize(chartContainer.clientWidth, 450);
   });
+  
+  // Store chart reference for later use
+  window.tradingChart = chart;
+  window.candleSeries = candleSeries;
+}
+
+/**
+ * Initialize the order form tabs (buy/sell)
+ */
+function initOrderTabs() {
+  const buyTab = document.querySelector('.trade-tab.buy');
+  const sellTab = document.querySelector('.trade-tab.sell');
+  const buyButtons = document.getElementById('buy-buttons');
+  const sellButtons = document.getElementById('sell-buttons');
+  
+  if (!buyTab || !sellTab || !buyButtons || !sellButtons) return;
+  
+  buyTab.addEventListener('click', function() {
+    // Update active state
+    buyTab.classList.add('active');
+    sellTab.classList.remove('active');
+    
+    // Show buy buttons, hide sell buttons
+    buyButtons.style.display = 'grid';
+    sellButtons.style.display = 'none';
+  });
+  
+  sellTab.addEventListener('click', function() {
+    // Update active state
+    sellTab.classList.add('active');
+    buyTab.classList.remove('active');
+    
+    // Show sell buttons, hide buy buttons
+    sellButtons.style.display = 'grid';
+    buyButtons.style.display = 'none';
+  });
+}
+
+/**
+ * Initialize the amount slider for percentage-based trading
+ */
+function initSlider() {
+  const slider = document.getElementById('amount-slider');
+  const amountInput = document.getElementById('amount');
+  
+  if (!slider || !amountInput) return;
+  
+  slider.addEventListener('input', function() {
+    // Update amount based on slider value (percentage of available balance)
+    const percentage = parseInt(this.value);
+    
+    // Get available balance
+    const availableBalanceEl = document.getElementById('available-balance');
+    if (!availableBalanceEl) return;
+    
+    const availableBalanceText = availableBalanceEl.textContent;
+    const balanceParts = availableBalanceText.split(' ');
+    if (balanceParts.length < 2) return;
+    
+    const availableBalance = parseFloat(balanceParts[0]);
+    if (isNaN(availableBalance)) return;
+    
+    // Calculate amount based on percentage
+    const amount = (availableBalance * percentage / 100).toFixed(6);
+    amountInput.value = amount;
+    
+    // Trigger input event to update other dependent values
+    amountInput.dispatchEvent(new Event('input'));
+  });
+}
+
+/**
+ * Initialize the order forms and calculations
+ */
+function initOrderForms() {
+  const tradeForm = document.getElementById('trade-form');
+  const amountInput = document.getElementById('amount');
+  const priceInput = document.getElementById('price');
+  const orderTypeSelect = document.getElementById('order-type');
+  
+  if (!tradeForm || !amountInput || !priceInput || !orderTypeSelect) return;
+  
+  // Handle order type change
+  orderTypeSelect.addEventListener('change', function() {
+    const orderType = this.value;
+    
+    // Disable price input for market orders
+    if (orderType === 'market') {
+      priceInput.disabled = true;
+      priceInput.placeholder = 'Market Price';
+    } else {
+      priceInput.disabled = false;
+      
+      // Get current price for the selected pair
+      const pair = document.getElementById('pair').value;
+      const currentPrice = getCurrentPrice(pair);
+      
+      priceInput.placeholder = currentPrice ? `Current: ${currentPrice}` : 'Limit Price';
+    }
+    
+    // Update order summary
+    updateOrderSummary();
+  });
+  
+  // Handle amount and price input changes
+  amountInput.addEventListener('input', updateOrderSummary);
+  priceInput.addEventListener('input', updateOrderSummary);
+  
+  // Handle form submission
+  tradeForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Get active tab
+    const buyTab = document.querySelector('.trade-tab.buy');
+    const orderType = orderTypeSelect.value;
+    const pair = document.getElementById('pair').value;
+    const amount = parseFloat(amountInput.value);
+    const price = parseFloat(priceInput.value);
+    
+    // Validate inputs
+    if (isNaN(amount) || amount <= 0) {
+      showNotification('Please enter a valid amount', 'error');
+      return;
+    }
+    
+    if (orderType !== 'market' && (isNaN(price) || price <= 0)) {
+      showNotification('Please enter a valid price', 'error');
+      return;
+    }
+    
+    // Create order object
+    const order = {
+      pair,
+      type: buyTab.classList.contains('active') ? 'buy' : 'sell',
+      orderType,
+      amount,
+      price: orderType === 'market' ? null : price,
+    };
+    
+    // Submit order
+    submitOrder(order);
+  });
+}
+
+/**
+ * Update the order summary calculations
+ */
+function updateOrderSummary() {
+  const amountInput = document.getElementById('amount');
+  const priceInput = document.getElementById('price');
+  const orderTypeSelect = document.getElementById('order-type');
+  const orderValueEl = document.getElementById('order-value');
+  const tradingFeeEl = document.getElementById('trading-fee');
+  
+  if (!amountInput || !priceInput || !orderTypeSelect || !orderValueEl || !tradingFeeEl) return;
+  
+  const amount = parseFloat(amountInput.value) || 0;
+  const price = parseFloat(priceInput.value) || 0;
+  const orderType = orderTypeSelect.value;
+  const pair = document.getElementById('pair').value;
+  
+  // Get price based on order type
+  let orderPrice = price;
+  if (orderType === 'market') {
+    // Use current market price for market orders
+    orderPrice = getCurrentPrice(pair) || 0;
+  }
+  
+  // Calculate order value
+  const orderValue = amount * orderPrice;
+  
+  // Calculate trading fee (0.1% example fee)
+  const tradingFee = orderValue * 0.001;
+  
+  // Update display
+  const [base, quote] = pair.split('/');
+  orderValueEl.textContent = `${orderValue.toFixed(2)} ${quote}`;
+  tradingFeeEl.textContent = `${tradingFee.toFixed(2)} ${quote}`;
+}
+
+/**
+ * Submit an order to the API
+ */
+function submitOrder(order) {
+  // Show loading state
+  showNotification('Processing your order...', 'info');
+  
+  // Example API call
+  fetch('/api/orders', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(order),
+  })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to place order');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Show success notification
+      showNotification(`${order.type === 'buy' ? 'Buy' : 'Sell'} order placed successfully!`, 'success');
+      
+      // Reset form
+      document.getElementById('amount').value = '';
+      document.getElementById('price').value = '';
+      document.getElementById('amount-slider').value = 0;
+      
+      // Update order book and trade history
+      fetchOrderBook(order.pair);
+      fetchTradeHistory(order.pair);
+      
+      // Update user balance
+      loadUserWalletData();
+    })
+    .catch(error => {
+      console.error('Order submission error:', error);
+      showNotification('Failed to place order. Please try again.', 'error');
+    });
 }
 
 /**
  * Initialize chart interval buttons
  */
-function initChartIntervals() {
+function initChartIntervalButtons() {
   const intervalButtons = document.querySelectorAll('.chart-interval-option');
   
   intervalButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      // Get interval from button data attribute
-      const interval = button.getAttribute('data-interval');
-      
-      // Set active class
+    button.addEventListener('click', function() {
+      // Update active state
       intervalButtons.forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
+      this.classList.add('active');
       
-      // Update current interval
-      currentInterval = interval;
+      // Get interval
+      const interval = this.getAttribute('data-interval');
       
-      // Load chart data for new interval
-      loadChartData(currentSymbol, interval);
+      // Get current pair
+      const pair = document.getElementById('pair').value;
+      
+      // Load chart data for selected interval
+      loadChartData(pair, interval);
     });
   });
 }
 
 /**
- * Initialize chart indicators
+ * Initialize chart indicator buttons
  */
-function initChartIndicators() {
+function initChartIndicatorButtons() {
   const indicatorButtons = document.querySelectorAll('.chart-indicator-option');
   
   indicatorButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      // Toggle active class
-      button.classList.toggle('active');
+    button.addEventListener('click', function() {
+      // Toggle active state
+      this.classList.toggle('active');
       
-      // Get indicator from button data attribute
-      const indicator = button.getAttribute('data-indicator');
+      // Get indicator type
+      const indicator = this.getAttribute('data-indicator');
       
-      // Toggle indicator
-      toggleIndicator(indicator, button.classList.contains('active'));
+      // Toggle indicator on chart
+      toggleChartIndicator(indicator, this.classList.contains('active'));
     });
   });
 }
 
 /**
- * Toggle chart indicator
- * @param {string} indicator - Indicator name
- * @param {boolean} active - Whether to activate or deactivate
+ * Toggle a technical indicator on the chart
  */
-function toggleIndicator(indicator, active) {
-  if (!tradingChart || !candleSeries) return;
+function toggleChartIndicator(indicator, isActive) {
+  if (!window.tradingChart) return;
   
+  // Example indicator implementation
   switch (indicator) {
     case 'bollinger':
-      toggleBollingerBands(active);
+      toggleBollingerBands(isActive);
       break;
     case 'ma':
-      toggleMovingAverage(active);
+      toggleMovingAverage(isActive);
       break;
     case 'rsi':
-      toggleRSI(active);
+      toggleRSI(isActive);
       break;
-    default:
-      console.warn(`Unknown indicator: ${indicator}`);
+    case 'volume':
+      toggleVolumeIndicator(isActive);
+      break;
   }
 }
 
-// Store references to indicator series for toggling
-let bollingerBands = null;
-let movingAverage = null;
-let rsiSeries = null;
-let rsiPane = null;
+/**
+ * Initialize order book display
+ */
+function initOrderBookDisplay() {
+  // Initial fetch for current pair
+  const pair = document.getElementById('pair').value;
+  fetchOrderBook(pair);
+}
+
+/**
+ * Fetch order book data from API
+ */
+function fetchOrderBook(pair) {
+  // Clear existing order book
+  const askOrdersEl = document.getElementById('ask-orders');
+  const bidOrdersEl = document.getElementById('bid-orders');
+  
+  if (!askOrdersEl || !bidOrdersEl) return;
+  
+  // Replace with actual API calls
+  fetch(`/api/orderbook?symbol=${pair.replace('/', '')}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch order book');
+      }
+      return response.json();
+    })
+    .then(data => {
+      updateOrderBookDisplay(data);
+    })
+    .catch(error => {
+      console.error('Order book fetch error:', error);
+      // Use example data in case of error
+      updateOrderBookDisplay(generateExampleOrderBook(pair));
+    });
+}
+
+/**
+ * Update the order book display with provided data
+ */
+function updateOrderBookDisplay(data) {
+  const askOrdersEl = document.getElementById('ask-orders');
+  const bidOrdersEl = document.getElementById('bid-orders');
+  const spreadEl = document.getElementById('market-spread');
+  const spreadValueEl = document.getElementById('market-spread-value');
+  
+  if (!askOrdersEl || !bidOrdersEl || !spreadEl || !spreadValueEl) return;
+  
+  // Empty containers
+  askOrdersEl.innerHTML = '';
+  bidOrdersEl.innerHTML = '';
+  
+  // Add ask orders (sells)
+  if (data.asks && data.asks.length > 0) {
+    // Sort asks from lowest to highest
+    const sortedAsks = [...data.asks].sort((a, b) => a.price - b.price);
+    
+    sortedAsks.slice(0, 10).forEach(ask => {
+      const row = document.createElement('div');
+      row.className = 'order-book-row sell';
+      
+      row.innerHTML = `
+        <div class="order-book-price">${formatPrice(ask.price)}</div>
+        <div class="order-book-amount">${formatAmount(ask.amount)}</div>
+        <div class="order-book-total">${formatPrice(ask.price * ask.amount)}</div>
+      `;
+      
+      askOrdersEl.appendChild(row);
+    });
+  }
+  
+  // Add bid orders (buys)
+  if (data.bids && data.bids.length > 0) {
+    // Sort bids from highest to lowest
+    const sortedBids = [...data.bids].sort((a, b) => b.price - a.price);
+    
+    sortedBids.slice(0, 10).forEach(bid => {
+      const row = document.createElement('div');
+      row.className = 'order-book-row buy';
+      
+      row.innerHTML = `
+        <div class="order-book-price">${formatPrice(bid.price)}</div>
+        <div class="order-book-amount">${formatAmount(bid.amount)}</div>
+        <div class="order-book-total">${formatPrice(bid.price * bid.amount)}</div>
+      `;
+      
+      bidOrdersEl.appendChild(row);
+    });
+  }
+  
+  // Calculate and display spread
+  if (data.asks && data.asks.length > 0 && data.bids && data.bids.length > 0) {
+    const lowestAsk = Math.min(...data.asks.map(ask => ask.price));
+    const highestBid = Math.max(...data.bids.map(bid => bid.price));
+    
+    const spread = lowestAsk - highestBid;
+    const spreadPercentage = (spread / lowestAsk) * 100;
+    
+    spreadEl.textContent = spreadPercentage.toFixed(2) + '%';
+    spreadValueEl.textContent = spread.toFixed(2);
+  }
+}
+
+/**
+ * Initialize trade history display
+ */
+function initTradeHistory() {
+  // Initial fetch for current pair
+  const pair = document.getElementById('pair').value;
+  fetchTradeHistory(pair);
+}
+
+/**
+ * Fetch trade history from API
+ */
+function fetchTradeHistory(pair) {
+  // Clear existing trade history
+  const tradeHistoryEl = document.getElementById('trade-history');
+  
+  if (!tradeHistoryEl) return;
+  
+  // Replace with actual API calls
+  fetch(`/api/trades?symbol=${pair.replace('/', '')}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch trade history');
+      }
+      return response.json();
+    })
+    .then(data => {
+      updateTradeHistoryDisplay(data);
+    })
+    .catch(error => {
+      console.error('Trade history fetch error:', error);
+      // Use example data in case of error
+      updateTradeHistoryDisplay(generateExampleTradeHistory(pair));
+    });
+}
+
+/**
+ * Update the trade history display with provided data
+ */
+function updateTradeHistoryDisplay(data) {
+  const tradeHistoryEl = document.getElementById('trade-history');
+  
+  if (!tradeHistoryEl) return;
+  
+  // Empty container
+  tradeHistoryEl.innerHTML = '';
+  
+  // Add trades
+  if (data.trades && data.trades.length > 0) {
+    data.trades.slice(0, 20).forEach(trade => {
+      const row = document.createElement('div');
+      row.className = 'trade-history-row';
+      
+      row.innerHTML = `
+        <div class="trade-history-price ${trade.side}">${formatPrice(trade.price)}</div>
+        <div class="trade-history-amount">${formatAmount(trade.amount)}</div>
+        <div class="trade-history-time">${formatTime(trade.time)}</div>
+      `;
+      
+      tradeHistoryEl.appendChild(row);
+    });
+  }
+}
+
+/**
+ * Load user wallet data
+ */
+function loadUserWalletData() {
+  // Get selected pair
+  const pair = document.getElementById('pair').value;
+  updateAvailableBalance(pair);
+}
+
+/**
+ * Update the available balance display for the current trading pair
+ */
+function updateAvailableBalance(pair) {
+  const availableBalanceEl = document.getElementById('available-balance');
+  
+  if (!availableBalanceEl) return;
+  
+  // Extract quote currency from pair (e.g., USDT from BTC/USDT)
+  const [base, quote] = pair.split('/');
+  
+  // Fetch user balances
+  fetch('/api/wallet/balances')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch balances');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // Find balance for quote currency
+      const quoteBalance = data.balances.find(b => b.currency === quote);
+      
+      if (quoteBalance) {
+        availableBalanceEl.textContent = `${parseFloat(quoteBalance.available).toFixed(2)} ${quote}`;
+      } else {
+        availableBalanceEl.textContent = `0.00 ${quote}`;
+      }
+    })
+    .catch(error => {
+      console.error('Balance fetch error:', error);
+      availableBalanceEl.textContent = `0.00 ${quote}`;
+    });
+}
+
+/**
+ * Initialize WebSocket connection for real-time updates
+ */
+function initWebSocketConnection() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${window.location.host}/ws`;
+  
+  const socket = new WebSocket(wsUrl);
+  
+  socket.onopen = function() {
+    console.log('WebSocket connection established');
+    
+    // Subscribe to channels
+    const pair = document.getElementById('pair').value;
+    socket.send(JSON.stringify({
+      type: 'subscribe',
+      channels: ['ticker', 'orderbook', 'trades'],
+      pairs: [pair.replace('/', '')]
+    }));
+  };
+  
+  socket.onmessage = function(event) {
+    try {
+      const data = JSON.parse(event.data);
+      
+      switch (data.type) {
+        case 'ticker':
+          handleTickerUpdate(data);
+          break;
+        case 'orderbook':
+          handleOrderBookUpdate(data);
+          break;
+        case 'trade':
+          handleTradeUpdate(data);
+          break;
+        case 'candle':
+          handleCandleUpdate(data);
+          break;
+      }
+    } catch (error) {
+      console.error('WebSocket message error:', error);
+    }
+  };
+  
+  socket.onclose = function() {
+    console.log('WebSocket connection closed');
+    
+    // Reconnect after delay
+    setTimeout(initWebSocketConnection, 5000);
+  };
+  
+  socket.onerror = function(error) {
+    console.error('WebSocket error:', error);
+  };
+  
+  // Store socket reference for later use
+  window.tradingSocket = socket;
+}
+
+/**
+ * Handle ticker updates from WebSocket
+ */
+function handleTickerUpdate(data) {
+  // Update price display
+  const currentPriceEl = document.querySelector('#current-price');
+  const priceValueEl = document.querySelector('#current-price .price-value');
+  const priceChangeEl = document.querySelector('#current-price .price-change');
+  
+  if (priceValueEl && data.price) {
+    priceValueEl.textContent = formatPrice(data.price);
+  }
+  
+  if (priceChangeEl && data.change !== undefined) {
+    const changeClass = data.change >= 0 ? 'positive' : 'negative';
+    priceChangeEl.textContent = (data.change >= 0 ? '+' : '') + data.change.toFixed(2) + '%';
+    priceChangeEl.className = 'price-change ' + changeClass;
+  }
+  
+  // Update high, low, volume
+  if (data.high) {
+    document.getElementById('high-price').textContent = formatPrice(data.high);
+  }
+  
+  if (data.low) {
+    document.getElementById('low-price').textContent = formatPrice(data.low);
+  }
+  
+  if (data.volume) {
+    document.getElementById('volume').textContent = formatAmount(data.volume);
+  }
+  
+  if (data.change) {
+    document.getElementById('price-change-24h').textContent = (data.change >= 0 ? '+' : '') + data.change.toFixed(2) + '%';
+    document.getElementById('price-change-24h').className = data.change >= 0 ? 'stat-value positive' : 'stat-value negative';
+  }
+  
+  // Update price input placeholder
+  updateOrderSummary();
+}
+
+/**
+ * Handle order book updates from WebSocket
+ */
+function handleOrderBookUpdate(data) {
+  updateOrderBookDisplay(data);
+}
+
+/**
+ * Handle trade updates from WebSocket
+ */
+function handleTradeUpdate(data) {
+  const tradeHistoryEl = document.getElementById('trade-history');
+  
+  if (!tradeHistoryEl) return;
+  
+  // Add new trade to top of list
+  const row = document.createElement('div');
+  row.className = 'trade-history-row';
+  
+  row.innerHTML = `
+    <div class="trade-history-price ${data.side}">${formatPrice(data.price)}</div>
+    <div class="trade-history-amount">${formatAmount(data.amount)}</div>
+    <div class="trade-history-time">${formatTime(data.time || new Date())}</div>
+  `;
+  
+  // Add to top of list
+  if (tradeHistoryEl.firstChild) {
+    tradeHistoryEl.insertBefore(row, tradeHistoryEl.firstChild);
+  } else {
+    tradeHistoryEl.appendChild(row);
+  }
+  
+  // Remove oldest if over 20
+  const children = tradeHistoryEl.children;
+  if (children.length > 20) {
+    tradeHistoryEl.removeChild(children[children.length - 1]);
+  }
+}
+
+/**
+ * Handle candle updates from WebSocket
+ */
+function handleCandleUpdate(data) {
+  if (!window.candleSeries) return;
+  
+  // Update last candle or add new one
+  window.candleSeries.update(data);
+}
+
+/**
+ * Load chart data for a specific pair and interval
+ */
+function loadChartData(pair, interval = '15m') {
+  if (!window.candleSeries) return;
+  
+  // Replace with actual API calls
+  fetch(`/api/klines?symbol=${pair.replace('/', '')}&interval=${interval}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to fetch chart data');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.klines && data.klines.length > 0) {
+        window.candleSeries.setData(data.klines);
+      }
+    })
+    .catch(error => {
+      console.error('Chart data fetch error:', error);
+      // Use example data if API fails
+      window.candleSeries.setData(generateExampleCandlestickData());
+    });
+}
+
+// Utility functions
+
+/**
+ * Get current price for a trading pair
+ */
+function getCurrentPrice(pair) {
+  // In a real app, this would come from a global state or market data service
+  // For demo, return example price
+  switch (pair) {
+    case 'BTC/USDT':
+      return 43950.25;
+    case 'ETH/USDT':
+      return 2380.50;
+    case 'LTC/USDT':
+      return 82.75;
+    case 'ADA/USDT':
+      return 0.45;
+    case 'XRP/USDT':
+      return 0.52;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Format price for display
+ */
+function formatPrice(price) {
+  return price.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+/**
+ * Format amount for display
+ */
+function formatAmount(amount) {
+  return amount.toLocaleString('en-US', {
+    minimumFractionDigits: 4,
+    maximumFractionDigits: 8
+  });
+}
+
+/**
+ * Format time for display
+ */
+function formatTime(time) {
+  if (typeof time === 'string') {
+    time = new Date(time);
+  }
+  
+  return time.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  });
+}
+
+/**
+ * Show notification
+ */
+function showNotification(message, type = 'info') {
+  // Create notification element
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  
+  // Add to document
+  document.body.appendChild(notification);
+  
+  // Remove after delay
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 500);
+  }, 3000);
+}
+
+/**
+ * Generate example candlestick data for demo
+ */
+function generateExampleCandlestickData() {
+  const basePrice = 43950;
+  const now = new Date();
+  const data = [];
+  
+  // Generate 100 example candles
+  for (let i = 0; i < 100; i++) {
+    const time = new Date(now);
+    time.setMinutes(now.getMinutes() - (100 - i) * 15);
+    
+    // Random price changes following a yellow/black theme
+    const delta = (Math.random() - 0.4) * 100;
+    const open = basePrice + delta;
+    let close, high, low;
+    
+    if (Math.random() > 0.4) {
+      // Upward candle
+      close = open + Math.random() * 50;
+      high = close + Math.random() * 20;
+      low = open - Math.random() * 20;
+    } else {
+      // Downward candle
+      close = open - Math.random() * 50;
+      high = open + Math.random() * 20;
+      low = close - Math.random() * 20;
+    }
+    
+    data.push({
+      time: Math.floor(time.getTime() / 1000),
+      open: open,
+      high: high,
+      low: low,
+      close: close
+    });
+  }
+  
+  return data;
+}
+
+/**
+ * Generate example order book data for demo
+ */
+function generateExampleOrderBook(pair) {
+  let basePrice;
+  switch (pair) {
+    case 'BTC/USDT':
+      basePrice = 43950;
+      break;
+    case 'ETH/USDT':
+      basePrice = 2380;
+      break;
+    case 'LTC/USDT':
+      basePrice = 82;
+      break;
+    case 'ADA/USDT':
+      basePrice = 0.45;
+      break;
+    case 'XRP/USDT':
+      basePrice = 0.52;
+      break;
+    default:
+      basePrice = 1000;
+  }
+  
+  const asks = [];
+  const bids = [];
+  
+  // Generate asks (sell orders)
+  for (let i = 1; i <= 10; i++) {
+    const price = basePrice + (i * basePrice * 0.0005);
+    const amount = Math.random() * 2;
+    
+    asks.push({
+      price,
+      amount
+    });
+  }
+  
+  // Generate bids (buy orders)
+  for (let i = 1; i <= 10; i++) {
+    const price = basePrice - (i * basePrice * 0.0005);
+    const amount = Math.random() * 2;
+    
+    bids.push({
+      price,
+      amount
+    });
+  }
+  
+  return {
+    asks,
+    bids
+  };
+}
+
+/**
+ * Generate example trade history data for demo
+ */
+function generateExampleTradeHistory(pair) {
+  let basePrice;
+  switch (pair) {
+    case 'BTC/USDT':
+      basePrice = 43950;
+      break;
+    case 'ETH/USDT':
+      basePrice = 2380;
+      break;
+    case 'LTC/USDT':
+      basePrice = 82;
+      break;
+    case 'ADA/USDT':
+      basePrice = 0.45;
+      break;
+    case 'XRP/USDT':
+      basePrice = 0.52;
+      break;
+    default:
+      basePrice = 1000;
+  }
+  
+  const trades = [];
+  const now = new Date();
+  
+  // Generate trades
+  for (let i = 0; i < 20; i++) {
+    const time = new Date(now);
+    time.setSeconds(now.getSeconds() - i * 15);
+    
+    const side = Math.random() > 0.5 ? 'buy' : 'sell';
+    const price = basePrice + (Math.random() - 0.5) * basePrice * 0.002;
+    const amount = Math.random() * 0.5;
+    
+    trades.push({
+      price,
+      amount,
+      side,
+      time
+    });
+  }
+  
+  return {
+    trades
+  };
+}
+
+// Technical indicator implementations
 
 /**
  * Toggle Bollinger Bands indicator
- * @param {boolean} active - Whether to activate or deactivate
  */
-function toggleBollingerBands(active) {
-  if (active && !bollingerBands) {
-    // Create Bollinger Bands
-    bollingerBands = candleSeries.createPriceLine({
-      price: 0,
-      color: 'rgba(255, 255, 255, 0.5)',
+let bollingerSeries = null;
+function toggleBollingerBands(isActive) {
+  if (!window.tradingChart || !window.candleSeries) return;
+  
+  if (isActive && !bollingerSeries) {
+    // Create Bollinger Bands series
+    bollingerSeries = window.tradingChart.addLineSeries({
+      color: 'rgba(247, 201, 72, 0.5)',
       lineWidth: 1,
-      lineStyle: LightweightCharts.LineStyle.Solid,
-      axisLabelVisible: true,
-      title: 'BB',
+      priceLineVisible: false,
     });
     
-    // Calculate and update Bollinger Bands
-    calculateBollingerBands();
-  } else if (!active && bollingerBands) {
-    // Remove Bollinger Bands
-    candleSeries.removePriceLine(bollingerBands);
-    bollingerBands = null;
+    // Generate example Bollinger Bands data
+    const data = window.candleSeries.data();
+    if (!data || data.length === 0) return;
+    
+    const period = 20;
+    const stdDevMultiplier = 2;
+    const bands = [];
+    
+    // Very simplified BB calculation
+    for (let i = period - 1; i < data.length; i++) {
+      // Calculate SMA
+      let sum = 0;
+      for (let j = 0; j < period; j++) {
+        sum += data[i - j].close;
+      }
+      const sma = sum / period;
+      
+      // Calculate standard deviation
+      let sumSquaredDiff = 0;
+      for (let j = 0; j < period; j++) {
+        const diff = data[i - j].close - sma;
+        sumSquaredDiff += diff * diff;
+      }
+      const stdDev = Math.sqrt(sumSquaredDiff / period);
+      
+      // Upper and lower bands
+      const upper = sma + (stdDev * stdDevMultiplier);
+      const lower = sma - (stdDev * stdDevMultiplier);
+      
+      bands.push({
+        time: data[i].time,
+        value: upper
+      });
+    }
+    
+    bollingerSeries.setData(bands);
+  } else if (!isActive && bollingerSeries) {
+    // Remove series
+    window.tradingChart.removeSeries(bollingerSeries);
+    bollingerSeries = null;
   }
 }
 
 /**
  * Toggle Moving Average indicator
- * @param {boolean} active - Whether to activate or deactivate
  */
-function toggleMovingAverage(active) {
-  if (active && !movingAverage) {
-    // Add Moving Average series
-    movingAverage = tradingChart.addLineSeries({
-      color: 'rgba(255, 152, 0, 1)',
+let maSeries = null;
+function toggleMovingAverage(isActive) {
+  if (!window.tradingChart || !window.candleSeries) return;
+  
+  if (isActive && !maSeries) {
+    // Create MA series
+    maSeries = window.tradingChart.addLineSeries({
+      color: 'rgba(247, 201, 72, 0.9)',
       lineWidth: 2,
       priceLineVisible: false,
-      lastValueVisible: false,
-      priceFormat: {
-        type: 'price',
-        precision: 2,
-        minMove: 0.01,
-      },
     });
     
-    // Calculate and update Moving Average
-    calculateMovingAverage();
-  } else if (!active && movingAverage) {
-    // Remove Moving Average series
-    tradingChart.removeSeries(movingAverage);
-    movingAverage = null;
+    // Generate example MA data
+    const data = window.candleSeries.data();
+    if (!data || data.length === 0) return;
+    
+    const period = 20;
+    const maData = [];
+    
+    for (let i = period - 1; i < data.length; i++) {
+      let sum = 0;
+      for (let j = 0; j < period; j++) {
+        sum += data[i - j].close;
+      }
+      
+      maData.push({
+        time: data[i].time,
+        value: sum / period
+      });
+    }
+    
+    maSeries.setData(maData);
+  } else if (!isActive && maSeries) {
+    // Remove series
+    window.tradingChart.removeSeries(maSeries);
+    maSeries = null;
   }
 }
 
 /**
  * Toggle RSI indicator
- * @param {boolean} active - Whether to activate or deactivate
  */
-function toggleRSI(active) {
-  if (active && !rsiPane) {
+let rsiSeries = null;
+let rsiPane = null;
+function toggleRSI(isActive) {
+  if (!window.tradingChart || !window.candleSeries) return;
+  
+  if (isActive && !rsiPane) {
     // Create RSI pane
-    rsiPane = tradingChart.addPane({
+    rsiPane = window.tradingChart.addPane({
       height: 80,
     });
     
-    // Add RSI series
+    // Create RSI series
     rsiSeries = rsiPane.addLineSeries({
-      color: 'rgba(76, 175, 80, 1)',
+      color: 'rgba(247, 201, 72, 0.9)',
       lineWidth: 2,
       priceLineVisible: false,
-      lastValueVisible: true,
-      priceFormat: {
-        type: 'price',
-        precision: 2,
-        minMove: 0.01,
-      },
     });
     
-    // Calculate and update RSI
-    calculateRSI();
-  } else if (!active && rsiPane) {
-    // Remove RSI pane
-    tradingChart.removePanes();
+    // Generate example RSI data
+    const data = window.candleSeries.data();
+    if (!data || data.length === 0) return;
+    
+    const period = 14;
+    const rsiData = [];
+    
+    // Simplified RSI calculation
+    for (let i = period; i < data.length; i++) {
+      let gainSum = 0;
+      let lossSum = 0;
+      
+      for (let j = i - period + 1; j <= i; j++) {
+        const change = data[j].close - data[j - 1].close;
+        if (change >= 0) {
+          gainSum += change;
+        } else {
+          lossSum += Math.abs(change);
+        }
+      }
+      
+      const avgGain = gainSum / period;
+      const avgLoss = lossSum / period;
+      
+      // Calculate RSI
+      let rs = avgGain / (avgLoss === 0 ? 0.001 : avgLoss);
+      let rsi = 100 - (100 / (1 + rs));
+      
+      rsiData.push({
+        time: data[i].time,
+        value: rsi
+      });
+    }
+    
+    rsiSeries.setData(rsiData);
+    
+    // Add RSI levels
+    rsiPane.addPriceLine({
+      price: 70,
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      color: 'rgba(255, 255, 255, 0.4)',
+      axisLabelVisible: true,
+    });
+    
+    rsiPane.addPriceLine({
+      price: 30,
+      lineWidth: 1,
+      lineStyle: LightweightCharts.LineStyle.Dashed,
+      color: 'rgba(255, 255, 255, 0.4)',
+      axisLabelVisible: true,
+    });
+  } else if (!isActive && rsiPane) {
+    // Remove pane
+    window.tradingChart.removePanes();
     rsiPane = null;
     rsiSeries = null;
   }
 }
 
 /**
- * Calculate Bollinger Bands
- * Simplified calculation for demonstration purposes
+ * Toggle Volume indicator
  */
-function calculateBollingerBands() {
-  // This is a simplified implementation
-  // In a production app, use a proper technical analysis library
-  if (!bollingerBands || !candleSeries) return;
+let volumeSeries = null;
+function toggleVolumeIndicator(isActive) {
+  if (!window.tradingChart || !window.candleSeries) return;
   
-  // Get current price
-  const currentPrice = marketDataService.getCurrentPrice(currentSymbol);
-  if (!currentPrice) return;
-  
-  // Set middle band to current price
-  bollingerBands.applyOptions({
-    price: currentPrice.price,
-    title: 'BB (20, 2)',
-  });
-}
-
-/**
- * Calculate Moving Average
- * Simplified calculation for demonstration purposes
- */
-function calculateMovingAverage() {
-  // This is a simplified implementation
-  // In a production app, use a proper technical analysis library
-  if (!movingAverage) return;
-  
-  // Get chart data
-  marketDataService.getKlines(currentSymbol.replace('/', ''), currentInterval, 50)
-    .then(klines => {
-      if (!klines || !klines.length) return;
-      
-      // Calculate simple moving average (20 periods)
-      const period = 20;
-      const maData = [];
-      
-      for (let i = period - 1; i < klines.length; i++) {
-        let sum = 0;
-        for (let j = 0; j < period; j++) {
-          sum += klines[i - j].close;
-        }
-        maData.push({
-          time: klines[i].time,
-          value: sum / period,
-        });
-      }
-      
-      // Update Moving Average series
-      movingAverage.setData(maData);
-    })
-    .catch(error => {
-      console.error('Failed to calculate MA:', error);
-    });
-}
-
-/**
- * Calculate RSI (Relative Strength Index)
- * Simplified calculation for demonstration purposes
- */
-function calculateRSI() {
-  // This is a simplified implementation
-  // In a production app, use a proper technical analysis library
-  if (!rsiSeries) return;
-  
-  // Get chart data
-  marketDataService.getKlines(currentSymbol.replace('/', ''), currentInterval, 50)
-    .then(klines => {
-      if (!klines || !klines.length) return;
-      
-      // Calculate RSI (14 periods)
-      const period = 14;
-      const rsiData = [];
-      
-      // Calculate price changes
-      const changes = [];
-      for (let i = 1; i < klines.length; i++) {
-        changes.push(klines[i].close - klines[i - 1].close);
-      }
-      
-      // Calculate RSI for each period
-      for (let i = period; i < changes.length; i++) {
-        let gains = 0;
-        let losses = 0;
-        
-        // Sum gains and losses over the period
-        for (let j = i - period; j < i; j++) {
-          if (changes[j] >= 0) {
-            gains += changes[j];
-          } else {
-            losses += Math.abs(changes[j]);
-          }
-        }
-        
-        // Calculate average gain and loss
-        const avgGain = gains / period;
-        const avgLoss = losses / period;
-        
-        // Calculate RS and RSI
-        const rs = avgGain / (avgLoss === 0 ? 0.00001 : avgLoss); // Avoid division by zero
-        const rsi = 100 - (100 / (1 + rs));
-        
-        rsiData.push({
-          time: klines[i].time,
-          value: rsi,
-        });
-      }
-      
-      // Update RSI series
-      rsiSeries.setData(rsiData);
-    })
-    .catch(error => {
-      console.error('Failed to calculate RSI:', error);
-    });
-}
-
-/**
- * Load chart data for a symbol and interval
- * @param {string} symbol - Trading pair symbol
- * @param {string} interval - Chart interval
- */
-function loadChartData(symbol, interval) {
-  if (!candleSeries) return;
-  
-  // Format symbol for API call (remove slash)
-  const apiSymbol = symbol.replace('/', '');
-  
-  // Show loading state
-  document.getElementById('current-price').textContent = `${symbol}: Loading...`;
-  
-  // Load candlestick data
-  marketDataService.getKlines(apiSymbol, interval)
-    .then(klines => {
-      if (!klines || !klines.length) {
-        console.error('No klines data received');
-        return;
-      }
-      
-      // Update candlestick series
-      candleSeries.setData(klines);
-      
-      // Update indicators if active
-      if (bollingerBands) calculateBollingerBands();
-      if (movingAverage) calculateMovingAverage();
-      if (rsiSeries) calculateRSI();
-      
-      // Update price display
-      updatePriceDisplay();
-      
-      // Automatically scroll to the right (latest data)
-      tradingChart.timeScale().fitContent();
-    })
-    .catch(error => {
-      console.error('Failed to load chart data:', error);
-      document.getElementById('current-price').textContent = `${symbol}: Error loading data`;
-    });
-}
-
-/**
- * Initialize market data listeners
- */
-function initMarketDataListeners() {
-  // Listen for price updates
-  marketDataService.on('price', (data) => {
-    updatePriceDisplay();
-    
-    // Update indicators if active
-    if (bollingerBands) calculateBollingerBands();
-  });
-  
-  // Listen for klines updates
-  marketDataService.on('klines', (data) => {
-    if (data.symbol.replace('USDT', '/USDT') !== currentSymbol) return;
-    if (data.interval !== currentInterval) return;
-    
-    // Add new candle to the chart
-    if (candleSeries && data.klines.length > 0) {
-      const lastCandle = data.klines[data.klines.length - 1];
-      candleSeries.update(lastCandle);
-      
-      // Update indicators if active
-      if (bollingerBands) calculateBollingerBands();
-      if (movingAverage) calculateMovingAverage();
-      if (rsiSeries) calculateRSI();
-    }
-  });
-  
-  // Listen for order book updates
-  marketDataService.on('orderBook', (data) => {
-    if (data.symbol.replace('USDT', '/USDT') !== currentSymbol) return;
-    
-    // Update order book display
-    updateOrderBookDisplay(data.orderBook);
-  });
-}
-
-/**
- * Update price display
- */
-function updatePriceDisplay() {
-  const priceData = marketDataService.getCurrentPrice(currentSymbol);
-  
-  if (!priceData) {
-    const fallbackPrice = marketDataService.getCurrentPrice('BTC/USDT');
-    if (fallbackPrice) {
-      document.getElementById('current-price').innerHTML = `
-        ${currentSymbol}: No data available
-      `;
-    }
-    return;
-  }
-  
-  // Update current price header
-  document.getElementById('current-price').innerHTML = `
-    ${priceData.symbol}: ${utils.formatCurrency(priceData.price)} 
-    <span class="${priceData.change >= 0 ? 'positive' : 'negative'}">
-      ${utils.formatPercentage(priceData.change)}
-    </span>
-  `;
-  
-  // Update price input placeholder
-  const priceInput = document.getElementById('price');
-  if (priceInput) {
-    priceInput.placeholder = `Price (current: ${utils.formatCurrency(priceData.price)})`;
-  }
-  
-  // Update price stats
-  if (priceData.high) {
-    document.getElementById('high-price').textContent = utils.formatCurrency(priceData.high);
-  }
-  
-  if (priceData.low) {
-    document.getElementById('low-price').textContent = utils.formatCurrency(priceData.low);
-  }
-  
-  if (priceData.volume) {
-    document.getElementById('volume').textContent = utils.formatNumber(priceData.volume);
-  }
-}
-
-/**
- * Initialize trading pairs dropdown
- */
-function initTradingPairs() {
-  const pairSelect = document.getElementById('pair');
-  
-  if (pairSelect) {
-    pairSelect.addEventListener('change', (e) => {
-      currentSymbol = e.target.value;
-      
-      // Load chart data for new symbol
-      loadChartData(currentSymbol, currentInterval);
-      
-      // Update order book
-      updateOrderBook();
+  if (isActive && !volumeSeries) {
+    // Create volume series
+    volumeSeries = window.tradingChart.addHistogramSeries({
+      color: 'rgba(247, 201, 72, 0.5)',
+      priceFormat: {
+        type: 'volume',
+      },
+      priceLineVisible: false,
+      lastValueVisible: false,
     });
     
-    // Set initial value
-    pairSelect.value = currentSymbol;
-  }
-}
-
-/**
- * Initialize trade form
- */
-function initTradeForm() {
-  const tradeForm = document.getElementById('trade-form');
-  
-  if (tradeForm) {
-    tradeForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      // Get form values
-      const pair = document.getElementById('pair').value;
-      const orderType = document.getElementById('order-type').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      const price = parseFloat(document.getElementById('price').value);
-      
-      // Validate form
-      if (isNaN(amount) || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-      }
-      
-      if (orderType === 'limit' && (isNaN(price) || price <= 0)) {
-        alert('Please enter a valid price for limit orders');
-        return;
-      }
-      
-      // Create order
-      const orderData = {
-        pair,
-        type: 'buy',
-        orderType,
-        amount,
-        price: orderType === 'market' ? null : price,
-      };
-      
-      // Submit order
-      submitOrder(orderData);
-    });
+    // Generate example volume data
+    const data = window.candleSeries.data();
+    if (!data || data.length === 0) return;
     
-    // Handle sell button click
-    const sellButton = tradeForm.querySelector('button.btn-outline');
-    if (sellButton) {
-      sellButton.addEventListener('click', (e) => {
-        e.preventDefault();
-        
-        // Get form values
-        const pair = document.getElementById('pair').value;
-        const orderType = document.getElementById('order-type').value;
-        const amount = parseFloat(document.getElementById('amount').value);
-        const price = parseFloat(document.getElementById('price').value);
-        
-        // Validate form
-        if (isNaN(amount) || amount <= 0) {
-          alert('Please enter a valid amount');
-          return;
-        }
-        
-        if (orderType === 'limit' && (isNaN(price) || price <= 0)) {
-          alert('Please enter a valid price for limit orders');
-          return;
-        }
-        
-        // Create order
-        const orderData = {
-          pair,
-          type: 'sell',
-          orderType,
-          amount,
-          price: orderType === 'market' ? null : price,
-        };
-        
-        // Submit order
-        submitOrder(orderData);
+    const volumeData = [];
+    
+    for (let i = 0; i < data.length; i++) {
+      // Generate random volume
+      const volume = (Math.random() * 100) + 50;
+      
+      // Color based on candle direction
+      const color = data[i].close >= data[i].open 
+        ? 'rgba(247, 201, 72, 0.5)'  // Yellow for up candles
+        : 'rgba(50, 50, 50, 0.5)';    // Dark for down candles
+      
+      volumeData.push({
+        time: data[i].time,
+        value: volume,
+        color: color
       });
     }
     
-    // Handle order type change
-    const orderTypeSelect = document.getElementById('order-type');
-    const priceInput = document.getElementById('price');
-    
-    if (orderTypeSelect && priceInput) {
-      orderTypeSelect.addEventListener('change', (e) => {
-        const orderType = e.target.value;
-        
-        // Disable price input for market orders
-        if (orderType === 'market') {
-          priceInput.disabled = true;
-          priceInput.placeholder = 'Market price';
-        } else {
-          priceInput.disabled = false;
-          
-          // Update placeholder with current price
-          const currentPrice = marketDataService.getCurrentPrice(currentSymbol);
-          if (currentPrice) {
-            priceInput.placeholder = `Price (current: ${utils.formatCurrency(currentPrice.price)})`;
-          } else {
-            priceInput.placeholder = 'Price';
-          }
-        }
-      });
-    }
-  }
-  
-  // Initialize price alert form
-  const alertForm = document.getElementById('price-alert-form');
-  
-  if (alertForm) {
-    alertForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      
-      // Get alert price
-      const alertPrice = parseFloat(document.getElementById('alert-price').value);
-      
-      // Validate price
-      if (isNaN(alertPrice) || alertPrice <= 0) {
-        alert('Please enter a valid alert price');
-        return;
-      }
-      
-      // Set price alert
-      setPriceAlert(currentSymbol, alertPrice);
-    });
+    volumeSeries.setData(volumeData);
+  } else if (!isActive && volumeSeries) {
+    // Remove series
+    window.tradingChart.removeSeries(volumeSeries);
+    volumeSeries = null;
   }
 }
-
-/**
- * Submit order to API
- * @param {Object} orderData - Order data
- */
-async function submitOrder(orderData) {
-  try {
-    // Show loading state
-    const submitButton = document.querySelector('#trade-form button[type="submit"]');
-    const originalText = submitButton.innerHTML;
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    
-    // Submit order to API
-    const response = await api.createOrder(orderData);
-    
-    // Reset form
-    document.getElementById('trade-form').reset();
-    
-    // Show success message
-    alert(`Order submitted successfully. Order ID: ${response.id}`);
-    
-    // Update order book and trade history
-    updateOrderBook();
-    updateTradeHistory();
-    
-    // Reset button
-    submitButton.disabled = false;
-    submitButton.innerHTML = originalText;
-  } catch (error) {
-    console.error('Failed to submit order:', error);
-    
-    // Show error message
-    alert(`Failed to submit order: ${error.message}`);
-    
-    // Reset button
-    const submitButton = document.querySelector('#trade-form button[type="submit"]');
-    submitButton.disabled = false;
-    submitButton.innerHTML = '<i class="fas fa-shopping-cart"></i> Buy';
-  }
-}
-
-/**
- * Update order book
- */
-function updateOrderBook() {
-  try {
-    // Format symbol for API call (remove slash)
-    const apiSymbol = currentSymbol.replace('/', '');
-    
-    // Get order book data
-    marketDataService.getOrderBook(apiSymbol)
-      .then(orderBook => {
-        if (!orderBook) {
-          document.getElementById('order-book').innerHTML = 'Order book data not available';
-          return;
-        }
-        
-        // Update order book display
-        updateOrderBookDisplay(orderBook);
-      })
-      .catch(error => {
-        console.error('Failed to fetch order book:', error);
-        document.getElementById('order-book').innerHTML = 'Error loading order book';
-      });
-  } catch (error) {
-    console.error('Error updating order book:', error);
-  }
-}
-
-/**
- * Update order book display
- * @param {Object} orderBook - Order book data
- */
-function updateOrderBookDisplay(orderBook) {
-  const orderBookContainer = document.getElementById('order-book');
-  
-  if (!orderBookContainer) return;
-  
-  // Format and display order book
-  let html = '<div class="order-book-header">';
-  html += '<div class="price">Price</div>';
-  html += '<div class="amount">Amount</div>';
-  html += '<div class="total">Total</div>';
-  html += '</div>';
-  
-  // Asks (sell orders) - displayed in descending order
-  html += '<div class="asks">';
-  if (orderBook.asks && orderBook.asks.length) {
-    // Sort asks in ascending order (lowest ask price first)
-    const sortedAsks = [...orderBook.asks].sort((a, b) => a[0] - b[0]);
-    
-    // Take up to 10 ask orders
-    const displayAsks = sortedAsks.slice(0, 10);
-    
-    // Display asks
-    for (const ask of displayAsks) {
-      const price = parseFloat(ask[0]);
-      const amount = parseFloat(ask[1]);
-      const total = price * amount;
-      
-      html += '<div class="order-row ask-row">';
-      html += `<div class="price ask-price">${utils.formatCurrency(price)}</div>`;
-      html += `<div class="amount">${utils.formatNumber(amount)}</div>`;
-      html += `<div class="total">${utils.formatCurrency(total)}</div>`;
-      html += '</div>';
-    }
-  } else {
-    html += '<div class="no-orders">No ask orders</div>';
-  }
-  html += '</div>';
-  
-  // Spread
-  const lowestAsk = orderBook.asks && orderBook.asks.length ? Math.min(...orderBook.asks.map(a => parseFloat(a[0]))) : 0;
-  const highestBid = orderBook.bids && orderBook.bids.length ? Math.max(...orderBook.bids.map(b => parseFloat(b[0]))) : 0;
-  const spread = lowestAsk - highestBid;
-  const spreadPercent = (lowestAsk > 0) ? (spread / lowestAsk) * 100 : 0;
-  
-  html += '<div class="spread">';
-  html += `<div>Spread: ${utils.formatCurrency(spread)} (${utils.formatPercentage(spreadPercent)})</div>`;
-  html += '</div>';
-  
-  // Bids (buy orders) - displayed in descending order
-  html += '<div class="bids">';
-  if (orderBook.bids && orderBook.bids.length) {
-    // Sort bids in descending order (highest bid price first)
-    const sortedBids = [...orderBook.bids].sort((a, b) => b[0] - a[0]);
-    
-    // Take up to 10 bid orders
-    const displayBids = sortedBids.slice(0, 10);
-    
-    // Display bids
-    for (const bid of displayBids) {
-      const price = parseFloat(bid[0]);
-      const amount = parseFloat(bid[1]);
-      const total = price * amount;
-      
-      html += '<div class="order-row bid-row">';
-      html += `<div class="price bid-price">${utils.formatCurrency(price)}</div>`;
-      html += `<div class="amount">${utils.formatNumber(amount)}</div>`;
-      html += `<div class="total">${utils.formatCurrency(total)}</div>`;
-      html += '</div>';
-    }
-  } else {
-    html += '<div class="no-orders">No bid orders</div>';
-  }
-  html += '</div>';
-  
-  // Update container
-  orderBookContainer.innerHTML = html;
-}
-
-/**
- * Update trade history
- */
-async function updateTradeHistory() {
-  try {
-    // Get trade history from API
-    const trades = await api.getTradeHistory();
-    
-    // Update trade history display
-    const tradeHistoryContainer = document.getElementById('trade-history');
-    
-    if (!tradeHistoryContainer) return;
-    
-    if (!trades || !trades.length) {
-      tradeHistoryContainer.innerHTML = 'No trades yet';
-      return;
-    }
-    
-    // Format and display trades
-    let html = '';
-    
-    for (const trade of trades) {
-      const date = new Date(trade.timestamp).toLocaleDateString();
-      const type = trade.type === 'buy' ? 'Bought' : 'Sold';
-      const amount = trade.amount;
-      const price = trade.price;
-      const total = amount * price;
-      
-      html += `<div class="trade-row ${trade.type}-row">`;
-      html += `<div class="trade-date">${date}</div>`;
-      html += `<div class="trade-type">${type}</div>`;
-      html += `<div class="trade-amount">${amount} ${trade.pair.split('/')[0]}</div>`;
-      html += `<div class="trade-price">@ ${utils.formatCurrency(price)}</div>`;
-      html += `<div class="trade-total">${utils.formatCurrency(total)}</div>`;
-      html += '</div>';
-    }
-    
-    // Update container
-    tradeHistoryContainer.innerHTML = html;
-  } catch (error) {
-    console.error('Failed to fetch trade history:', error);
-    
-    const tradeHistoryContainer = document.getElementById('trade-history');
-    if (tradeHistoryContainer) {
-      tradeHistoryContainer.innerHTML = 'Error loading trade history';
-    }
-  }
-}
-
-/**
- * Set price alert
- * @param {string} symbol - Trading pair symbol
- * @param {number} price - Alert price
- */
-function setPriceAlert(symbol, price) {
-  try {
-    // Create alert
-    const alert = {
-      symbol,
-      price,
-      timestamp: new Date().toISOString(),
-    };
-    
-    // Store alert in local storage
-    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
-    alerts.push(alert);
-    localStorage.setItem('priceAlerts', JSON.stringify(alerts));
-    
-    // Show success message
-    alert(`Price alert set for ${symbol} at ${utils.formatCurrency(price)}`);
-    
-    // Reset form
-    document.getElementById('price-alert-form').reset();
-    
-    // Start checking for alerts if not already
-    startAlertChecker();
-  } catch (error) {
-    console.error('Failed to set price alert:', error);
-    alert(`Failed to set price alert: ${error.message}`);
-  }
-}
-
-// Alert checker interval reference
-let alertCheckerInterval = null;
-
-/**
- * Start price alert checker
- */
-function startAlertChecker() {
-  if (alertCheckerInterval) return;
-  
-  // Check for alerts every 5 seconds
-  alertCheckerInterval = setInterval(checkPriceAlerts, 5000);
-}
-
-/**
- * Check for triggered price alerts
- */
-function checkPriceAlerts() {
-  try {
-    // Get alerts from local storage
-    const alerts = JSON.parse(localStorage.getItem('priceAlerts') || '[]');
-    
-    if (!alerts.length) {
-      clearInterval(alertCheckerInterval);
-      alertCheckerInterval = null;
-      return;
-    }
-    
-    // Get current prices
-    const prices = marketDataService.getAllPrices();
-    
-    // Check each alert
-    const triggeredAlerts = [];
-    const remainingAlerts = [];
-    
-    for (const alert of alerts) {
-      // Check if price is available for this symbol
-      if (prices[alert.symbol]) {
-        const currentPrice = prices[alert.symbol].price;
-        
-        // Check if alert is triggered
-        const alertPrice = parseFloat(alert.price);
-        const isTriggered = alertPrice >= currentPrice;
-        
-        if (isTriggered) {
-          triggeredAlerts.push(alert);
-        } else {
-          remainingAlerts.push(alert);
-        }
-      } else {
-        // Keep alerts for symbols with no price data
-        remainingAlerts.push(alert);
-      }
-    }
-    
-    // Update alerts in local storage
-    localStorage.setItem('priceAlerts', JSON.stringify(remainingAlerts));
-    
-    // Notify for triggered alerts
-    for (const alert of triggeredAlerts) {
-      notifyPriceAlert(alert);
-    }
-    
-    // Stop checker if no alerts remaining
-    if (!remainingAlerts.length) {
-      clearInterval(alertCheckerInterval);
-      alertCheckerInterval = null;
-    }
-  } catch (error) {
-    console.error('Error checking price alerts:', error);
-  }
-}
-
-/**
- * Notify the user about a triggered price alert
- * @param {Object} alert - Price alert object
- */
-function notifyPriceAlert(alert) {
-  // Show alert
-  const currentPrice = marketDataService.getCurrentPrice(alert.symbol)?.price || 'unknown';
-  
-  alert(`Price Alert: ${alert.symbol} has reached ${utils.formatCurrency(alert.price)}. Current price: ${utils.formatCurrency(currentPrice)}`);
-  
-  // Play sound if available
-  const audio = new Audio('../../assets/sounds/alert.mp3');
-  audio.play().catch(e => console.error('Failed to play alert sound:', e));
-}
-
-// Export functions for external use
-window.tradingModule = {
-  initTrading,
-  loadChartData,
-  updateOrderBook,
-  updateTradeHistory,
-};

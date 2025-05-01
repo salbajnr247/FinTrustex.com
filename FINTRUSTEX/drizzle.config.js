@@ -4,9 +4,14 @@ require('dotenv').config();
 module.exports = {
   schema: './shared/schema.ts',
   out: './drizzle',
-  driver: 'pg', 
+  dialect: 'postgresql',
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL,
+    host: process.env.PGHOST,
+    port: parseInt(process.env.PGPORT),
+    user: process.env.PGUSER,
+    password: process.env.PGPASSWORD,
+    database: process.env.PGDATABASE,
+    ssl: true
   },
   verbose: true,
   strict: true,

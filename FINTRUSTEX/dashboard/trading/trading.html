@@ -42,9 +42,10 @@
         <section id="index">
           <h1 class="section-title">Trading</h1>
           <div class="trading-grid">
+            <!-- Price Chart -->
             <div class="chart-container card glassmorph">
               <div class="chart-header">
-                <h3 id="current-price">BTC/USDT: Loading...</h3>
+                <h3 id="current-price">BTC/USDT: <span class="price-value">Loading...</span> <span class="price-change">--</span></h3>
                 <div class="chart-controls">
                   <div class="chart-intervals">
                     <button class="chart-interval-option" data-interval="1m">1m</button>
@@ -53,15 +54,17 @@
                     <button class="chart-interval-option" data-interval="1h">1h</button>
                     <button class="chart-interval-option" data-interval="4h">4h</button>
                     <button class="chart-interval-option" data-interval="1d">1d</button>
+                    <button class="chart-interval-option" data-interval="1w">1w</button>
                   </div>
                   <div class="chart-indicators">
-                    <button class="chart-indicator-option" data-indicator="bollinger">BB</button>
-                    <button class="chart-indicator-option" data-indicator="ma">MA</button>
-                    <button class="chart-indicator-option" data-indicator="rsi">RSI</button>
+                    <button class="chart-indicator-option" data-indicator="bollinger" title="Bollinger Bands">BB</button>
+                    <button class="chart-indicator-option" data-indicator="ma" title="Moving Average">MA</button>
+                    <button class="chart-indicator-option" data-indicator="rsi" title="Relative Strength Index">RSI</button>
+                    <button class="chart-indicator-option" data-indicator="volume" title="Volume Profile">VOL</button>
                   </div>
                 </div>
               </div>
-              <div id="trading-chart" style="height: 500px;"></div>
+              <div id="trading-chart"></div>
               <div class="chart-footer">
                 <div class="chart-stats">
                   <div class="stat">
@@ -76,44 +79,203 @@
                     <span class="stat-label">24h Volume:</span>
                     <span id="volume" class="stat-value">--</span>
                   </div>
+                  <div class="stat">
+                    <span class="stat-label">24h Change:</span>
+                    <span id="price-change-24h" class="stat-value">--</span>
+                  </div>
                 </div>
               </div>
             </div>
+            
+            <!-- Order Book -->
             <div class="order-book card glassmorph">
               <h3>Order Book</h3>
-              <div id="order-book">
-                <p>Bid: 60000 USDT @ 1 BTC</p>
-                <p>Ask: 61000 USDT @ 1 BTC</p>
+              <div class="order-book-content">
+                <!-- Sell Orders (asks) -->
+                <div class="order-book-section">
+                  <div class="order-book-header">
+                    <div class="order-book-price">Price (USDT)</div>
+                    <div class="order-book-amount">Amount (BTC)</div>
+                    <div class="order-book-total">Total (USDT)</div>
+                  </div>
+                  <div class="order-book-rows" id="ask-orders">
+                    <!-- Sell orders will be populated dynamically -->
+                    <div class="order-book-row sell">
+                      <div class="order-book-price">43,952.50</div>
+                      <div class="order-book-amount">0.12500</div>
+                      <div class="order-book-total">5,494.06</div>
+                    </div>
+                    <div class="order-book-row sell">
+                      <div class="order-book-price">43,950.00</div>
+                      <div class="order-book-amount">0.25000</div>
+                      <div class="order-book-total">10,987.50</div>
+                    </div>
+                    <div class="order-book-row sell">
+                      <div class="order-book-price">43,949.50</div>
+                      <div class="order-book-amount">0.10000</div>
+                      <div class="order-book-total">4,394.95</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Market Spread -->
+                <div class="order-book-spread">
+                  <div>Spread: <span id="market-spread">0.07%</span></div>
+                  <div>$<span id="market-spread-value">30.00</span></div>
+                </div>
+                
+                <!-- Buy Orders (bids) -->
+                <div class="order-book-section">
+                  <div class="order-book-rows" id="bid-orders">
+                    <!-- Buy orders will be populated dynamically -->
+                    <div class="order-book-row buy">
+                      <div class="order-book-price">43,920.00</div>
+                      <div class="order-book-amount">0.10000</div>
+                      <div class="order-book-total">4,392.00</div>
+                    </div>
+                    <div class="order-book-row buy">
+                      <div class="order-book-price">43,900.00</div>
+                      <div class="order-book-amount">0.50000</div>
+                      <div class="order-book-total">21,950.00</div>
+                    </div>
+                    <div class="order-book-row buy">
+                      <div class="order-book-price">43,880.00</div>
+                      <div class="order-book-amount">0.35000</div>
+                      <div class="order-book-total">15,358.00</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
+            
+            <!-- Trading Form -->
             <div class="trade-form card glassmorph">
-              <h3>Place Order</h3>
+              <div class="trade-form-header">
+                <h3>Place Order</h3>
+                <div class="trade-tabs">
+                  <div class="trade-tab buy active" data-tab="buy">Buy</div>
+                  <div class="trade-tab sell" data-tab="sell">Sell</div>
+                </div>
+              </div>
+              
               <form id="trade-form">
-                <label for="pair">Trading Pair</label>
-                <select id="pair" class="glassmorph-input" aria-label="Trading Pair">
-                  <option value="BTC/USDT">BTC/USDT</option>
-                  <option value="ETH/USDT">ETH/USDT</option>
-                </select>
-                <label for="order-type">Order Type</label>
-                <select id="order-type" class="glassmorph-input" aria-label="Order Type">
-                  <option value="limit">Limit</option>
-                  <option value="market">Market</option>
-                </select>
-                <input type="number" id="amount" class="glassmorph-input" placeholder="Amount" required />
-                <input type="number" id="price" class="glassmorph-input" placeholder="Price" required />
-                <button type="submit" class="btn btn-yellow"><i class="fas fa-shopping-cart"></i> Buy</button>
-                <button type="button" class="btn btn-outline"><i class="fas fa-arrow-right"></i> Sell</button>
+                <div class="form-row">
+                  <div class="form-col">
+                    <div class="form-group">
+                      <label for="pair">Trading Pair</label>
+                      <select id="pair" class="glassmorph-input" aria-label="Trading Pair">
+                        <option value="BTC/USDT">BTC/USDT</option>
+                        <option value="ETH/USDT">ETH/USDT</option>
+                        <option value="LTC/USDT">LTC/USDT</option>
+                        <option value="ADA/USDT">ADA/USDT</option>
+                        <option value="XRP/USDT">XRP/USDT</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="form-col">
+                    <div class="form-group">
+                      <label for="order-type">Order Type</label>
+                      <select id="order-type" class="glassmorph-input" aria-label="Order Type">
+                        <option value="limit">Limit</option>
+                        <option value="market">Market</option>
+                        <option value="stop-limit">Stop Limit</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="price">Price</label>
+                  <div class="input-with-label">
+                    <input type="number" id="price" class="glassmorph-input" placeholder="0.00" step="0.01" min="0" />
+                    <span class="input-label">USDT</span>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="amount">Amount</label>
+                  <div class="input-with-label">
+                    <input type="number" id="amount" class="glassmorph-input" placeholder="0.00" step="0.0001" min="0" />
+                    <span class="input-label">BTC</span>
+                  </div>
+                </div>
+                
+                <div class="range-labels">
+                  <span>0%</span>
+                  <span>25%</span>
+                  <span>50%</span>
+                  <span>75%</span>
+                  <span>100%</span>
+                </div>
+                <input type="range" id="amount-slider" class="range-slider" min="0" max="100" step="1" value="0" />
+                
+                <div class="order-summary">
+                  <div class="summary-row">
+                    <span class="summary-label">Available:</span>
+                    <span class="summary-value" id="available-balance">0.00 USDT</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Order Value:</span>
+                    <span class="summary-value" id="order-value">0.00 USDT</span>
+                  </div>
+                  <div class="summary-row">
+                    <span class="summary-label">Trading Fee:</span>
+                    <span class="summary-value" id="trading-fee">0.00 USDT</span>
+                  </div>
+                </div>
+                
+                <div class="order-button-group" id="buy-buttons">
+                  <button type="submit" class="btn-buy" id="buy-button">Buy BTC</button>
+                </div>
+                
+                <div class="order-button-group" id="sell-buttons" style="display: none;">
+                  <button type="submit" class="btn-sell" id="sell-button">Sell BTC</button>
+                </div>
               </form>
-              <form id="price-alert-form">
+
+              <!-- Price Alert Form -->
+              <div style="margin-top: 20px;">
                 <h3>Set Price Alert</h3>
-                <input type="number" id="alert-price" class="glassmorph-input" placeholder="Alert Price" required />
-                <button type="submit" class="btn btn-yellow"><i class="fas fa-bell"></i> Set Alert</button>
-              </form>
+                <form id="price-alert-form">
+                  <div class="form-group">
+                    <label for="alert-price">Price Threshold</label>
+                    <div class="input-with-label">
+                      <input type="number" id="alert-price" class="glassmorph-input" placeholder="0.00" step="0.01" min="0" required />
+                      <span class="input-label">USDT</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="alert-condition">Condition</label>
+                    <select id="alert-condition" class="glassmorph-input">
+                      <option value="above">Price goes above</option>
+                      <option value="below">Price goes below</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="btn btn-yellow"><i class="fas fa-bell"></i> Set Alert</button>
+                </form>
+              </div>
             </div>
+            
+            <!-- Trade History -->
             <div class="trade-history card glassmorph">
-              <h3>Trade History</h3>
-              <div id="trade-history">
-                <p>2025-04-17: Bought 0.1 BTC @ 60000 USDT</p>
+              <h3>Recent Trades</h3>
+              <div class="trade-history-rows" id="trade-history">
+                <!-- Trades will be populated dynamically -->
+                <div class="trade-history-row">
+                  <div class="trade-history-price buy">43,950.00</div>
+                  <div class="trade-history-amount">0.0532</div>
+                  <div class="trade-history-time">12:31:20</div>
+                </div>
+                <div class="trade-history-row">
+                  <div class="trade-history-price sell">43,925.50</div>
+                  <div class="trade-history-amount">0.1245</div>
+                  <div class="trade-history-time">12:30:18</div>
+                </div>
+                <div class="trade-history-row">
+                  <div class="trade-history-price buy">43,950.00</div>
+                  <div class="trade-history-amount">0.0387</div>
+                  <div class="trade-history-time">12:30:05</div>
+                </div>
               </div>
             </div>
           </div>

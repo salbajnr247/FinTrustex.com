@@ -1,64 +1,99 @@
 /**
  * Database Migration Script for FinTrustEX
- * This script allows you to export your database schema and data to SQL format
- * which can be imported into another PostgreSQL database
+ * This script updates the database schema based on changes to shared/schema.ts
  */
 
-const fs = require('fs');
-const path = require('path');
 const { execSync } = require('child_process');
-require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 
-// Database connection parameters
-const dbParams = {
-  host: process.env.PGHOST,
-  port: process.env.PGPORT,
-  database: process.env.PGDATABASE,
-  user: process.env.PGUSER,
-  password: process.env.PGPASSWORD
-};
-
-// Output files
-const SCHEMA_FILE = path.join(__dirname, 'db_schema.sql');
-const DATA_FILE = path.join(__dirname, 'db_data.sql');
-
-console.log('Database Migration Tool for FinTrustEX');
-console.log('======================================');
-
-// Validate database connection details
-if (!dbParams.host || !dbParams.database || !dbParams.user || !dbParams.password) {
-  console.error('Error: Missing database connection parameters.');
-  console.error('Please ensure the following environment variables are set:');
-  console.error('PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD');
-  process.exit(1);
+async function main() {
+  const { Pool } = require('pg');
+  try {
+    console.log('Starting database migration...');
+    
+    // Check if the schema file exists
+    const schemaPath = path.resolve(__dirname, 'shared/schema.ts');
+    if (!fs.existsSync(schemaPath)) {
+      throw new Error('Schema file not found at: ' + schemaPath);
+    }
+    console.log('Schema file found at: ' + schemaPath);
+    
+    // Run drizzle-kit generate first to create SQL files
+    console.log('Running drizzle-kit generate...');
+    execSync('npx drizzle-kit generate:pg', {
+      cwd: __dirname,
+      stdio: 'inherit'
+    });
+    
+    console.log('Migrating database schema...');
+    // Connect to DB and run SQL directly using node-postgres to avoid interactive prompts
+    const pool = new Pool({
+      host: process.env.PGHOST,
+      port: parseInt(process.env.PGPORT),
+      user: process.env.PGUSER,
+      password: process.env.PGPASSWORD,
+      database: process.env.PGDATABASE,
+      ssl: true
+    });
+    
+    // Perform basic alterations to add the new fields
+    const alterations = [
+      // Add new fields to users table
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS account_status TEXT DEFAULT 'active'",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS restriction_reason TEXT",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS restricted_at TIMESTAMP",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS restricted_by INTEGER",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT",
+      "ALTER TABLE IF EXISTS users ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT",
+      
+      // Add method field to transactions
+      "ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS method TEXT",
+      "ALTER TABLE IF EXISTS transactions ADD COLUMN IF NOT EXISTS metadata JSONB",
+      
+      // Create admin_logs table if it doesn't exist
+      `CREATE TABLE IF NOT EXISTS admin_logs (
+        id SERIAL PRIMARY KEY,
+        admin_id INTEGER NOT NULL REFERENCES users(id),
+        action TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        details JSONB,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      
+      // Create account_restrictions table if it doesn't exist
+      `CREATE TABLE IF NOT EXISTS account_restrictions (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id),
+        admin_id INTEGER NOT NULL REFERENCES users(id),
+        action_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    ];
+    
+    // Run each SQL statement
+    for (const sql of alterations) {
+      try {
+        await pool.query(sql);
+        console.log(`Successfully executed: ${sql.substring(0, 50)}...`);
+      } catch (error) {
+        console.log(`Error executing SQL: ${sql.substring(0, 50)}...`);
+        console.log(`Error details: ${error.message}`);
+        // Continue to next statement
+      }
+    }
+    
+    await pool.end();
+    
+    console.log('Database migration completed successfully!');
+  } catch (error) {
+    console.error('Database migration failed:', error);
+    process.exit(1);
+  }
 }
 
-try {
-  console.log(`\nExporting database schema to ${SCHEMA_FILE}...`);
-  
-  // Export schema (structure only, no data)
-  const schemaCmd = `PGPASSWORD=${dbParams.password} pg_dump -h ${dbParams.host} -p ${dbParams.port} -U ${dbParams.user} -d ${dbParams.database} --schema-only --no-owner --no-acl > "${SCHEMA_FILE}"`;
-  execSync(schemaCmd, { stdio: 'inherit' });
-  
-  console.log(`\nExporting database data to ${DATA_FILE}...`);
-  
-  // Export data only (no schema)
-  const dataCmd = `PGPASSWORD=${dbParams.password} pg_dump -h ${dbParams.host} -p ${dbParams.port} -U ${dbParams.user} -d ${dbParams.database} --data-only --no-owner --no-acl > "${DATA_FILE}"`;
-  execSync(dataCmd, { stdio: 'inherit' });
-  
-  console.log('\nDatabase export completed successfully!');
-  console.log('\nInstructions for importing to a new database:');
-  console.log('1. Create a new PostgreSQL database');
-  console.log('2. Import the schema: psql -h new_host -U new_user -d new_database < db_schema.sql');
-  console.log('3. Import the data: psql -h new_host -U new_user -d new_database < db_data.sql');
-  
-} catch (error) {
-  console.error('\nError during database export:', error.message);
-  console.error('\nAlternative export method:');
-  console.log('You can manually export the database using the command line:');
-  console.log(`PGPASSWORD=${dbParams.password} pg_dump -h ${dbParams.host} -p ${dbParams.port} -U ${dbParams.user} -d ${dbParams.database} > fintrustex_backup.sql`);
-}
-
-// Display the current database URL (for reference)
-console.log('\nCurrent DATABASE_URL:', process.env.DATABASE_URL);
-console.log('\nTo use this database in another application, set the DATABASE_URL environment variable to the value above.');
+// Run the migration
+main();

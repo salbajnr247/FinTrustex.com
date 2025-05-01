@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Deposit Funds</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../../assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/wallet.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body class="dark-theme">
+  <div class="wallet-wrapper">
+    <header class="navbar" id="navbar-container"></header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container"></aside>
+      <main class="main-content" id="app">
+        <section id="index">
+          <h1 class="section-title">Deposit Funds</h1>
+          
+          <div class="deposit-methods-container">
+            <div class="deposit-methods card glassmorph" data-aos="fade-up">
+              <h3>Select Payment Method</h3>
+              <div class="payment-methods">
+                <div class="payment-method active" data-method="card">
+                  <i class="fas fa-credit-card"></i>
+                  <span>Credit/Debit Card</span>
+                </div>
+                <div class="payment-method" data-method="crypto">
+                  <i class="fab fa-bitcoin"></i>
+                  <span>Cryptocurrency</span>
+                </div>
+                <div class="payment-method" data-method="bank">
+                  <i class="fas fa-university"></i>
+                  <span>Bank Transfer</span>
+                </div>
+              </div>
+              
+              <div class="payment-forms">
+                <!-- Credit Card Payment Form -->
+                <div class="payment-form active" id="card-payment-form">
+                  <form id="payment-form">
+                    <div class="form-group">
+                      <label for="currency">Select Currency</label>
+                      <select id="currency" class="form-control">
+                        <option value="USDT">USDT</option>
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                      </select>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="amount">Amount</label>
+                      <div class="amount-input-wrapper">
+                        <input type="number" id="amount" min="10" step="10" value="100" class="form-control">
+                        <span id="currency-symbol">$</span>
+                      </div>
+                    </div>
+                    
+                    <div class="amount-presets">
+                      <button type="button" class="amount-preset" data-amount="100">$100</button>
+                      <button type="button" class="amount-preset" data-amount="250">$250</button>
+                      <button type="button" class="amount-preset" data-amount="500">$500</button>
+                      <button type="button" class="amount-preset" data-amount="1000">$1000</button>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="card-element">Credit or debit card</label>
+                      <div id="card-element" class="form-control card-element">
+                        <!-- Stripe Card Element will be inserted here -->
+                      </div>
+                      <div id="card-errors" class="error-message" role="alert"></div>
+                    </div>
+                    
+                    <div class="form-summary">
+                      <div class="summary-item">
+                        <span>Deposit Amount:</span>
+                        <span id="display-amount">$100.00</span>
+                      </div>
+                      <div class="summary-item">
+                        <span>Processing Fee:</span>
+                        <span id="display-fee">$3.00</span>
+                      </div>
+                      <div class="summary-item total">
+                        <span>Total:</span>
+                        <span id="display-total">$103.00</span>
+                      </div>
+                    </div>
+                    
+                    <button type="submit" id="submit-button" class="btn btn-yellow">
+                      <i class="fas fa-lock"></i> Deposit Securely
+                    </button>
+                    
+                    <div class="secure-badge">
+                      <i class="fas fa-shield-alt"></i>
+                      <span>Your payment is secured with Stripe</span>
+                    </div>
+                  </form>
+                </div>
+                
+                <!-- Cryptocurrency Payment Form -->
+                <div class="payment-form" id="crypto-payment-form">
+                  <h4>Deposit via Cryptocurrency</h4>
+                  <div class="crypto-address-container">
+                    <div class="crypto-selector">
+                      <button class="crypto-option active" data-crypto="BTC">
+                        <img src="../../assets/images/bitcoin.svg" alt="Bitcoin">
+                        <span>Bitcoin</span>
+                      </button>
+                      <button class="crypto-option" data-crypto="ETH">
+                        <img src="../../assets/images/ethereum.svg" alt="Ethereum">
+                        <span>Ethereum</span>
+                      </button>
+                      <button class="crypto-option" data-crypto="USDT">
+                        <img src="../../assets/images/tether.svg" alt="Tether">
+                        <span>Tether</span>
+                      </button>
+                    </div>
+                    
+                    <div class="crypto-address-wrapper">
+                      <h5>Send your deposit to this address:</h5>
+                      <div class="crypto-qr">
+                        <div id="qrcode"></div>
+                      </div>
+                      <div class="crypto-address">
+                        <input type="text" id="crypto-address" readonly value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh">
+                        <button id="copy-address" class="btn btn-outline btn-sm">
+                          <i class="fas fa-copy"></i>
+                        </button>
+                      </div>
+                      <div class="crypto-notes">
+                        <p>Only send <span id="selected-crypto">Bitcoin</span> to this address. Sending any other currency may result in permanent loss.</p>
+                        <p>Your account will be credited after <span id="confirmation-count">2</span> blockchain confirmations.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Bank Transfer Payment Form -->
+                <div class="payment-form" id="bank-payment-form">
+                  <h4>Deposit via Bank Transfer</h4>
+                  <div class="bank-details">
+                    <p>Make a transfer to our bank account with your user ID in the reference:</p>
+                    <div class="bank-detail-row">
+                      <span>Bank Name:</span>
+                      <span>Global Finance Bank</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span>Account Name:</span>
+                      <span>FINTRUSTEX LTD</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span>Account Number:</span>
+                      <span>127890456</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span>Routing Number:</span>
+                      <span>456789123</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span>SWIFT/BIC:</span>
+                      <span>GFBKUS12XXX</span>
+                    </div>
+                    <div class="bank-detail-row">
+                      <span>Reference:</span>
+                      <span id="bank-user-reference">FTX-1234567</span>
+                      <button id="copy-reference" class="btn btn-outline btn-sm">
+                        <i class="fas fa-copy"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="bank-transfer-notes">
+                    <p>Important: Always include your unique reference number in your bank transfer. Without this reference, your deposit may be delayed or lost.</p>
+                    <p>Bank transfers typically take 1-3 business days to process.</p>
+                  </div>
+                  <div class="bank-notification">
+                    <button id="notify-bank-transfer" class="btn btn-yellow">
+                      <i class="fas fa-bell"></i> Notify Us About Your Transfer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="deposit-history card glassmorph" data-aos="fade-up">
+              <h3>Recent Deposits</h3>
+              <div class="transaction-list" id="deposit-history">
+                <div class="transaction-item">
+                  <div class="transaction-icon">
+                    <i class="fas fa-credit-card"></i>
+                  </div>
+                  <div class="transaction-details">
+                    <div class="transaction-title">Credit Card Deposit</div>
+                    <div class="transaction-date">Apr 28, 2025</div>
+                  </div>
+                  <div class="transaction-amount positive">+$500.00</div>
+                  <div class="transaction-status completed">Completed</div>
+                </div>
+                <div class="transaction-item">
+                  <div class="transaction-icon">
+                    <i class="fab fa-bitcoin"></i>
+                  </div>
+                  <div class="transaction-details">
+                    <div class="transaction-title">Bitcoin Deposit</div>
+                    <div class="transaction-date">Apr 24, 2025</div>
+                  </div>
+                  <div class="transaction-amount positive">+0.01254 BTC</div>
+                  <div class="transaction-status completed">Completed</div>
+                </div>
+                <div class="transaction-item">
+                  <div class="transaction-icon">
+                    <i class="fas fa-university"></i>
+                  </div>
+                  <div class="transaction-details">
+                    <div class="transaction-title">Bank Transfer</div>
+                    <div class="transaction-date">Apr 18, 2025</div>
+                  </div>
+                  <div class="transaction-amount positive">+$1,000.00</div>
+                  <div class="transaction-status pending">Pending</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container"></footer>
+    
+    <div id="success-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Deposit Successful!</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3>Your deposit was successful</h3>
+          <div class="success-details">
+            <div class="success-detail-row">
+              <span>Amount:</span>
+              <span id="success-amount">$100.00</span>
+            </div>
+            <div class="success-detail-row">
+              <span>Transaction ID:</span>
+              <span id="success-txid">txn_1234567890</span>
+            </div>
+            <div class="success-detail-row">
+              <span>Date:</span>
+              <span id="success-date">May 1, 2025</span>
+            </div>
+          </div>
+          <p>Your funds have been added to your account and are now available for trading.</p>
+        </div>
+        <div class="modal-footer">
+          <button id="return-to-wallet" class="btn btn-outline">Return to Wallet</button>
+          <button id="start-trading" class="btn btn-yellow">Start Trading</button>
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth-service.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/deposit.js"></script>
+  </div>
+</body>
+</html>

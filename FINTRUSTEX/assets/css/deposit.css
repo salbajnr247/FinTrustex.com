@@ -1,0 +1,738 @@
+/* Deposit-specific styles */
+.deposit-methods-container {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.card {
+  background: rgba(25, 30, 47, 0.5);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card h3 {
+  color: var(--accent-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.card h3::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 24px;
+  background: var(--accent-color);
+  margin-right: 12px;
+  border-radius: 3px;
+}
+
+/* Payment methods */
+.payment-methods {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.payment-method {
+  flex: 1;
+  min-width: 120px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-method i {
+  font-size: 2rem;
+  color: var(--text-muted);
+}
+
+.payment-method span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  text-align: center;
+}
+
+.payment-method:hover {
+  background: rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+.payment-method.active {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-color);
+}
+
+.payment-method.active i,
+.payment-method.active span {
+  color: var(--accent-color);
+}
+
+/* Payment forms */
+.payment-forms {
+  position: relative;
+  min-height: 400px;
+}
+
+.payment-form {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.payment-form.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(247, 201, 72, 0.2);
+}
+
+/* Amount input */
+.amount-input-wrapper {
+  position: relative;
+}
+
+.amount-input-wrapper input {
+  padding-right: 2.5rem;
+}
+
+#currency-symbol {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 1.2rem;
+}
+
+/* Amount presets */
+.amount-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.amount-preset {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.amount-preset:hover {
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+/* Stripe card element */
+.card-element {
+  height: 40px;
+  padding: 10px 12px;
+  color: white;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+}
+
+.error-message {
+  color: #f44336;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  min-height: 20px;
+}
+
+/* Form summary */
+.form-summary {
+  margin: 1.5rem 0;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.summary-item.total {
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.summary-item.total span:last-child {
+  color: var(--accent-color);
+}
+
+/* Submit button */
+.btn {
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  border: none;
+}
+
+.btn-yellow {
+  background: linear-gradient(135deg, var(--accent-color), #e6b800);
+  color: #111;
+  border: none;
+  width: 100%;
+}
+
+.btn-yellow:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 201, 72, 0.3);
+}
+
+.btn-yellow:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+}
+
+.btn-outline:hover {
+  background: rgba(247, 201, 72, 0.1);
+  color: var(--accent-color);
+  transform: translateY(-2px);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* Secure badge */
+.secure-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.secure-badge i {
+  color: #4caf50;
+}
+
+/* Crypto deposit */
+.crypto-address-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.crypto-selector {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.crypto-option {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  min-width: 100px;
+}
+
+.crypto-option img {
+  width: 32px;
+  height: 32px;
+}
+
+.crypto-option span {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.crypto-option:hover {
+  background: rgba(0, 0, 0, 0.3);
+  transform: translateY(-3px);
+}
+
+.crypto-option.active {
+  background: rgba(0, 0, 0, 0.4);
+  border-color: var(--accent-color);
+}
+
+.crypto-option.active span {
+  color: var(--accent-color);
+}
+
+.crypto-address-wrapper {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.crypto-address-wrapper h5 {
+  color: var(--text-color);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.crypto-qr {
+  background: white;
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.crypto-address {
+  display: flex;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.crypto-address input {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: var(--accent-color);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9rem;
+}
+
+.crypto-notes {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.crypto-notes p {
+  margin: 0.5rem 0;
+}
+
+.crypto-notes span {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+/* Bank transfer */
+.bank-details {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.bank-details p {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-color);
+}
+
+.bank-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bank-detail-row:last-child {
+  border-bottom: none;
+}
+
+.bank-detail-row span:first-child {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.bank-detail-row span:last-child {
+  color: var(--text-color);
+  font-weight: 600;
+  font-family: 'Fira Code', monospace;
+}
+
+.bank-detail-row:last-child {
+  display: flex;
+  align-items: center;
+}
+
+.bank-detail-row button {
+  margin-left: 0.5rem;
+}
+
+.bank-transfer-notes {
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.bank-transfer-notes p {
+  margin: 0.5rem 0;
+}
+
+.bank-notification {
+  text-align: center;
+}
+
+/* Deposit history */
+.transaction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.transaction-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.transaction-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.transaction-details {
+  flex: 1;
+}
+
+.transaction-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.transaction-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.transaction-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-right: 1rem;
+}
+
+.transaction-amount.positive {
+  color: var(--accent-color);
+}
+
+.transaction-amount.negative {
+  color: #f44336;
+}
+
+.transaction-status {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  text-transform: capitalize;
+}
+
+.transaction-status.completed {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.transaction-status.pending {
+  background: rgba(247, 201, 72, 0.1);
+  color: var(--accent-color);
+}
+
+.transaction-status.failed {
+  background: rgba(244, 67, 54, 0.1);
+  color: #f44336;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-content {
+  background: #1e2130;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 540px;
+  margin: 10vh auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: all 0.3s ease;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: var(--accent-color);
+  font-size: 1.5rem;
+}
+
+.close-modal {
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.close-modal:hover {
+  color: white;
+}
+
+.modal-body {
+  padding: 2rem;
+  text-align: center;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.success-icon i {
+  color: #4caf50;
+  font-size: 2.5rem;
+}
+
+.modal-body h3 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.success-details {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.success-detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.success-detail-row:last-child {
+  border-bottom: none;
+}
+
+.success-detail-row span:first-child {
+  color: var(--text-muted);
+}
+
+.success-detail-row span:last-child {
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.modal-body p {
+  color: var(--text-color);
+  margin-bottom: 0;
+}
+
+.modal-footer {
+  padding: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Empty state */
+.empty-state {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles */
+@media (max-width: 992px) {
+  .deposit-methods-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-methods {
+    flex-direction: column;
+  }
+  
+  .payment-method {
+    width: 100%;
+  }
+  
+  .crypto-selector {
+    flex-direction: column;
+  }
+  
+  .transaction-item {
+    flex-wrap: wrap;
+  }
+  
+  .transaction-status {
+    width: 100%;
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .card {
+    padding: 1.5rem;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-width: none;
+  }
+}

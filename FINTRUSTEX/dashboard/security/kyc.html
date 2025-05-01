@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Identity Verification (KYC)</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../../assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="../../assets/css/main.css">
+  <link rel="stylesheet" href="../../assets/css/security.css">
+  <link rel="stylesheet" href="../../assets/css/kyc.css">
+  <link rel="stylesheet" href="../../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="security-wrapper">
+    <header class="navbar" id="navbar-container"></header>
+    <div class="container">
+      <aside class="sidebar" id="sidebar-container"></aside>
+      <main class="main-content" id="app">
+        <section id="index">
+          <h1 class="section-title">Identity Verification (KYC)</h1>
+          
+          <div class="kyc-container">
+            <!-- KYC Status Card -->
+            <div class="kyc-status card glassmorph" data-aos="fade-up">
+              <h3>Verification Status</h3>
+              <div class="status-container">
+                <div class="status-badge not-submitted" id="kyc-status-badge">
+                  <i class="fas fa-exclamation-circle"></i>
+                  <span>Not Submitted</span>
+                </div>
+                <div class="status-message" id="kyc-status-message">
+                  You have not submitted your verification documents yet. Please complete the verification process to unlock all platform features.
+                </div>
+                
+                <!-- Level Indicators -->
+                <div class="verification-levels">
+                  <div class="level-item active">
+                    <div class="level-icon">
+                      <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="level-info">
+                      <h4>Level 1</h4>
+                      <p>Email & Phone</p>
+                      <div class="level-limits">
+                        <span>Limits: $2,000/day</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="level-item" id="level-2-item">
+                    <div class="level-icon">
+                      <i class="fas fa-id-card"></i>
+                    </div>
+                    <div class="level-info">
+                      <h4>Level 2</h4>
+                      <p>ID Verification</p>
+                      <div class="level-limits">
+                        <span>Limits: $10,000/day</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="level-item" id="level-3-item">
+                    <div class="level-icon">
+                      <i class="fas fa-address-card"></i>
+                    </div>
+                    <div class="level-info">
+                      <h4>Level 3</h4>
+                      <p>Address Proof</p>
+                      <div class="level-limits">
+                        <span>Limits: $100,000/day</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- KYC Form Card -->
+            <div class="kyc-form card glassmorph" data-aos="fade-up">
+              <h3>Submit Verification</h3>
+              
+              <!-- Form steps navigation -->
+              <div class="form-steps">
+                <div class="step active" data-step="1">
+                  <div class="step-number">1</div>
+                  <div class="step-info">
+                    <div class="step-name">Personal Info</div>
+                    <div class="step-status">Current</div>
+                  </div>
+                </div>
+                <div class="step" data-step="2">
+                  <div class="step-number">2</div>
+                  <div class="step-info">
+                    <div class="step-name">ID Verification</div>
+                    <div class="step-status">Pending</div>
+                  </div>
+                </div>
+                <div class="step" data-step="3">
+                  <div class="step-number">3</div>
+                  <div class="step-info">
+                    <div class="step-name">Address Proof</div>
+                    <div class="step-status">Pending</div>
+                  </div>
+                </div>
+                <div class="step" data-step="4">
+                  <div class="step-number">4</div>
+                  <div class="step-info">
+                    <div class="step-name">Review</div>
+                    <div class="step-status">Pending</div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Form steps content -->
+              <div class="form-step-container">
+                <!-- Step 1: Personal Information -->
+                <div class="form-step active" id="step-1">
+                  <form id="personal-info-form">
+                    <div class="form-group">
+                      <label for="first-name">First Name</label>
+                      <input type="text" id="first-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="last-name">Last Name</label>
+                      <input type="text" id="last-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="dob">Date of Birth</label>
+                      <input type="date" id="dob" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="nationality">Country of Citizenship</label>
+                      <select id="nationality" class="form-control" required>
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="SG">Singapore</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="JP">Japan</option>
+                        <option value="KR">South Korea</option>
+                        <option value="IN">India</option>
+                        <!-- Add more countries as needed -->
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label for="phone">Phone Number</label>
+                      <div class="phone-input">
+                        <select id="phone-code" class="form-control phone-code">
+                          <option value="+1">+1</option>
+                          <option value="+44">+44</option>
+                          <option value="+61">+61</option>
+                          <option value="+65">+65</option>
+                          <option value="+49">+49</option>
+                          <option value="+33">+33</option>
+                          <option value="+81">+81</option>
+                          <option value="+82">+82</option>
+                          <option value="+91">+91</option>
+                          <!-- Add more country codes as needed -->
+                        </select>
+                        <input type="tel" id="phone" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="form-actions">
+                      <button type="submit" class="btn btn-yellow">Continue to ID Verification</button>
+                    </div>
+                  </form>
+                </div>
+                
+                <!-- Step 2: ID Verification -->
+                <div class="form-step" id="step-2">
+                  <div class="id-verification-container">
+                    <div class="id-type-selector">
+                      <h4>Select ID Type</h4>
+                      <div class="id-types">
+                        <div class="id-type active" data-id-type="passport">
+                          <i class="fas fa-passport"></i>
+                          <span>Passport</span>
+                        </div>
+                        <div class="id-type" data-id-type="id-card">
+                          <i class="fas fa-id-card"></i>
+                          <span>ID Card</span>
+                        </div>
+                        <div class="id-type" data-id-type="drivers-license">
+                          <i class="fas fa-id-badge"></i>
+                          <span>Driver's License</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="document-upload">
+                      <h4>Upload Your Document</h4>
+                      <p class="upload-instructions">Please upload clear, color images of your ID document. Make sure all information is clearly visible.</p>
+                      
+                      <div class="upload-container" id="passport-upload">
+                        <div class="upload-item">
+                          <label for="passport-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload Passport</span>
+                              <p>JPG, PNG or PDF (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="passport-preview"></div>
+                          </label>
+                          <input type="file" id="passport-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                        </div>
+                      </div>
+                      
+                      <div class="upload-container" id="id-card-upload" style="display: none;">
+                        <div class="upload-item">
+                          <label for="id-front-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload ID Front</span>
+                              <p>JPG, PNG or PDF (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="id-front-preview"></div>
+                          </label>
+                          <input type="file" id="id-front-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                        </div>
+                        <div class="upload-item">
+                          <label for="id-back-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload ID Back</span>
+                              <p>JPG, PNG or PDF (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="id-back-preview"></div>
+                          </label>
+                          <input type="file" id="id-back-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                        </div>
+                      </div>
+                      
+                      <div class="upload-container" id="license-upload" style="display: none;">
+                        <div class="upload-item">
+                          <label for="license-front-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload License Front</span>
+                              <p>JPG, PNG or PDF (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="license-front-preview"></div>
+                          </label>
+                          <input type="file" id="license-front-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                        </div>
+                        <div class="upload-item">
+                          <label for="license-back-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload License Back</span>
+                              <p>JPG, PNG or PDF (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="license-back-preview"></div>
+                          </label>
+                          <input type="file" id="license-back-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                        </div>
+                      </div>
+                      
+                      <div class="selfie-upload">
+                        <h4>Upload Selfie with ID</h4>
+                        <p class="upload-instructions">Please upload a photo of yourself holding your ID document next to your face.</p>
+                        
+                        <div class="upload-item">
+                          <label for="selfie-file">
+                            <div class="upload-placeholder">
+                              <i class="fas fa-upload"></i>
+                              <span>Upload Selfie with ID</span>
+                              <p>JPG or PNG (Max 5MB)</p>
+                            </div>
+                            <div class="upload-preview" id="selfie-preview"></div>
+                          </label>
+                          <input type="file" id="selfie-file" class="file-input" accept="image/jpeg,image/png">
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                      <button class="btn btn-outline prev-step" data-prev="1">Back</button>
+                      <button class="btn btn-yellow next-step" data-next="3">Continue to Address Proof</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 3: Address Proof -->
+                <div class="form-step" id="step-3">
+                  <div class="address-proof-container">
+                    <div class="form-group">
+                      <label for="address-line1">Address Line 1</label>
+                      <input type="text" id="address-line1" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                      <label for="address-line2">Address Line 2 (Optional)</label>
+                      <input type="text" id="address-line2" class="form-control">
+                    </div>
+                    <div class="form-group">
+                      <label for="city">City/Town</label>
+                      <input type="text" id="city" class="form-control" required>
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="state">State/Province</label>
+                        <input type="text" id="state" class="form-control" required>
+                      </div>
+                      <div class="form-group">
+                        <label for="postal-code">Postal/ZIP Code</label>
+                        <input type="text" id="postal-code" class="form-control" required>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="country">Country</label>
+                      <select id="country" class="form-control" required>
+                        <option value="">Select Country</option>
+                        <option value="US">United States</option>
+                        <option value="UK">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="SG">Singapore</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="JP">Japan</option>
+                        <option value="KR">South Korea</option>
+                        <option value="IN">India</option>
+                        <!-- Add more countries as needed -->
+                      </select>
+                    </div>
+                    
+                    <div class="proof-document-upload">
+                      <h4>Upload Address Proof Document</h4>
+                      <p class="upload-instructions">Please upload a document that verifies your address (utility bill, bank statement, etc.). Document must be less than 3 months old.</p>
+                      
+                      <div class="address-doc-types">
+                        <div class="doc-type active" data-doc-type="utility">
+                          <i class="fas fa-file-invoice"></i>
+                          <span>Utility Bill</span>
+                        </div>
+                        <div class="doc-type" data-doc-type="bank">
+                          <i class="fas fa-university"></i>
+                          <span>Bank Statement</span>
+                        </div>
+                        <div class="doc-type" data-doc-type="tax">
+                          <i class="fas fa-file-invoice-dollar"></i>
+                          <span>Tax Document</span>
+                        </div>
+                      </div>
+                      
+                      <div class="upload-item">
+                        <label for="address-proof-file">
+                          <div class="upload-placeholder">
+                            <i class="fas fa-upload"></i>
+                            <span>Upload Address Proof</span>
+                            <p>JPG, PNG or PDF (Max 5MB)</p>
+                          </div>
+                          <div class="upload-preview" id="address-proof-preview"></div>
+                        </label>
+                        <input type="file" id="address-proof-file" class="file-input" accept="image/jpeg,image/png,application/pdf">
+                      </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                      <button class="btn btn-outline prev-step" data-prev="2">Back</button>
+                      <button class="btn btn-yellow next-step" data-next="4">Continue to Review</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Step 4: Review and Submit -->
+                <div class="form-step" id="step-4">
+                  <div class="review-container">
+                    <h4>Review Your Information</h4>
+                    <p>Please review your information carefully before submitting. You will not be able to make changes after submission without contacting support.</p>
+                    
+                    <div class="review-section">
+                      <h5>Personal Information</h5>
+                      <div class="review-info" id="review-personal-info">
+                        <!-- Will be filled dynamically -->
+                      </div>
+                    </div>
+                    
+                    <div class="review-section">
+                      <h5>ID Document</h5>
+                      <div class="review-info" id="review-id-info">
+                        <!-- Will be filled dynamically -->
+                      </div>
+                    </div>
+                    
+                    <div class="review-section">
+                      <h5>Address Information</h5>
+                      <div class="review-info" id="review-address-info">
+                        <!-- Will be filled dynamically -->
+                      </div>
+                    </div>
+                    
+                    <div class="verification-agreement">
+                      <div class="checkbox-wrapper">
+                        <input type="checkbox" id="verification-agreement-check" required>
+                        <label for="verification-agreement-check">
+                          I confirm that all information provided is accurate and belongs to me. I understand providing false information may result in account termination and legal action.
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                      <button class="btn btn-outline prev-step" data-prev="3">Back</button>
+                      <button class="btn btn-yellow" id="submit-verification" disabled>Submit Verification</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- KYC Requirements Card -->
+            <div class="kyc-requirements card glassmorph" data-aos="fade-up">
+              <h3>Verification Requirements</h3>
+              <div class="requirements-container">
+                <div class="requirement-section">
+                  <h4><i class="fas fa-id-card"></i> Accepted ID Documents</h4>
+                  <ul class="requirement-list">
+                    <li>Valid passport</li>
+                    <li>Government-issued ID card</li>
+                    <li>Driver's license</li>
+                  </ul>
+                </div>
+                <div class="requirement-section">
+                  <h4><i class="fas fa-home"></i> Accepted Address Proof</h4>
+                  <ul class="requirement-list">
+                    <li>Utility bill (issued within the last 3 months)</li>
+                    <li>Bank statement (issued within the last 3 months)</li>
+                    <li>Tax document (issued within the last year)</li>
+                    <li>Government-issued letter (issued within the last 3 months)</li>
+                  </ul>
+                </div>
+                <div class="requirement-section">
+                  <h4><i class="fas fa-check-circle"></i> Document Requirements</h4>
+                  <ul class="requirement-list">
+                    <li>Documents must be valid and not expired</li>
+                    <li>Full name must be clearly visible</li>
+                    <li>Photo must be clearly visible (for ID documents)</li>
+                    <li>Documents must be in color (not black and white)</li>
+                    <li>File size not exceeding 5MB per file</li>
+                    <li>Accepted formats: JPG, PNG, PDF</li>
+                    <li>Documents must not be digitally modified or tampered</li>
+                  </ul>
+                </div>
+                <div class="verification-note">
+                  <i class="fas fa-info-circle"></i>
+                  <p>Verification typically takes 24-48 hours after submission. You will be notified via email once your verification is complete.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <footer class="footer" id="footer-container"></footer>
+    
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Verification Submitted</h2>
+          <span class="close-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3>Your verification documents have been submitted successfully!</h3>
+          <p>Our team will review your documents within 24-48 hours. You will receive an email notification once the verification process is complete.</p>
+          <div class="verification-id">
+            <span>Verification ID:</span>
+            <span id="verification-id">VER-12345678</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="close-success-modal" class="btn btn-yellow">Return to Dashboard</button>
+        </div>
+      </div>
+    </div>
+    
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="../../assets/js/api.js"></script>
+    <script src="../../assets/js/auth-service.js"></script>
+    <script src="../../assets/js/utils.js"></script>
+    <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/main.js"></script>
+    <script src="../../assets/js/kyc.js"></script>
+  </div>
+</body>
+</html>

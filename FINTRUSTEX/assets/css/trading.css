@@ -10,83 +10,547 @@
 
 .section-title {
   color: var(--accent-color); /* #f7c948 */
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   font-size: 2rem;
+  font-weight: 700;
 }
 
 .trading-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 1rem;
-}
-
-.chart-container {
-  padding: 2rem;
-  max-height: 400px;
-}
-
-.chart-container canvas {
-  max-height: 400px;
+  grid-template-columns: 3fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 1.5rem;
   width: 100%;
 }
 
-.order-book,
-.trade-history,
-.trade-form {
-  padding: 2rem;
+.chart-container {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  padding: 1.5rem;
+  height: auto;
+  min-height: 550px;
 }
 
-.order-book h3,
-.trade-history h3,
-.trade-form h3 {
-  color: var(--accent-color);
-  margin-bottom: 1rem;
-}
-
-.order-book p,
-.trade-history p {
-  color: var(--text-color);
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 0.9rem;
-}
-
-.order-book,
-.trade-history {
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.trade-form {
+.chart-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
-.trade-form label {
+.chart-header h3 {
+  color: var(--accent-color);
+  font-size: 1.4rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.chart-intervals,
+.chart-indicators {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.chart-interval-option,
+.chart-indicator-option {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-color);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.chart-interval-option:hover,
+.chart-indicator-option:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.chart-interval-option.active,
+.chart-indicator-option.active {
+  background: var(--accent-color);
+  color: var(--dark-bg);
+  border-color: var(--accent-color);
+}
+
+#trading-chart {
+  width: 100%;
+  height: 450px !important;
+  position: relative;
+}
+
+.chart-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.chart-stats {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.stat {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.stat-value {
+  color: var(--text-color);
+  font-weight: 600;
+  margin-left: 0.3rem;
+}
+
+.positive {
+  color: var(--accent-color) !important;
+}
+
+.negative {
+  color: #999999 !important;
+}
+
+.order-book {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 15rem);
+}
+
+.order-book h3 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.order-book-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.order-book-section {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.order-book-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.order-book-rows {
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: 'Fira Code', monospace;
+}
+
+.order-book-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 0.3rem 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.order-book-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.order-book-row.buy {
+  color: var(--accent-color);
+}
+
+.order-book-row.sell {
+  color: #999999;
+}
+
+.order-book-price {
+  text-align: left;
+}
+
+.order-book-amount {
+  text-align: right;
+}
+
+.order-book-total {
+  text-align: right;
+}
+
+.order-book-spread {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.trade-form {
+  grid-column: 1;
+  grid-row: 2;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.trade-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.trade-form h3 {
+  color: var(--accent-color);
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.trade-tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.trade-tab {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.trade-tab.buy {
+  background: rgba(247, 201, 72, 0.2);
+  color: var(--accent-color);
+  border: 1px solid rgba(247, 201, 72, 0.3);
+}
+
+.trade-tab.buy.active {
+  background: rgba(247, 201, 72, 0.3);
+  border-color: var(--accent-color);
+}
+
+.trade-tab.sell {
+  background: rgba(0, 0, 0, 0.5);
+  color: #cccccc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.trade-tab.sell.active {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: #999999;
+}
+
+.trade-form-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
   color: var(--text-color);
   font-size: 0.9rem;
 }
 
-.trade-form select,
-.trade-form input {
-  margin-bottom: 1rem;
+.form-row {
+  display: flex;
+  gap: 1rem;
 }
 
-.trade-form button {
-  margin-top: 0.5rem;
+.form-col {
+  flex: 1;
+}
+
+.input-with-label {
+  position: relative;
+}
+
+.input-label {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  pointer-events: none;
+}
+
+.range-slider {
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.order-button-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.btn-buy {
+  background: linear-gradient(to right, var(--accent-color), #e6b800);
+  color: var(--dark-bg);
+  border: none;
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-buy:hover {
+  filter: brightness(1.1);
+}
+
+.btn-sell {
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-sell:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.order-summary {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.summary-label {
+  color: var(--text-muted);
+}
+
+.summary-value {
+  color: var(--text-color);
+  font-family: 'Fira Code', monospace;
+}
+
+.trade-history {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.trade-history h3 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.trade-history-rows {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 300px;
+}
+
+.trade-history-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 0.8rem;
+  font-family: 'Fira Code', monospace;
+}
+
+.trade-history-price {
+  font-weight: 600;
+}
+
+.trade-history-price.buy {
+  color: var(--accent-color);
+}
+
+.trade-history-price.sell {
+  color: #999999;
+}
+
+.trade-history-amount,
+.trade-history-time {
+  color: var(--text-muted);
+}
+
+.market-select {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.market-select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.market-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.market-name {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.market-price {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.market-change {
+  min-width: 65px;
+  text-align: right;
 }
 
 .glassmorph-input {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0.8rem 1rem;
   color: var(--text-color);
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 .glassmorph-input:focus {
   outline: none;
   border-color: var(--accent-color);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.glassmorph-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Responsive styles */
+@media (max-width: 1200px) {
+  .trading-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  .trading-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto;
+  }
+  
+  .chart-container {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  
+  .order-book {
+    grid-column: 1;
+    grid-row: 2;
+    max-height: 400px;
+  }
+  
+  .trade-form {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  
+  .trade-history {
+    grid-column: 1;
+    grid-row: 4;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .chart-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .trade-form-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 576px) {
+  .chart-intervals,
+  .chart-indicators {
+    flex-wrap: wrap;
+  }
+  
+  .chart-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Chart-specific styles */
+.tv-lightweight-charts {
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden;
 }

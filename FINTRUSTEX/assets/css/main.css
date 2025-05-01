@@ -207,11 +207,36 @@ body {
   transform: translateX(5px);
 }
 
-.sidebar-nav ul li.active a {
+.sidebar-nav ul li.active > a {
   color: var(--accent-color);
   font-weight: bold;
   border-left: 3px solid var(--accent-color);
   padding-left: 0.5rem;
+}
+
+/* Sub-menu styles */
+.sidebar-nav .sub-menu {
+  margin-left: 1rem;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.sidebar-nav li:hover .sub-menu,
+.sidebar-nav li:focus-within .sub-menu,
+.sidebar-nav li.active .sub-menu {
+  height: auto;
+  padding-top: 0.5rem;
+}
+
+.sidebar-nav .sub-menu li a {
+  font-size: 0.9rem;
+  padding: 0.3rem 0;
+  opacity: 0.8;
+}
+
+.sidebar-nav .sub-menu li a:hover {
+  opacity: 1;
 }
 
 .shortcuts {

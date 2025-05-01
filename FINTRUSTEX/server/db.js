@@ -1,18 +1,22 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.db = exports.client = void 0;
+/**
+ * Database Connection for FinTrustEX
+ */
 
-const postgres = require("postgres");
-const { drizzle } = require("drizzle-orm/postgres-js");
-const schema = require("../shared/schema");
-require("dotenv/config");
+require('dotenv').config();
+const { Pool } = require('pg');
+const { drizzle } = require('drizzle-orm/node-postgres');
+const schema = require('../shared/schema');
 
-if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
-}
+// Create PostgreSQL connection pool
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL
+});
 
-exports.client = postgres(process.env.DATABASE_URL);
-exports.db = drizzle(exports.client, { schema });
+// Initialize Drizzle ORM with the schema
+const db = drizzle(pool, { schema });
 
-// Log configuration for debugging
-console.log(`Database configured with ${process.env.DATABASE_URL ? 'provided' : 'missing'} connection string`);
+// Export both pool and db
+module.exports = {
+  pool,
+  db
+};
