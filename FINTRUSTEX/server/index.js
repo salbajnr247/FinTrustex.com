@@ -95,7 +95,7 @@ app.use(express.static('.'));
 
 // Route to serve the main HTML file
 app.get('/', (req, res) => {
-    res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'index.html'));
+    res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
 // Handle frontend routes (SPA fallback)
@@ -106,7 +106,7 @@ app.get('*', (req, res) => {
     }
     
     // Otherwise, serve the main HTML file to support SPA routing
-    res.sendFile(path.join(process.cwd(), 'FINTRUSTEX', 'index.html'));
+    res.sendFile(path.join(process.cwd(), 'index.html'));
 });
 
 // Parse PORT to number to avoid TypeScript errors
@@ -121,7 +121,7 @@ async function startServer() {
         const server = http.createServer(app);
         
         // Setup WebSocket server
-        const wss = (0, routes_1.setupWebSocketServer)(server);
+        const wss = require('./routes').setupWebSocketServer(server);
         console.log('WebSocket server initialized');
         
         // Start HTTP server

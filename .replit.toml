@@ -1,4 +1,6 @@
-[run]
-display = "Start FinTrustEX with WebSocket"
-command = "cd FINTRUSTEX && node -r esbuild-register server/index.js"
-watch = ["FINTRUSTEX/**"]
+[commands]
+start = ["bash", "-c", "./start-server-with-websocket.sh"]
+restart = ["bash", "-c", "./start-server-with-websocket.sh"]
+
+[unitTest]
+language = "nodejs"

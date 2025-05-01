@@ -1,12 +1,31 @@
 {
   "workflows": [
     {
-      "name": "FINTRUSTEX",
-      "run": "cd FINTRUSTEX && node server-start.js"
+      "name": "Start FinTrustEX Server (Basic)",
+      "command": "./start-fintrustex.sh",
+      "runAtStart": false,
+      "restartOn": {
+        "files": ["FINTRUSTEX/**/*"]
+      },
+      "dependsOn": []
     },
     {
-      "name": "FINTRUSTEX-WS",
-      "run": "./start-server-with-websocket.sh"
+      "name": "Start FinTrustEX Server (WebSocket)",
+      "command": "./start-server-with-websocket.sh",
+      "runAtStart": true,
+      "restartOn": {
+        "files": ["FINTRUSTEX/**/*"]
+      },
+      "dependsOn": []
+    },
+    {
+      "name": "Start FinTrustEX Server (Managed)",
+      "command": "cd FINTRUSTEX && node server-start.js",
+      "runAtStart": false,
+      "restartOn": {
+        "files": ["FINTRUSTEX/**/*"]
+      },
+      "dependsOn": []
     }
   ]
 }

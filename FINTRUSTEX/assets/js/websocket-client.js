@@ -1,355 +1,245 @@
 /**
  * WebSocket Client for FinTrustEX
- * Handles real-time data connections and message handling
+ * Handles real-time market data and trading updates
  */
 
 class WebSocketClient {
-  /**
-   * Initialize WebSocket client
-   * @param {string} url - WebSocket server URL
-   */
-  constructor(url) {
-    this.url = url;
+  constructor() {
     this.socket = null;
-    this.isConnected = false;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectInterval = 2000; // Start with 2 seconds
-    this.messageCallbacks = new Map();
+    this.reconnectDelay = 2000; // 2 seconds initial delay
     this.subscriptions = new Map();
-    this.connectCallbacks = [];
-    this.disconnectCallbacks = [];
-    this.lastPingTime = 0;
-    this.pingInterval = 30000; // 30 seconds
-    this.pingTimeoutId = null;
-    this.reconnectTimeoutId = null;
+    this.messageHandlers = new Map();
+    this.connected = false;
   }
 
   /**
-   * Connect to WebSocket server
-   * @returns {Promise} - Resolves when connection is established
+   * Connect to the WebSocket server
    */
   connect() {
-    return new Promise((resolve, reject) => {
-      if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
-        resolve();
-        return;
-      }
-
-      try {
-        this.socket = new WebSocket(this.url);
-
-        this.socket.onopen = () => {
-          console.log('WebSocket connection established');
-          this.isConnected = true;
-          this.reconnectAttempts = 0;
-          this.startPingInterval();
-          
-          // Reconnect all active subscriptions
-          this.resubscribeAll();
-          
-          // Execute connect callbacks
-          this.connectCallbacks.forEach(callback => callback());
-          
-          resolve();
-        };
-
-        this.socket.onmessage = (event) => {
-          try {
-            const message = JSON.parse(event.data);
-            this.handleMessage(message);
-          } catch (error) {
-            console.error('Error parsing WebSocket message:', error);
-          }
-        };
-
-        this.socket.onclose = (event) => {
-          console.log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
-          this.isConnected = false;
-          this.stopPingInterval();
-          
-          // Execute disconnect callbacks
-          this.disconnectCallbacks.forEach(callback => callback(event));
-          
-          // Attempt to reconnect if not closed intentionally
-          if (event.code !== 1000) {
-            this.attemptReconnect();
-          }
-        };
-
-        this.socket.onerror = (error) => {
-          console.error('WebSocket error:', error);
-          reject(error);
-        };
-      } catch (error) {
-        console.error('Error creating WebSocket connection:', error);
-        reject(error);
-      }
-    });
-  }
-
-  /**
-   * Handle incoming WebSocket message
-   * @param {Object} message - Parsed message from server
-   */
-  handleMessage(message) {
-    // Handle pong responses
-    if (message.type === 'pong') {
-      const latency = Date.now() - this.lastPingTime;
-      console.log(`WebSocket ping: ${latency}ms`);
-      return;
-    }
+    // Use proper protocol based on page protocol (secure/insecure)
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     
-    // Handle subscription messages
-    if (message.type === 'data' && message.channel && message.symbol) {
-      const key = this.getSubscriptionKey(message.channel, message.symbol, message.interval);
-      const callbacks = this.messageCallbacks.get(key) || [];
+    console.log(`Connecting to WebSocket at ${wsUrl}...`);
+    
+    // Create WebSocket connection
+    this.socket = new WebSocket(wsUrl);
+    
+    // Setup event handlers
+    this.socket.onopen = this.handleOpen.bind(this);
+    this.socket.onclose = this.handleClose.bind(this);
+    this.socket.onerror = this.handleError.bind(this);
+    this.socket.onmessage = this.handleMessage.bind(this);
+  }
+  
+  /**
+   * Handle WebSocket connection open
+   */
+  handleOpen() {
+    console.log('WebSocket connection established');
+    this.connected = true;
+    this.reconnectAttempts = 0;
+    
+    // Resubscribe to previous subscriptions after reconnect
+    this.resubscribe();
+    
+    // Dispatch connection event
+    this.dispatchEvent('connection', { status: 'connected' });
+  }
+  
+  /**
+   * Handle WebSocket connection close
+   */
+  handleClose(event) {
+    console.log(`WebSocket connection closed: ${event.code} ${event.reason}`);
+    this.connected = false;
+    
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      // Attempt to reconnect with exponential backoff
+      const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts);
+      console.log(`Attempting to reconnect in ${delay}ms...`);
       
-      callbacks.forEach(callback => {
-        try {
-          callback(message.data);
-        } catch (error) {
-          console.error('Error in subscription callback:', error);
-        }
+      setTimeout(() => {
+        this.reconnectAttempts++;
+        this.connect();
+      }, delay);
+    } else {
+      console.error('Max reconnect attempts reached, giving up');
+      this.dispatchEvent('connection', { 
+        status: 'disconnected', 
+        error: 'Failed to reconnect after multiple attempts'
       });
     }
-    
-    // Handle system messages
-    if (message.type === 'system') {
-      console.log('System message:', message.message);
+  }
+  
+  /**
+   * Handle WebSocket errors
+   */
+  handleError(error) {
+    console.error('WebSocket error:', error);
+    this.dispatchEvent('error', { error });
+  }
+  
+  /**
+   * Handle incoming WebSocket messages
+   */
+  handleMessage(event) {
+    try {
+      const message = JSON.parse(event.data);
+      
+      // Route message to the appropriate handler
+      if (message.type && this.messageHandlers.has(message.type)) {
+        this.messageHandlers.get(message.type).forEach(handler => {
+          handler(message);
+        });
+      }
+      
+      // Also dispatch as a custom event
+      this.dispatchEvent('message', message);
+      
+      // Handle specific message types
+      if (message.type === 'marketUpdate') {
+        this.dispatchEvent('marketUpdate', message.data);
+      } else if (message.type === 'orderUpdate') {
+        this.dispatchEvent('orderUpdate', message.data);
+      } else if (message.type === 'notification') {
+        this.dispatchEvent('notification', message.data);
+      }
+    } catch (error) {
+      console.error('Error processing WebSocket message:', error);
     }
   }
-
+  
   /**
-   * Send message to WebSocket server
-   * @param {Object} message - Message to send
-   * @returns {boolean} - Success status
+   * Send a message to the WebSocket server
    */
-  send(message) {
-    if (!this.isConnected || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
-      console.error('Cannot send message: WebSocket not connected');
+  send(type, data = {}) {
+    if (!this.connected || this.socket.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket is not connected, cannot send message');
       return false;
     }
-
+    
+    const message = JSON.stringify({
+      type,
+      data,
+      timestamp: Date.now()
+    });
+    
     try {
-      this.socket.send(JSON.stringify(message));
+      this.socket.send(message);
       return true;
     } catch (error) {
       console.error('Error sending WebSocket message:', error);
       return false;
     }
   }
-
+  
   /**
-   * Subscribe to data channel
-   * @param {string} channel - Data channel (e.g., 'ticker', 'trades', 'orderbook')
-   * @param {string} symbol - Trading symbol (e.g., 'BTCUSD', 'ETHUSD')
-   * @param {string|null} interval - Time interval for candle data (e.g., '1m', '1h', '1d')
-   * @param {Function} callback - Callback for data updates
-   * @returns {boolean} - Success status
+   * Subscribe to a specific market data feed
    */
-  subscribe(channel, symbol, interval, callback) {
-    if (!channel || !symbol) {
-      console.error('Channel and symbol are required for subscription');
-      return false;
-    }
-
-    const key = this.getSubscriptionKey(channel, symbol, interval);
+  subscribe(channel, symbol, interval = '1m') {
+    const subscriptionKey = `${channel}:${symbol}:${interval}`;
     
-    // Add callback to message handlers
-    if (!this.messageCallbacks.has(key)) {
-      this.messageCallbacks.set(key, []);
-    }
-    this.messageCallbacks.get(key).push(callback);
-    
-    // Save subscription details for reconnection
-    this.subscriptions.set(key, { channel, symbol, interval });
-    
-    // Send subscription request if connected
-    if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.sendSubscription(channel, symbol, interval);
-    }
-    
-    return true;
-  }
-
-  /**
-   * Unsubscribe from data channel
-   * @param {string} channel - Data channel
-   * @param {string} symbol - Trading symbol
-   * @param {string|null} interval - Time interval for candle data
-   * @returns {boolean} - Success status
-   */
-  unsubscribe(channel, symbol, interval) {
-    const key = this.getSubscriptionKey(channel, symbol, interval);
-    
-    // Remove from message callbacks
-    this.messageCallbacks.delete(key);
-    
-    // Remove from subscriptions list
-    this.subscriptions.delete(key);
-    
-    // Send unsubscribe request if connected
-    if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.send({
-        type: 'unsubscribe',
-        channel,
-        symbol,
-        interval: interval || undefined
-      });
-    }
-    
-    return true;
-  }
-
-  /**
-   * Send subscription request to server
-   * @param {string} channel - Data channel
-   * @param {string} symbol - Trading symbol
-   * @param {string|null} interval - Time interval for candle data
-   */
-  sendSubscription(channel, symbol, interval) {
-    this.send({
-      type: 'subscribe',
-      channel,
-      symbol,
-      interval: interval || undefined
-    });
-  }
-
-  /**
-   * Resubscribe to all active subscriptions
-   * Used after reconnection
-   */
-  resubscribeAll() {
-    this.subscriptions.forEach((details) => {
-      this.sendSubscription(details.channel, details.symbol, details.interval);
-    });
-  }
-
-  /**
-   * Generate unique key for subscription
-   * @param {string} channel - Data channel
-   * @param {string} symbol - Trading symbol
-   * @param {string|null} interval - Time interval
-   * @returns {string} - Unique subscription key
-   */
-  getSubscriptionKey(channel, symbol, interval) {
-    return `${channel}:${symbol}${interval ? ':' + interval : ''}`;
-  }
-
-  /**
-   * Add connection event handler
-   * @param {Function} callback - Function to call on connection
-   */
-  onConnect(callback) {
-    if (typeof callback === 'function') {
-      this.connectCallbacks.push(callback);
-    }
-  }
-
-  /**
-   * Add disconnection event handler
-   * @param {Function} callback - Function to call on disconnection
-   */
-  onDisconnect(callback) {
-    if (typeof callback === 'function') {
-      this.disconnectCallbacks.push(callback);
-    }
-  }
-
-  /**
-   * Start ping interval to keep connection alive
-   */
-  startPingInterval() {
-    this.stopPingInterval(); // Clear any existing interval
-    
-    this.pingTimeoutId = setInterval(() => {
-      if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
-        this.lastPingTime = Date.now();
-        this.send({ type: 'ping' });
+    if (!this.subscriptions.has(subscriptionKey)) {
+      this.subscriptions.set(subscriptionKey, { channel, symbol, interval });
+      
+      // Send subscription request if already connected
+      if (this.connected && this.socket.readyState === WebSocket.OPEN) {
+        this.send('subscribe', { channel, symbol, interval });
       }
-    }, this.pingInterval);
+    }
+    
+    return subscriptionKey;
   }
-
+  
   /**
-   * Stop ping interval
+   * Unsubscribe from a specific market data feed
    */
-  stopPingInterval() {
-    if (this.pingTimeoutId) {
-      clearInterval(this.pingTimeoutId);
-      this.pingTimeoutId = null;
+  unsubscribe(channel, symbol, interval = '1m') {
+    const subscriptionKey = `${channel}:${symbol}:${interval}`;
+    
+    if (this.subscriptions.has(subscriptionKey)) {
+      this.subscriptions.delete(subscriptionKey);
+      
+      // Send unsubscription request if connected
+      if (this.connected && this.socket.readyState === WebSocket.OPEN) {
+        this.send('unsubscribe', { channel, symbol, interval });
+      }
     }
   }
-
+  
   /**
-   * Attempt to reconnect to WebSocket server
+   * Resubscribe to all active subscriptions (after reconnect)
    */
-  attemptReconnect() {
-    if (this.reconnectTimeoutId) {
-      clearTimeout(this.reconnectTimeoutId);
-    }
-
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('Maximum reconnection attempts reached. Giving up.');
+  resubscribe() {
+    if (!this.connected || this.socket.readyState !== WebSocket.OPEN) {
       return;
     }
-
-    const delay = Math.min(30000, this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts));
-    this.reconnectAttempts++;
-
-    console.log(`Attempting to reconnect in ${delay / 1000} seconds. Attempt ${this.reconnectAttempts} of ${this.maxReconnectAttempts}.`);
     
-    this.reconnectTimeoutId = setTimeout(() => {
-      console.log('Reconnecting...');
-      this.connect().catch(error => {
-        console.error('Reconnection failed:', error);
-      });
-    }, delay);
+    this.subscriptions.forEach(({ channel, symbol, interval }) => {
+      this.send('subscribe', { channel, symbol, interval });
+    });
   }
-
+  
   /**
-   * Disconnect from WebSocket server
+   * Register a message handler for a specific message type
+   */
+  on(messageType, handler) {
+    if (!this.messageHandlers.has(messageType)) {
+      this.messageHandlers.set(messageType, []);
+    }
+    
+    this.messageHandlers.get(messageType).push(handler);
+  }
+  
+  /**
+   * Remove a message handler
+   */
+  off(messageType, handler) {
+    if (this.messageHandlers.has(messageType)) {
+      const handlers = this.messageHandlers.get(messageType);
+      const index = handlers.indexOf(handler);
+      
+      if (index !== -1) {
+        handlers.splice(index, 1);
+      }
+    }
+  }
+  
+  /**
+   * Dispatch a custom event
+   */
+  dispatchEvent(name, detail) {
+    const event = new CustomEvent(`ws:${name}`, { detail });
+    document.dispatchEvent(event);
+  }
+  
+  /**
+   * Close the WebSocket connection
    */
   disconnect() {
     if (this.socket) {
-      this.stopPingInterval();
-      
-      if (this.reconnectTimeoutId) {
-        clearTimeout(this.reconnectTimeoutId);
-        this.reconnectTimeoutId = null;
-      }
-      
-      if (this.socket.readyState === WebSocket.OPEN) {
-        this.socket.close(1000, 'Normal closure');
-      }
-      
-      this.isConnected = false;
+      this.socket.close();
     }
   }
 }
 
-// Create singleton instance
-const wsClient = (() => {
-  let instance;
-  
-  function createInstance() {
-    // Determine WebSocket URL based on current location
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
-    return new WebSocketClient(wsUrl);
-  }
-  
-  return {
-    getInstance: function() {
-      if (!instance) {
-        instance = createInstance();
-      }
-      return instance;
-    }
-  };
-})();
+// Create a singleton instance
+const wsClient = new WebSocketClient();
 
-// Export WebSocket client
-window.wsClient = wsClient.getInstance();
+// Connect when the page loads (if not already connected)
+document.addEventListener('DOMContentLoaded', () => {
+  wsClient.connect();
+});
+
+// Reconnect when the page becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && (!wsClient.connected || wsClient.socket.readyState !== WebSocket.OPEN)) {
+    wsClient.connect();
+  }
+});
+
+// Export the singleton instance
+window.wsClient = wsClient;
