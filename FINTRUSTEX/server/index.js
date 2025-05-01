@@ -12,6 +12,7 @@ const routes_1 = require("./routes");
 const path = require("path");
 const aiRouter = require("./routes/ai").default;
 const db_1 = require("./db");
+const { authenticate } = require("./middleware/auth");
 
 // Create Express application
 const app = express();
@@ -20,7 +21,7 @@ const PORT = process.env.PORT || 3000;
 // Database connection check
 async function initDatabase() {
     try {
-        await db_1.client`SELECT NOW()`;
+        const result = await db_1.pool.query('SELECT NOW()');
         console.log('Database connection successful!');
     }
     catch (error) {
@@ -75,11 +76,16 @@ app.get('/api/orders', orderRoutes.getOrders);
 app.get('/api/orders/:id', orderRoutes.getOrderById);
 app.put('/api/orders/:id/status', orderRoutes.updateOrderStatus);
 
+// Middleware for transaction routes
+app.use('/api/transactions', authenticate);
+
 // Transaction routes
 app.post('/api/transactions', transactionRoutes.createTransaction);
 app.get('/api/transactions', transactionRoutes.getTransactions);
 app.get('/api/transactions/:id', transactionRoutes.getTransactionById);
 app.put('/api/transactions/:id/status', transactionRoutes.updateTransactionStatus);
+app.get('/api/transactions/:id/receipt', transactionRoutes.getTransactionReceipt);
+app.post('/api/transactions/filter', transactionRoutes.filterTransactions);
 
 // AI Chat routes
 app.use('/api/ai', aiRouter);

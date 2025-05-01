@@ -1,6 +1,7 @@
 /**
  * Dashboard JavaScript
  * Handles portfolio overview, market data, and analytics
+ * Updated for CoinZ-style design
  */
 
 async function initDashboard() {
@@ -12,9 +13,12 @@ async function initDashboard() {
     }
 
     // Initialize dashboard components
-    await initPortfolioOverview();
+    await initPortfolioSummary();
     await initMarketTickers();
+    await loadOrderBook();
     await initNotificationsPanel();
+    setupChartIntervals();
+    setupMarketSelector();
     setupEventListeners();
 
     // Set theme based on user preference
@@ -33,6 +37,51 @@ async function initDashboard() {
   } catch (error) {
     console.error('Error initializing dashboard:', error);
     showToast('Failed to initialize dashboard. Please try again.', 'error');
+  }
+}
+
+/**
+ * Initialize portfolio summary sidebar
+ */
+async function initPortfolioSummary() {
+  try {
+    // Get portfolio data
+    const portfolio = await fetchPortfolioData();
+    
+    // Get portfolio elements
+    const totalValueEl = document.getElementById('portfolio-total-value');
+    const changeEl = document.getElementById('portfolio-change');
+    const assetsEl = document.getElementById('portfolio-assets');
+    
+    if (totalValueEl) {
+      totalValueEl.textContent = utils.formatCurrency(portfolio.totalBalance);
+    }
+    
+    if (changeEl) {
+      changeEl.textContent = utils.formatPercentage(portfolio.dailyChange);
+      changeEl.className = `portfolio-change ${portfolio.dailyChange >= 0 ? 'positive' : 'negative'}`;
+    }
+    
+    if (assetsEl) {
+      // Clear existing content
+      assetsEl.innerHTML = '';
+      
+      // Add assets (limit to top 3)
+      const topAssets = portfolio.assets.slice(0, 3);
+      
+      topAssets.forEach(asset => {
+        const assetElem = document.createElement('div');
+        assetElem.className = 'asset';
+        assetElem.innerHTML = `
+          <span class="asset-name">${asset.symbol}</span>
+          <span class="asset-amount">${asset.balance.toFixed(4)}</span>
+          <span class="asset-value">${utils.formatCurrency(asset.value || 0)}</span>
+        `;
+        assetsEl.appendChild(assetElem);
+      });
+    }
+  } catch (error) {
+    console.error('Failed to initialize portfolio summary:', error);
   }
 }
 
@@ -84,42 +133,390 @@ async function initPortfolioOverview() {
  */
 async function initMarketTickers() {
   try {
-    // Get top market data from CoinGecko
-    const marketData = await api.market.getMarkets(10);
+    // Get top market data
+    const marketData = await api.market.getMarkets(8);
     
     // Get ticker container
-    const tickerContainer = document.getElementById('market-tickers');
+    const tickerContainer = document.getElementById('crypto-tickers');
     if (!tickerContainer) return;
     
-    // Update tickers
-    let tickersHtml = '<h3>Market Tickers</h3>';
+    // Clear the container
+    tickerContainer.innerHTML = '';
     
-    marketData.forEach(coin => {
+    // Supported coins with image URLs (fallback if API doesn't provide images)
+    const coinIcons = {
+      'bitcoin': 'https://cryptologos.cc/logos/bitcoin-btc-logo.png',
+      'ethereum': 'https://cryptologos.cc/logos/ethereum-eth-logo.png',
+      'binancecoin': 'https://cryptologos.cc/logos/bnb-bnb-logo.png',
+      'solana': 'https://cryptologos.cc/logos/solana-sol-logo.png',
+      'ripple': 'https://cryptologos.cc/logos/xrp-xrp-logo.png',
+      'cardano': 'https://cryptologos.cc/logos/cardano-ada-logo.png',
+      'dogecoin': 'https://cryptologos.cc/logos/dogecoin-doge-logo.png',
+      'polkadot': 'https://cryptologos.cc/logos/polkadot-new-dot-logo.png'
+    };
+    
+    // Create and append ticker elements
+    marketData.forEach((coin, index) => {
       const priceChange = coin.price_change_percentage_24h;
-      tickersHtml += `
-        <div class="ticker-item" data-coin-id="${coin.id}">
-          <div class="ticker-info">
-            <img src="${coin.image}" alt="${coin.name}" class="ticker-icon">
-            <span>${coin.symbol.toUpperCase()}/USD</span>
-          </div>
-          <span>${utils.formatCurrency(coin.current_price)}</span>
-          <span class="${priceChange >= 0 ? 'positive' : 'negative'}">${utils.formatPercentage(priceChange)}</span>
+      const ticker = document.createElement('div');
+      ticker.className = `ticker ${index === 0 ? 'active' : ''}`;
+      ticker.dataset.symbol = `${coin.symbol.toUpperCase()}/USD`;
+      ticker.dataset.coinId = coin.id;
+      
+      ticker.innerHTML = `
+        <div class="ticker-header">
+          <img src="${coin.image || coinIcons[coin.id] || coinIcons.bitcoin}" alt="${coin.symbol}" 
+               onerror="this.src='https://cryptologos.cc/logos/bitcoin-btc-logo.png'">
+          <span class="ticker-name">${coin.symbol.toUpperCase()}/USD</span>
+        </div>
+        <div class="ticker-price">${utils.formatCurrency(coin.current_price)}</div>
+        <div class="ticker-change ${priceChange >= 0 ? 'positive' : 'negative'}">
+          ${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%
         </div>
       `;
-    });
-    
-    tickerContainer.innerHTML = tickersHtml;
-    
-    // Add click handlers for ticker details
-    document.querySelectorAll('.ticker-item').forEach(item => {
-      item.addEventListener('click', () => {
-        const coinId = item.dataset.coinId;
-        showCoinDetails(coinId);
+      
+      // Add click event
+      ticker.addEventListener('click', function() {
+        // Remove active class from all tickers
+        document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
+        // Add active class to clicked ticker
+        this.classList.add('active');
+        
+        const symbol = this.dataset.symbol;
+        const coinId = this.dataset.coinId;
+        
+        // Update chart
+        updateChart(symbol);
+        
+        // Update order book
+        loadOrderBook(symbol);
       });
+      
+      tickerContainer.appendChild(ticker);
     });
   } catch (error) {
     console.error('Failed to load market tickers:', error);
     showToast('Failed to load market data', 'error');
+    
+    // Add fallback tickers if API fails
+    const tickerContainer = document.getElementById('crypto-tickers');
+    if (tickerContainer) {
+      tickerContainer.innerHTML = '<div class="error-message">Unable to load market data. Please try again later.</div>';
+    }
+  }
+}
+
+/**
+ * Update chart with the selected symbol
+ * @param {string} symbol - Market symbol
+ */
+function updateChart(symbol) {
+  // Update chart pair display
+  const chartPairEl = document.getElementById('chartPair');
+  if (chartPairEl) {
+    chartPairEl.textContent = symbol;
+  }
+  
+  // Get TradingView widget and update symbol
+  if (window.tvWidget) {
+    const formattedSymbol = symbol.replace('/', '');
+    tvWidget.chart().setSymbol(`BINANCE:${formattedSymbol}`);
+  }
+}
+
+/**
+ * Load order book data
+ * @param {string} symbol - Market symbol (optional)
+ */
+async function loadOrderBook(symbol = 'BTC/USD') {
+  try {
+    // Get order book elements
+    const askOrdersEl = document.getElementById('ask-orders');
+    const bidOrdersEl = document.getElementById('bid-orders');
+    const marketPriceEl = document.getElementById('market-price');
+    const marketPriceChangeEl = document.getElementById('market-price-change');
+    
+    if (!askOrdersEl || !bidOrdersEl) return;
+    
+    // Try to get order book data from API
+    let orderBookData;
+    try {
+      orderBookData = await api.market.getOrderBook(symbol);
+    } catch (apiError) {
+      console.warn('Failed to get order book from API, using generated data:', apiError);
+      // Generate sample order book data
+      const basePrice = symbol.includes('BTC') ? 42356.78 : 
+                        symbol.includes('ETH') ? 2345.67 : 
+                        symbol.includes('SOL') ? 102.34 : 
+                        symbol.includes('BNB') ? 312.45 : 100.00;
+      
+      orderBookData = {
+        asks: [],
+        bids: [],
+        lastPrice: basePrice,
+        priceChangePercent: (Math.random() * 4 - 2).toFixed(2) // Random between -2% and +2%
+      };
+      
+      // Generate asks (sell orders)
+      for (let i = 0; i < 5; i++) {
+        const price = basePrice * (1 + (i + 1) * 0.001);
+        const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
+        orderBookData.asks.push([price, amount]);
+      }
+      
+      // Generate bids (buy orders)
+      for (let i = 0; i < 5; i++) {
+        const price = basePrice * (1 - (i + 1) * 0.001);
+        const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
+        orderBookData.bids.push([price, amount]);
+      }
+    }
+    
+    // Update asks
+    askOrdersEl.innerHTML = '';
+    if (orderBookData.asks && orderBookData.asks.length > 0) {
+      orderBookData.asks.slice(0, 5).forEach(ask => {
+        const price = parseFloat(ask[0]);
+        const amount = parseFloat(ask[1]);
+        const total = (price * amount).toFixed(2);
+        
+        const orderRow = document.createElement('div');
+        orderRow.className = 'order-row';
+        orderRow.innerHTML = `
+          <span>${price.toFixed(2)}</span>
+          <span>${amount.toFixed(4)}</span>
+          <span>${total}</span>
+        `;
+        askOrdersEl.appendChild(orderRow);
+      });
+    }
+    
+    // Update bids
+    bidOrdersEl.innerHTML = '';
+    if (orderBookData.bids && orderBookData.bids.length > 0) {
+      orderBookData.bids.slice(0, 5).forEach(bid => {
+        const price = parseFloat(bid[0]);
+        const amount = parseFloat(bid[1]);
+        const total = (price * amount).toFixed(2);
+        
+        const orderRow = document.createElement('div');
+        orderRow.className = 'order-row';
+        orderRow.innerHTML = `
+          <span>${price.toFixed(2)}</span>
+          <span>${amount.toFixed(4)}</span>
+          <span>${total}</span>
+        `;
+        bidOrdersEl.appendChild(orderRow);
+      });
+    }
+    
+    // Update market price
+    if (marketPriceEl) {
+      const lastPrice = orderBookData.lastPrice || (orderBookData.asks?.[0]?.[0] || 0);
+      marketPriceEl.textContent = `$${parseFloat(lastPrice).toFixed(2)}`;
+    }
+    
+    // Update price change
+    if (marketPriceChangeEl) {
+      const changePercent = orderBookData.priceChangePercent || 0;
+      marketPriceChangeEl.textContent = `${changePercent >= 0 ? '+' : ''}${parseFloat(changePercent).toFixed(2)}%`;
+      marketPriceChangeEl.className = `change ${changePercent >= 0 ? 'positive' : 'negative'}`;
+    }
+  } catch (error) {
+    console.error('Failed to load order book:', error);
+  }
+}
+
+/**
+ * Set up chart interval buttons
+ */
+function setupChartIntervals() {
+  const intervalButtons = document.querySelectorAll('.interval-btn');
+  if (!intervalButtons.length) return;
+  
+  intervalButtons.forEach(btn => {
+    btn.addEventListener('click', function() {
+      // Remove active class from all buttons
+      intervalButtons.forEach(b => b.classList.remove('active'));
+      // Add active class to clicked button
+      this.classList.add('active');
+      
+      // Get interval from data attribute
+      const interval = this.dataset.interval;
+      
+      // Update TradingView chart interval
+      if (window.tvWidget) {
+        tvWidget.chart().setResolution(interval);
+      }
+    });
+  });
+}
+
+/**
+ * Set up market selector dropdown
+ */
+function setupMarketSelector() {
+  const marketSelect = document.getElementById('marketSelect');
+  if (!marketSelect) return;
+  
+  marketSelect.addEventListener('change', function() {
+    const selectedMarket = this.value;
+    filterMarkets(selectedMarket);
+  });
+}
+
+/**
+ * Filter markets based on selection
+ * @param {string} marketType - Market type to filter
+ */
+function filterMarkets(marketType) {
+  const tickers = document.querySelectorAll('.ticker');
+  if (!tickers.length) return;
+  
+  tickers.forEach(ticker => {
+    const symbol = ticker.dataset.symbol;
+    
+    if (marketType === 'all') {
+      ticker.style.display = 'block';
+    } else if (marketType === 'usd' && symbol.includes('/USD')) {
+      ticker.style.display = 'block';
+    } else if (marketType === 'btc' && symbol.includes('/BTC')) {
+      ticker.style.display = 'block';
+    } else {
+      ticker.style.display = 'none';
+    }
+  });
+}
+
+/**
+ * Set up event listeners for the dashboard
+ */
+function setupEventListeners() {
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('change', function() {
+      document.body.classList.toggle('dark-theme');
+      document.body.classList.toggle('light-theme');
+      localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+      
+      // Update TradingView theme if it exists
+      if (window.tvWidget) {
+        tvWidget.changeTheme(this.checked ? 'dark' : 'light');
+      }
+    });
+    
+    // Set initial theme based on localStorage or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    themeToggle.checked = savedTheme === 'dark';
+    document.body.classList.add(savedTheme + '-theme');
+    document.body.classList.remove(savedTheme === 'dark' ? 'light-theme' : 'dark-theme');
+  }
+  
+  // Notifications icon click
+  const notificationsIcon = document.getElementById('notifications-icon');
+  if (notificationsIcon) {
+    notificationsIcon.addEventListener('click', function() {
+      const notificationsPanel = document.querySelector('.notifications-panel');
+      if (notificationsPanel) {
+        notificationsPanel.classList.toggle('visible');
+      }
+    });
+  }
+  
+  // Mark all notifications as read
+  const markAllReadBtn = document.getElementById('mark-all-read');
+  if (markAllReadBtn) {
+    markAllReadBtn.addEventListener('click', markAllNotificationsAsRead);
+  }
+  
+  // View all notifications link
+  const viewAllNotificationsLink = document.getElementById('view-all-notifications');
+  if (viewAllNotificationsLink) {
+    viewAllNotificationsLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = 'notifications.html';
+    });
+  }
+  
+  // Setup interval buttons
+  setupChartIntervals();
+  
+  // Setup market selector
+  setupMarketSelector();
+  
+  // Handle sidebar navigation
+  document.querySelectorAll('.main-nav a').forEach(link => {
+    link.addEventListener('click', function(e) {
+      if (this.getAttribute('href') === '#') {
+        e.preventDefault(); // Prevent navigation for the active page
+      }
+    });
+  });
+  
+  // Handle header action buttons
+  document.querySelectorAll('.nav-actions button').forEach(button => {
+    button.addEventListener('click', function() {
+      const navTarget = this.dataset.nav;
+      if (navTarget) {
+        window.location.href = navTarget;
+      } else if (this.classList.contains('ar-toggle')) {
+        toggleARMode();
+      }
+    });
+  });
+  
+  // Setup automatic data refresh (every 30 seconds)
+  setInterval(async () => {
+    try {
+      await refreshMarketData();
+    } catch (error) {
+      console.error('Error refreshing market data:', error);
+    }
+  }, 30000);
+}
+
+/**
+ * Refresh market data
+ */
+async function refreshMarketData() {
+  try {
+    // Get active ticker symbol
+    const activeTicker = document.querySelector('.ticker.active');
+    if (activeTicker) {
+      const symbol = activeTicker.dataset.symbol;
+      
+      // Update order book for active symbol
+      await loadOrderBook(symbol);
+      
+      // Update all tickers
+      const tickers = document.querySelectorAll('.ticker');
+      if (tickers.length > 0 && window.api && api.market) {
+        const marketData = await api.market.getMarkets(tickers.length);
+        
+        if (marketData && marketData.length > 0) {
+          tickers.forEach((ticker, index) => {
+            if (index < marketData.length) {
+              const coin = marketData[index];
+              const priceElement = ticker.querySelector('.ticker-price');
+              const changeElement = ticker.querySelector('.ticker-change');
+              
+              if (priceElement) {
+                priceElement.textContent = utils.formatCurrency(coin.current_price);
+              }
+              
+              if (changeElement) {
+                const priceChange = coin.price_change_percentage_24h;
+                changeElement.textContent = `${priceChange >= 0 ? '+' : ''}${priceChange.toFixed(2)}%`;
+                changeElement.className = `ticker-change ${priceChange >= 0 ? 'positive' : 'negative'}`;
+              }
+            }
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error refreshing market data:', error);
   }
 }
 
@@ -574,6 +971,57 @@ async function markAllNotificationsAsRead() {
     console.error('Error marking all notifications as read:', error);
     showToast('Failed to mark all notifications as read', 'error');
   }
+}
+
+/**
+ * Toggle AR mode 
+ * This function loads and activates the AR Module for enhanced visualizations
+ */
+function toggleARMode() {
+  // If ARModule is already loaded, just toggle between active and inactive states
+  if (window.ARModule) {
+    if (window.ARModule.isActive()) {
+      window.ARModule.deactivate();
+      showToast('AR Mode deactivated', 'success');
+    } else {
+      window.ARModule.activate();
+      showToast('AR Mode activated', 'success');
+    }
+    return;
+  }
+  
+  // If ARModule is not loaded yet, load it first
+  showToast('Loading AR Module...', 'info');
+  
+  // Create and append script element to load AR module
+  const script = document.createElement('script');
+  script.src = '../assets/js/ar-module.js';
+  
+  // Define onload and onerror callbacks
+  script.onload = function() {
+    if (window.ARModule) {
+      showToast('AR Module loaded successfully', 'success');
+      // Activate AR mode immediately after loading
+      setTimeout(() => {
+        window.ARModule.activate();
+      }, 500);
+    } else {
+      showToast('Failed to initialize AR Module', 'error');
+    }
+  };
+  
+  script.onerror = function() {
+    showToast('Failed to load AR Module: File not found', 'error');
+    
+    // Remove the AR toggle active class if it exists
+    const arToggleBtn = document.getElementById('ar-toggle');
+    if (arToggleBtn) {
+      arToggleBtn.classList.remove('active');
+    }
+  };
+  
+  // Add script to head
+  document.head.appendChild(script);
 }
 
 /**

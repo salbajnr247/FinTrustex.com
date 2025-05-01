@@ -1,53 +1,69 @@
-// Mobile menu toggle
-const mobileToggle = document.getElementById('mobileMenuToggle');
-const navList = document.querySelector('.nav-list');
+// index.js
 
-mobileToggle.addEventListener('click', () => {
-  const expanded = mobileToggle.getAttribute('aria-expanded') === 'true' || false;
-  mobileToggle.setAttribute('aria-expanded', !expanded);
-  mobileToggle.classList.toggle('open');
-  navList.classList.toggle('show');
-});
+document.addEventListener("DOMContentLoaded", () => {
+  // Mobile menu toggle
+  const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+  const navList = document.querySelector(".nav-list");
 
-// Close mobile menu on nav link click
-document.querySelectorAll('.nav-link').forEach(link => {
-  link.addEventListener('click', () => {
-    if (navList.classList.contains('show')) {
-      navList.classList.remove('show');
-      mobileToggle.classList.remove('open');
-      mobileToggle.setAttribute('aria-expanded', false);
+  if (mobileMenuToggle && navList) {
+    mobileMenuToggle.addEventListener("click", () => {
+      const expanded =
+        mobileMenuToggle.getAttribute("aria-expanded") === "true";
+      mobileMenuToggle.setAttribute("aria-expanded", !expanded);
+      navList.classList.toggle("active");
+    });
+  }
+
+  // FAQ accordion toggle
+  const faqButtons = document.querySelectorAll(".faq-question");
+  faqButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const isExpanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", !isExpanded);
+      const answerId = button.getAttribute("aria-controls");
+      const answer = document.getElementById(answerId);
+      if (answer) {
+        answer.hidden = isExpanded;
+      }
+    });
+  });
+
+  // Smooth scrolling for nav links
+  const navLinks = document.querySelectorAll('a.nav-link[href^="#"]');
+  navLinks.forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = link.getAttribute("href").substring(1);
+      const targetElement = document.getElementById(targetId);
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: "smooth" });
+        // Close mobile menu if open
+        if (navList.classList.contains("active")) {
+          navList.classList.remove("active");
+          mobileMenuToggle.setAttribute("aria-expanded", false);
+        }
+      }
+    });
+  });
+
+  // Optional: Back to top button
+  const backToTopBtn = document.createElement("button");
+  backToTopBtn.className = "back-to-top";
+  backToTopBtn.setAttribute("aria-label", "Back to top");
+  backToTopBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
+  document.body.appendChild(backToTopBtn);
+
+  backToTopBtn.style.display = "none";
+
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 300) {
+      backToTopBtn.style.display = "block";
+    } else {
+      backToTopBtn.style.display = "none";
     }
   });
-});
 
-// Scroll-triggered animations for features, testimonials, and team members
-const observerOptions = {
-  threshold: 0.1,
-};
-
-const revealOnScroll = (entries, observer) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      observer.unobserve(entry.target);
-    }
-  });
-};
-
-const observer = new IntersectionObserver(revealOnScroll, observerOptions);
-
-document.querySelectorAll('.feature-card, .testimonial-card, .team-member').forEach(el => {
-  observer.observe(el);
-});
-
-// Smooth scroll for anchor links
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-  anchor.addEventListener('click', e => {
-    e.preventDefault();
-    const targetID = anchor.getAttribute('href').substring(1);
-    const targetElem = document.getElementById(targetID);
-    if (targetElem) {
-      targetElem.scrollIntoView({ behavior: 'smooth' });
-    }
+  backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
   });
 });

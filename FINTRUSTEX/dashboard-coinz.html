@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinTrustEX - Dashboard</title>
+    <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+    <script src="assets/js/auth-check.js"></script>
+    <link rel="stylesheet" href="assets/css/coinz-style.css">
+    <link rel="stylesheet" href="assets/css/notifications.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Add this style to make the chart square */
+        .tradingview-widget-container {
+            width: 100%;
+            aspect-ratio: 1/1; /* This makes it square */
+            position: relative;
+        }
+        #tradingview-chart {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="fintrustex-logo">
+                    <span class="fintrustex-f">F</span>
+                    <span class="fintrustex-x">X</span>
+                </div>
+                <h1>FinTrustEX</h1>
+            </div>
+            
+            <div class="header-controls">
+                <div class="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+                
+                <div class="notifications-bell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-count" id="notification-count">0</span>
+                </div>
+                
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <span id="username">User</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <nav class="main-nav">
+                    <ul>
+                        <li class="active"><a href="#"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                        <li><a href="dashboard/trading/trading.html"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+                        <li><a href="dashboard/wallet/wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
+                        <li><a href="dashboard/history.html"><i class="fas fa-history"></i> History</a></li>
+                        <li><a href="dashboard/support-tickets.html"><i class="fas fa-ticket-alt"></i> Support</a></li>
+                        <li><a href="dashboard/settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+                    </ul>
+                </nav>
+
+                <div class="portfolio-summary">
+                    <h3>Portfolio Value</h3>
+                    <div class="portfolio-value" id="portfolio-total">$0.00</div>
+                    <div class="portfolio-change positive" id="portfolio-change">+0.00%</div>
+                    <div class="portfolio-assets" id="portfolio-assets">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </aside>
+
+            <div class="dashboard">
+                <div class="market-overview">
+                    <div class="section-header">
+                        <h2>Market Overview</h2>
+                        <div class="market-selector">
+                            <select id="marketSelect">
+                                <option value="all">All Markets</option>
+                                <option value="usd">USD Pairs</option>
+                                <option value="btc">BTC Pairs</option>
+                                <option value="eth">ETH Pairs</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="crypto-tickers" id="crypto-tickers">
+                        <!-- Tickers will be populated by JavaScript -->
+                        <div class="spinner-container" id="tickers-loader">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-panels">
+                    <div class="notifications-panel">
+                        <div class="panel-header">
+                            <h3>Notifications</h3>
+                            <button id="mark-all-read" class="btn-outline-sm"><i class="fas fa-check-double"></i> Mark All Read</button>
+                        </div>
+                        <div class="notifications-list" id="notifications-list">
+                            <!-- Notifications will be populated by JavaScript -->
+                            <div class="empty-notification" id="empty-notifications" style="display: none;">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>No notifications yet</p>
+                            </div>
+                            <div class="spinner-container" id="notifications-loader">
+                                <div class="spinner"></div>
+                            </div>
+                        </div>
+                        <div class="panel-footer">
+                            <a href="dashboard/notifications.html">View All Notifications</a>
+                        </div>
+                    </div>
+                    
+                    <div class="quick-actions-panel">
+                        <div class="panel-header">
+                            <h3>Quick Actions</h3>
+                        </div>
+                        <div class="quick-actions">
+                            <a href="dashboard/wallet/deposit.html" class="quick-action-btn">
+                                <i class="fas fa-arrow-down"></i>
+                                <span>Deposit</span>
+                            </a>
+                            <a href="dashboard/wallet/withdraw.html" class="quick-action-btn">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Withdraw</span>
+                            </a>
+                            <a href="dashboard/trading/trading.html" class="quick-action-btn">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span>Trade</span>
+                            </a>
+                            <a href="dashboard/support-tickets.html" class="quick-action-btn">
+                                <i class="fas fa-headset"></i>
+                                <span>Support</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-trading-section">
+                    <div class="price-chart">
+                        <div class="chart-header">
+                            <h3 id="chartPair">BTC/USD</h3>
+                            <div class="chart-intervals">
+                                <button class="interval-btn active" data-interval="1D">1D</button>
+                                <button class="interval-btn" data-interval="1W">1W</button>
+                                <button class="interval-btn" data-interval="1M">1M</button>
+                            </div>
+                        </div>
+                        <!-- TradingView Chart Widget -->
+                        <div class="tradingview-widget-container">
+                            <div id="tradingview-chart"></div>
+                        </div>
+                    </div>
+
+                    <div class="order-book">
+                        <div class="panel-header">
+                            <h3>Order Book</h3>
+                        </div>
+                        <div class="order-book-content">
+                            <div class="asks">
+                                <div class="order-book-header">
+                                    <span>Price (USD)</span>
+                                    <span>Amount</span>
+                                    <span>Total</span>
+                                </div>
+                                <div class="ask-orders"></div>
+                            </div>
+                            <div class="market-price">
+                                <span class="price">$0.00</span>
+                                <span class="change">0.00%</span>
+                            </div>
+                            <div class="bids">
+                                <div class="bid-orders"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://s3.tradingview.com/tv.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/auth-service.js"></script>
+    <script src="assets/js/websocket-client.js"></script>
+    <script src="assets/js/market-data-service.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/components.js"></script>
+    <script src="assets/js/notification-service.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/coinz-dashboard.js"></script>
+</body>
+</html>

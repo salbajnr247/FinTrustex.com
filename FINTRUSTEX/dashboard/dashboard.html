@@ -10,55 +10,155 @@
   <link rel="stylesheet" href="../assets/css/dashboard.css">
   <link rel="stylesheet" href="../assets/css/notifications.css">
   <link rel="stylesheet" href="../assets/css/responsive.css">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="../assets/css/ar-module.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* TradingView chart container styling */
+    .tradingview-widget-container {
+      width: 100%;
+      height: 100%;
+      min-height: 400px;
+      position: relative;
+    }
+    
+    #tradingview-chart {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 <body class="dark-theme">
   <div class="dashboard-wrapper">
-    <header class="navbar" id="navbar-container">
-      <div class="navbar" role="banner">
-        <div class="navbar-left">
-          <button class="hamburger" aria-label="Toggle sidebar" id="hamburger-toggle">
-            <i class="fas fa-bars"></i>
-          </button>
-          <div class="logo">FinTrustEX</div>
+    <header class="header" id="navbar-container">
+      <div class="logo">
+        <div class="fintrust-logo">
+          <span class="fintrust-f">F</span>
+          <span class="fintrust-x">X</span>
         </div>
-        <h2 class="greeting">Welcome back, <span id="username">User</span> 👋</h2>
+        <h1>FinTrustEX</h1>
+      </div>
+      
+      <div class="header-controls">
         <div class="nav-actions">
           <button class="btn deposit" data-nav="/dashboard/wallet#deposit" aria-label="Deposit funds">Deposit</button>
           <button class="btn withdraw" data-nav="/dashboard/wallet#withdraw" aria-label="Withdraw funds">Withdraw</button>
           <button class="btn trade" data-nav="/dashboard/trading" aria-label="Start trading">Trade Now</button>
-          <button class="btn theme-toggle" aria-label="Toggle dark/light mode" id="theme-toggle">Toggle Theme</button>
           <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
-          <div class="profile">
-            <img src="/assets/images/profile.png" alt="User Profile" class="profile-img">
-            <span class="profile-name">Trader!</span>
+        </div>
+        
+        <div class="theme-toggle">
+          <i class="fas fa-sun"></i>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider round"></span>
+          </label>
+          <i class="fas fa-moon"></i>
+        </div>
+        
+        <div class="notifications-icon" id="notifications-icon">
+          <i class="fas fa-bell"></i>
+          <span class="notifications-badge" id="notifications-badge"></span>
+        </div>
+        
+        <div class="user-menu">
+          <div class="user-avatar">
+            <i class="fas fa-user-circle"></i>
           </div>
+          <span class="profile-name">Trader!</span>
         </div>
       </div>
     </header>
-    <div class="container">
-      <aside class="sidebar" id="sidebar-container"></aside>
-      <main class="main-content" id="app">
-        <section id="index">
-          <h1 class="section-title">Dashboard</h1>
-          <div class="dashboard-controls">
-            <button id="refresh-data" class="btn btn-yellow"><i class="fas fa-sync"></i> Refresh</button>
-            <button id="view-analytics" class="btn btn-outline"><i class="fas fa-chart-line"></i> Analytics</button>
+
+    <div class="main-content">
+      <aside class="sidebar" id="sidebar-container">
+        <nav class="main-nav">
+          <ul>
+            <li class="active"><a href="#"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="/dashboard/market-data.html"><i class="fas fa-chart-bar"></i> Market Data</a></li>
+            <li><a href="/dashboard/trading"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+            <li><a href="/dashboard/wallet"><i class="fas fa-wallet"></i> Wallet</a></li>
+            <li><a href="/dashboard/history"><i class="fas fa-history"></i> History</a></li>
+            <li><a href="/dashboard/support-tickets.html"><i class="fas fa-ticket-alt"></i> Support</a></li>
+            <li><a href="/dashboard/settings"><i class="fas fa-cog"></i> Settings</a></li>
+          </ul>
+        </nav>
+
+        <div class="portfolio-summary">
+          <h3>Portfolio Value</h3>
+          <div class="portfolio-value" id="portfolio-total-value">$24,589.42</div>
+          <div class="portfolio-change positive" id="portfolio-change">+2.34%</div>
+          <div class="portfolio-assets" id="portfolio-assets">
+            <!-- Will be populated by JavaScript -->
           </div>
-          <div class="dashboard-grid">
-            <div class="dashboard-overview card glassmorph" data-aos="fade-up">
-              <!-- Static Test Content -->
-              <h3>Portfolio Overview</h3>
-              <p>Total Balance: $12,500</p>
-              <p>24h Change: <span class="positive">+2.5%</span></p>
+        </div>
+      </aside>
+
+      <div class="dashboard">
+        <div class="market-overview">
+          <div class="section-header">
+            <h2>Market Overview</h2>
+            <div class="market-selector">
+              <select id="marketSelect">
+                <option value="all">All Markets</option>
+                <option value="usd">USD Pairs</option>
+                <option value="btc">BTC Pairs</option>
+              </select>
             </div>
-            
-            <!-- New Notifications Section -->
-            <div class="notifications-panel card glassmorph" data-aos="fade-up">
+          </div>
+          
+          <div class="crypto-tickers" id="crypto-tickers">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="chart-trading-section">
+          <div class="price-chart">
+            <div class="chart-header">
+              <h3 id="chartPair">BTC/USD</h3>
+              <div class="chart-intervals">
+                <button class="interval-btn active" data-interval="1h">1H</button>
+                <button class="interval-btn" data-interval="4h">4H</button>
+                <button class="interval-btn" data-interval="1D">1D</button>
+                <button class="interval-btn" data-interval="1W">1W</button>
+                <button class="interval-btn" data-interval="1M">1M</button>
+              </div>
+            </div>
+            <!-- TradingView Chart Widget -->
+            <div class="tradingview-widget-container">
+              <div id="tradingview-chart"></div>
+            </div>
+          </div>
+
+          <div class="order-trading-panel">
+            <div class="order-book">
+              <div class="panel-header">
+                <h3>Order Book</h3>
+              </div>
+              <div class="order-book-content">
+                <div class="asks">
+                  <div class="order-book-header">
+                    <span>Price (USD)</span>
+                    <span>Amount</span>
+                    <span>Total</span>
+                  </div>
+                  <div class="ask-orders" id="ask-orders"></div>
+                </div>
+                <div class="market-price">
+                  <span class="price" id="market-price">$0.00</span>
+                  <span class="change" id="market-price-change">0.00%</span>
+                </div>
+                <div class="bids">
+                  <div class="bid-orders" id="bid-orders"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="notifications-panel card">
               <div class="notifications-header">
                 <h3>Notifications</h3>
-                <button id="mark-all-read" class="btn btn-sm btn-outline"><i class="fas fa-check-double"></i> Mark All Read</button>
+                <button id="mark-all-read" class="btn btn-sm btn-outline"><i class="fas fa-check-double"></i> Mark All</button>
               </div>
               <div class="notifications-list" id="notifications-list">
                 <!-- Notifications will be populated here by JavaScript -->
@@ -76,60 +176,76 @@
               </div>
             </div>
           </div>
-          
-          <div class="market-tickers card glassmorph" data-aos="fade-up" id="market-tickers">
-            <h3>Market Tickers</h3>
-            <div class="ticker-item">
-              <span>BTC/USDT</span>
-              <span>$60,000</span>
-              <span class="positive">+1.2%</span>
-            </div>
-            <div class="ticker-item">
-              <span>ETH/USDT</span>
-              <span>$2,500</span>
-              <span class="negative">-0.8%</span>
-            </div>
-          </div>
-        </section>
-      </main>
+        </div>
+      </div>
     </div>
-    <footer class="footer" id="footer-container"></footer>
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        AOS.init({ duration: 800 });
-      });
-    </script>
-    <script src="../assets/js/api.js"></script>
-    <script src="../assets/js/auth-service.js"></script>
-    <script src="../assets/js/websocket-client.js"></script>
-    <script src="../assets/js/market-data-service.js"></script>
-    <script src="../assets/js/utils.js"></script>
-    <script src="../assets/js/components.js"></script>
-    <script src="../assets/js/notification-service.js"></script>
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/dashboard.js"></script>
-    
-    <script>
-      // Update user info in header on page load
-      document.addEventListener('DOMContentLoaded', () => {
-        if (window.authService) {
-          const user = authService.getCurrentUser();
-          if (user) {
-            const usernameElement = document.getElementById('username');
-            const profileNameElement = document.querySelector('.profile-name');
-            
-            if (usernameElement) {
-              usernameElement.textContent = user.username || user.email;
-            }
-            
-            if (profileNameElement) {
-              profileNameElement.textContent = user.username || 'Trader';
-            }
+  </div>
+
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      AOS.init({ duration: 800 });
+    });
+  </script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth-service.js"></script>
+  <script src="../assets/js/websocket-client.js"></script>
+  <script src="../assets/js/market-data-service.js"></script>
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/notification-service.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/dashboard.js"></script>
+  <!-- AR Module is loaded on demand when user activates AR mode -->
+  
+  <script>
+    // Update user info in header on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.authService) {
+        const user = authService.getCurrentUser();
+        if (user) {
+          const profileNameElement = document.querySelector('.profile-name');
+          
+          if (profileNameElement) {
+            profileNameElement.textContent = user.username || 'Trader';
           }
         }
+      }
+      
+      // Initialize TradingView widget
+      new TradingView.widget({
+        "autosize": true,
+        "symbol": "BINANCE:BTCUSDT",
+        "interval": "D",
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "en",
+        "toolbar_bg": "#f1f3f6",
+        "enable_publishing": false,
+        "hide_top_toolbar": false,
+        "hide_side_toolbar": false,
+        "allow_symbol_change": true,
+        "container_id": "tradingview-chart"
       });
-    </script>
-  </div>
+      
+      // Theme toggle functionality
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+          document.body.classList.toggle('light-theme');
+          document.body.classList.toggle('dark-theme');
+          localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+        });
+        
+        // Set initial theme based on stored preference
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        themeToggle.checked = storedTheme === 'dark';
+        document.body.classList.add(storedTheme + '-theme');
+        document.body.classList.remove(storedTheme === 'dark' ? 'light-theme' : 'dark-theme');
+      }
+    });
+  </script>
 </body>
 </html>

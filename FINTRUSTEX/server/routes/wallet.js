@@ -8,10 +8,10 @@ const { storage } = require('../storage');
 const { insertWalletSchema, insertTransactionSchema } = require('../../shared/schema');
 const { z } = require('zod');
 const { nanoid } = require('nanoid');
-const { verifyAuthToken } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 
 // Middleware to ensure user is authenticated
-router.use(verifyAuthToken);
+router.use(authenticate);
 
 /**
  * Get user wallets

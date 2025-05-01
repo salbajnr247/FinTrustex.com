@@ -3,6 +3,10 @@
     {
       "name": "FINTRUSTEX",
       "run": "cd FINTRUSTEX && node server-start.js"
+    },
+    {
+      "name": "FINTRUSTEX-WS",
+      "run": "./start-server-with-websocket.sh"
     }
   ]
 }

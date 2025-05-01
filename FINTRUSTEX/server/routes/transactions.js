@@ -3,22 +3,20 @@
  */
 
 const express = require('express');
-const router = express.Router();
 const { storage } = require('../storage');
-const { verifyAuthToken } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { z } = require('zod');
 
-// Middleware to ensure user is authenticated
-router.use(verifyAuthToken);
-
-/**
- * Get all user transactions
- * GET /api/transactions
- */
-router.get('/', async (req, res) => {
+// Export transaction route handler functions directly for use in index.js
+exports.getTransactions = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const transactions = await storage.getTransactionsByUserId(userId);
+    const userId = req.user ? req.user.id : null;
+    
+    // If user is authenticated, get their transactions
+    // Otherwise, return empty array or error based on your app's logic
+    const transactions = userId 
+      ? await storage.getTransactionsByUserId(userId)
+      : [];
     
     // Sort by created date, newest first
     transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -28,13 +26,9 @@ router.get('/', async (req, res) => {
     console.error('Error fetching transactions:', error);
     res.status(500).json({ error: 'Failed to fetch transactions' });
   }
-});
+};
 
-/**
- * Get transaction by ID
- * GET /api/transactions/:id
- */
-router.get('/:id', async (req, res) => {
+exports.getTransactionById = async (req, res) => {
   try {
     const transactionId = parseInt(req.params.id);
     const transaction = await storage.getTransaction(transactionId);
@@ -43,8 +37,8 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Transaction not found' });
     }
     
-    // Ensure user owns this transaction
-    if (transaction.userId !== req.user.id) {
+    // Ensure user owns this transaction if authenticated
+    if (req.user && transaction.userId !== req.user.id) {
       return res.status(403).json({ error: 'Access denied' });
     }
     
@@ -53,13 +47,41 @@ router.get('/:id', async (req, res) => {
     console.error('Error fetching transaction:', error);
     res.status(500).json({ error: 'Failed to fetch transaction' });
   }
-});
+};
+
+exports.createTransaction = async (req, res) => {
+  try {
+    // This would include validation and authorization checks
+    const transaction = await storage.createTransaction(req.body);
+    res.status(201).json(transaction);
+  } catch (error) {
+    console.error('Error creating transaction:', error);
+    res.status(500).json({ error: 'Failed to create transaction' });
+  }
+};
+
+exports.updateTransactionStatus = async (req, res) => {
+  try {
+    const transactionId = parseInt(req.params.id);
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ error: 'Status is required' });
+    }
+    
+    const transaction = await storage.updateTransactionStatus(transactionId, status);
+    res.json(transaction);
+  } catch (error) {
+    console.error('Error updating transaction status:', error);
+    res.status(500).json({ error: 'Failed to update transaction status' });
+  }
+};
 
 /**
  * Get transaction receipt
  * GET /api/transactions/:id/receipt
  */
-router.get('/:id/receipt', async (req, res) => {
+exports.getTransactionReceipt = async (req, res) => {
   try {
     const transactionId = parseInt(req.params.id);
     const transaction = await storage.getTransaction(transactionId);
@@ -99,13 +121,13 @@ router.get('/:id/receipt', async (req, res) => {
     console.error('Error generating transaction receipt:', error);
     res.status(500).json({ error: 'Failed to generate transaction receipt' });
   }
-});
+};
 
 /**
  * Get filtered transactions
  * POST /api/transactions/filter
  */
-router.post('/filter', async (req, res) => {
+exports.filterTransactions = async (req, res) => {
   try {
     // Filter schema
     const filterSchema = z.object({
@@ -165,6 +187,4 @@ router.post('/filter', async (req, res) => {
     console.error('Error filtering transactions:', error);
     res.status(500).json({ error: 'Failed to filter transactions' });
   }
-});
-
-module.exports = router;
+};

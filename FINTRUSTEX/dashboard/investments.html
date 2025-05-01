@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Investments</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/investments.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="dashboard-wrapper">
+    <header class="header" id="navbar-container">
+      <div class="logo">
+        <div class="fintrust-logo">
+          <span class="fintrust-f">F</span>
+          <span class="fintrust-x">X</span>
+        </div>
+        <h1>FinTrustEX</h1>
+      </div>
+      
+      <div class="header-controls">
+        <div class="nav-actions">
+          <button class="btn deposit" data-nav="/dashboard/wallet/deposit.html" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw" data-nav="/dashboard/wallet/withdraw.html" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" data-nav="/dashboard/trading/trading.html" aria-label="Start trading">Trade Now</button>
+          <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
+        </div>
+        
+        <div class="theme-toggle">
+          <i class="fas fa-sun"></i>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider round"></span>
+          </label>
+          <i class="fas fa-moon"></i>
+        </div>
+        
+        <div class="notifications-icon" id="notifications-icon">
+          <i class="fas fa-bell"></i>
+          <span class="notifications-badge" id="notifications-badge"></span>
+        </div>
+        
+        <div class="user-menu">
+          <div class="user-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <span class="profile-name">Trader!</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar" id="sidebar-container">
+        <nav class="main-nav">
+          <ul>
+            <li><a href="/dashboard/dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="/dashboard/trading/trading.html"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+            <li><a href="/dashboard/wallet/wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
+            <li class="active"><a href="#"><i class="fas fa-chart-pie"></i> Investments</a></li>
+            <li><a href="/dashboard/history"><i class="fas fa-history"></i> History</a></li>
+            <li><a href="/dashboard/support-tickets.html"><i class="fas fa-ticket-alt"></i> Support</a></li>
+            <li><a href="/dashboard/settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="dashboard">
+        <div class="investments-wrapper">
+          <div class="section-header">
+            <h2>Investment Opportunities</h2>
+            <div class="header-actions">
+              <div class="filter-dropdown">
+                <select id="investment-filter" class="filter-select">
+                  <option value="all">All Packages</option>
+                  <option value="fixed">Fixed Term</option>
+                  <option value="flexible">Flexible Term</option>
+                  <option value="high-yield">High Yield</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="my-investments-btn">My Investments</button>
+            </div>
+          </div>
+          
+          <div class="stats-cards">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-wallet"></i>
+              </div>
+              <div class="stat-content">
+                <h3>Total Invested</h3>
+                <div class="stat-value">$12,450.00</div>
+                <div class="stat-change positive">+12.5% <span>this month</span></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="stat-content">
+                <h3>Total Earnings</h3>
+                <div class="stat-value">$1,835.42</div>
+                <div class="stat-change positive">+5.2% <span>this month</span></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-project-diagram"></i>
+              </div>
+              <div class="stat-content">
+                <h3>Active Investments</h3>
+                <div class="stat-value">3</div>
+                <div class="stat-change neutral">0% <span>this month</span></div>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-content">
+                <h3>Avg. Return Rate</h3>
+                <div class="stat-value">8.2%</div>
+                <div class="stat-change positive">+0.5% <span>this month</span></div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="investment-packages" id="investment-packages">
+            <div class="package-card">
+              <div class="package-header">
+                <h3>Bitcoin Yield</h3>
+                <div class="package-term">
+                  <span class="term-badge fixed">30 Days</span>
+                </div>
+              </div>
+              <div class="package-roi">
+                <div class="roi-value">5.8%</div>
+                <div class="roi-period">Monthly Return</div>
+              </div>
+              <div class="package-details">
+                <div class="detail-item">
+                  <span class="detail-label">Min. Investment:</span>
+                  <span class="detail-value">0.01 BTC</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Max. Investment:</span>
+                  <span class="detail-value">1.00 BTC</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Period:</span>
+                  <span class="detail-value">30 Days</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Capital Return:</span>
+                  <span class="detail-value">End of Term</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Early Withdrawal:</span>
+                  <span class="detail-value negative">Not Available</span>
+                </div>
+              </div>
+              <div class="package-action">
+                <button class="btn btn-invest" data-pkg-id="btc-yield-30">Invest Now</button>
+              </div>
+            </div>
+            
+            <div class="package-card">
+              <div class="package-header">
+                <h3>ETH Staking</h3>
+                <div class="package-term">
+                  <span class="term-badge fixed">90 Days</span>
+                </div>
+              </div>
+              <div class="package-roi">
+                <div class="roi-value">7.2%</div>
+                <div class="roi-period">Quarterly Return</div>
+              </div>
+              <div class="package-details">
+                <div class="detail-item">
+                  <span class="detail-label">Min. Investment:</span>
+                  <span class="detail-value">0.5 ETH</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Max. Investment:</span>
+                  <span class="detail-value">20 ETH</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Period:</span>
+                  <span class="detail-value">90 Days</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Capital Return:</span>
+                  <span class="detail-value">End of Term</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Early Withdrawal:</span>
+                  <span class="detail-value negative">2% Fee</span>
+                </div>
+              </div>
+              <div class="package-action">
+                <button class="btn btn-invest" data-pkg-id="eth-stake-90">Invest Now</button>
+              </div>
+            </div>
+            
+            <div class="package-card">
+              <div class="package-header">
+                <h3>DeFi Yield Farm</h3>
+                <div class="package-term">
+                  <span class="term-badge flexible">Flexible</span>
+                </div>
+              </div>
+              <div class="package-roi">
+                <div class="roi-value">4.5%</div>
+                <div class="roi-period">Monthly Return</div>
+              </div>
+              <div class="package-details">
+                <div class="detail-item">
+                  <span class="detail-label">Min. Investment:</span>
+                  <span class="detail-value">$500</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Max. Investment:</span>
+                  <span class="detail-value">$50,000</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Period:</span>
+                  <span class="detail-value">Flexible</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Capital Return:</span>
+                  <span class="detail-value">Anytime</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Early Withdrawal:</span>
+                  <span class="detail-value positive">No Fee</span>
+                </div>
+              </div>
+              <div class="package-action">
+                <button class="btn btn-invest" data-pkg-id="defi-flex">Invest Now</button>
+              </div>
+            </div>
+            
+            <div class="package-card featured">
+              <div class="package-header">
+                <h3>High Yield BTC Fund</h3>
+                <div class="package-term">
+                  <span class="term-badge high-yield">180 Days</span>
+                </div>
+                <div class="featured-badge">Featured</div>
+              </div>
+              <div class="package-roi">
+                <div class="roi-value">12.5%</div>
+                <div class="roi-period">Bi-Annual Return</div>
+              </div>
+              <div class="package-details">
+                <div class="detail-item">
+                  <span class="detail-label">Min. Investment:</span>
+                  <span class="detail-value">0.1 BTC</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Max. Investment:</span>
+                  <span class="detail-value">5 BTC</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Period:</span>
+                  <span class="detail-value">180 Days</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Capital Return:</span>
+                  <span class="detail-value">End of Term</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Early Withdrawal:</span>
+                  <span class="detail-value negative">5% Fee</span>
+                </div>
+              </div>
+              <div class="package-action">
+                <button class="btn btn-invest featured" data-pkg-id="btc-high-yield">Invest Now</button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Modal for investment form -->
+          <div class="modal" id="investment-modal">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h3>Invest in <span id="investment-package-name">Package</span></h3>
+                <button class="modal-close">&times;</button>
+              </div>
+              <div class="modal-body">
+                <form id="investment-form">
+                  <div class="form-group">
+                    <label for="investment-amount">Amount to Invest</label>
+                    <div class="input-group">
+                      <input type="number" id="investment-amount" class="form-control" step="0.01" min="0" required>
+                      <span class="input-group-text" id="investment-currency">BTC</span>
+                    </div>
+                    <div class="amount-limits">
+                      <span>Min: <span id="min-investment">0.01 BTC</span></span>
+                      <span>Max: <span id="max-investment">1.00 BTC</span></span>
+                    </div>
+                  </div>
+                  
+                  <div class="investment-summary">
+                    <div class="summary-item">
+                      <span class="summary-label">Investment Term:</span>
+                      <span class="summary-value" id="investment-term">30 Days</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Expected Return:</span>
+                      <span class="summary-value" id="expected-return">5.8%</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Estimated Profit:</span>
+                      <span class="summary-value" id="estimated-profit">0.00 BTC</span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Total at Maturity:</span>
+                      <span class="summary-value" id="total-at-maturity">0.00 BTC</span>
+                    </div>
+                  </div>
+                  
+                  <div class="terms-agreement">
+                    <label class="checkbox-container">
+                      <input type="checkbox" id="terms-checkbox" required>
+                      <span class="checkmark"></span>
+                      I agree to the <a href="#" target="_blank">Terms and Conditions</a> of this investment
+                    </label>
+                  </div>
+                  
+                  <div class="form-actions">
+                    <button type="submit" class="btn btn-primary" id="confirm-investment">Confirm Investment</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-investment">Cancel</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          
+          <!-- My Investments Section (initially hidden) -->
+          <div class="my-investments-section" style="display: none;" id="my-investments-section">
+            <div class="section-header with-back">
+              <button class="back-button" id="back-to-packages"><i class="fas fa-arrow-left"></i></button>
+              <h2>My Investments</h2>
+            </div>
+            
+            <div class="active-investments">
+              <h3>Active Investments</h3>
+              <div class="investments-table">
+                <div class="table-header">
+                  <div class="table-cell">Package</div>
+                  <div class="table-cell">Amount</div>
+                  <div class="table-cell">Start Date</div>
+                  <div class="table-cell">End Date</div>
+                  <div class="table-cell">Expected Return</div>
+                  <div class="table-cell">Status</div>
+                  <div class="table-cell">Actions</div>
+                </div>
+                
+                <div class="table-body" id="active-investments-list">
+                  <div class="table-row">
+                    <div class="table-cell package-name">Bitcoin Yield</div>
+                    <div class="table-cell amount">0.25 BTC</div>
+                    <div class="table-cell date">Apr 15, 2025</div>
+                    <div class="table-cell date">May 15, 2025</div>
+                    <div class="table-cell return positive">+5.8% (0.0145 BTC)</div>
+                    <div class="table-cell status">
+                      <span class="status-badge active">Active</span>
+                    </div>
+                    <div class="table-cell actions">
+                      <button class="btn btn-sm btn-secondary view-details" data-investment-id="1">Details</button>
+                    </div>
+                  </div>
+                  
+                  <div class="table-row">
+                    <div class="table-cell package-name">ETH Staking</div>
+                    <div class="table-cell amount">5.0 ETH</div>
+                    <div class="table-cell date">Mar 10, 2025</div>
+                    <div class="table-cell date">Jun 10, 2025</div>
+                    <div class="table-cell return positive">+7.2% (0.36 ETH)</div>
+                    <div class="table-cell status">
+                      <span class="status-badge active">Active</span>
+                    </div>
+                    <div class="table-cell actions">
+                      <button class="btn btn-sm btn-secondary view-details" data-investment-id="2">Details</button>
+                    </div>
+                  </div>
+                  
+                  <div class="table-row">
+                    <div class="table-cell package-name">DeFi Yield Farm</div>
+                    <div class="table-cell amount">$1,000.00</div>
+                    <div class="table-cell date">Apr 01, 2025</div>
+                    <div class="table-cell date">Flexible</div>
+                    <div class="table-cell return positive">+4.5% ($45.00)</div>
+                    <div class="table-cell status">
+                      <span class="status-badge active">Active</span>
+                    </div>
+                    <div class="table-cell actions">
+                      <button class="btn btn-sm btn-secondary view-details" data-investment-id="3">Details</button>
+                      <button class="btn btn-sm btn-danger withdraw-early" data-investment-id="3">Withdraw</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="completed-investments">
+              <h3>Completed Investments</h3>
+              <div class="investments-table">
+                <div class="table-header">
+                  <div class="table-cell">Package</div>
+                  <div class="table-cell">Amount</div>
+                  <div class="table-cell">Start Date</div>
+                  <div class="table-cell">End Date</div>
+                  <div class="table-cell">Actual Return</div>
+                  <div class="table-cell">Status</div>
+                  <div class="table-cell">Actions</div>
+                </div>
+                
+                <div class="table-body" id="completed-investments-list">
+                  <div class="table-row">
+                    <div class="table-cell package-name">Bitcoin Yield</div>
+                    <div class="table-cell amount">0.1 BTC</div>
+                    <div class="table-cell date">Jan 10, 2025</div>
+                    <div class="table-cell date">Feb 10, 2025</div>
+                    <div class="table-cell return positive">+5.8% (0.0058 BTC)</div>
+                    <div class="table-cell status">
+                      <span class="status-badge completed">Completed</span>
+                    </div>
+                    <div class="table-cell actions">
+                      <button class="btn btn-sm btn-secondary view-details" data-investment-id="4">Details</button>
+                    </div>
+                  </div>
+                  
+                  <div class="table-row">
+                    <div class="table-cell package-name">High Yield BTC Fund</div>
+                    <div class="table-cell amount">0.2 BTC</div>
+                    <div class="table-cell date">Oct 15, 2024</div>
+                    <div class="table-cell date">Apr 15, 2025</div>
+                    <div class="table-cell return positive">+12.5% (0.025 BTC)</div>
+                    <div class="table-cell status">
+                      <span class="status-badge completed">Completed</span>
+                    </div>
+                    <div class="table-cell actions">
+                      <button class="btn btn-sm btn-secondary view-details" data-investment-id="5">Details</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      AOS.init({ duration: 800 });
+    });
+  </script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth-service.js"></script>
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/notification-service.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/investments.js"></script>
+  
+  <script>
+    // Update user info in header on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.authService) {
+        const user = authService.getCurrentUser();
+        if (user) {
+          const profileNameElement = document.querySelector('.profile-name');
+          
+          if (profileNameElement) {
+            profileNameElement.textContent = user.username || 'Trader';
+          }
+        }
+      }
+      
+      // Handle package invest buttons
+      document.querySelectorAll('.btn-invest').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const packageId = this.getAttribute('data-pkg-id');
+          const packageCard = this.closest('.package-card');
+          const packageName = packageCard.querySelector('h3').textContent;
+          const packageRoi = packageCard.querySelector('.roi-value').textContent;
+          const packageTerm = packageCard.querySelector('.term-badge').textContent;
+          const minInvestment = packageCard.querySelector('.detail-item:nth-child(1) .detail-value').textContent;
+          const maxInvestment = packageCard.querySelector('.detail-item:nth-child(2) .detail-value').textContent;
+          
+          // Set modal values
+          document.getElementById('investment-package-name').textContent = packageName;
+          document.getElementById('min-investment').textContent = minInvestment;
+          document.getElementById('max-investment').textContent = maxInvestment;
+          document.getElementById('investment-term').textContent = packageTerm;
+          document.getElementById('expected-return').textContent = packageRoi;
+          
+          // Set currency in the input group
+          const currency = minInvestment.split(' ')[1];
+          document.getElementById('investment-currency').textContent = currency;
+          
+          // Open modal
+          document.getElementById('investment-modal').style.display = 'flex';
+        });
+      });
+      
+      // Calculate estimated returns when investment amount changes
+      document.getElementById('investment-amount').addEventListener('input', function() {
+        const amount = parseFloat(this.value) || 0;
+        const roiText = document.getElementById('expected-return').textContent;
+        const roi = parseFloat(roiText) / 100;
+        const currency = document.getElementById('investment-currency').textContent;
+        
+        // Calculate estimated profit and total
+        const profit = amount * roi;
+        const total = amount + profit;
+        
+        // Update display
+        document.getElementById('estimated-profit').textContent = `${profit.toFixed(4)} ${currency}`;
+        document.getElementById('total-at-maturity').textContent = `${total.toFixed(4)} ${currency}`;
+      });
+      
+      // Close modal
+      document.querySelector('.modal-close').addEventListener('click', function() {
+        document.getElementById('investment-modal').style.display = 'none';
+      });
+      
+      document.getElementById('cancel-investment').addEventListener('click', function() {
+        document.getElementById('investment-modal').style.display = 'none';
+      });
+      
+      // Handle investment form submission
+      document.getElementById('investment-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const amount = document.getElementById('investment-amount').value;
+        const packageName = document.getElementById('investment-package-name').textContent;
+        
+        // Here you would normally send the investment to the backend
+        console.log(`Investment in ${packageName}: ${amount}`);
+        
+        // Show success message
+        showToast(`Investment of ${amount} in ${packageName} has been initiated successfully`, 'success');
+        
+        // Close modal
+        document.getElementById('investment-modal').style.display = 'none';
+      });
+      
+      // Handle filter change
+      document.getElementById('investment-filter').addEventListener('change', function() {
+        const filterValue = this.value;
+        const packages = document.querySelectorAll('.package-card');
+        
+        packages.forEach(pkg => {
+          const termBadge = pkg.querySelector('.term-badge');
+          const termType = termBadge.className.split(' ')[1]; // 'fixed', 'flexible', 'high-yield'
+          
+          if (filterValue === 'all' || termType === filterValue) {
+            pkg.style.display = 'block';
+          } else {
+            pkg.style.display = 'none';
+          }
+        });
+      });
+      
+      // Handle My Investments button
+      document.getElementById('my-investments-btn').addEventListener('click', function() {
+        document.getElementById('investment-packages').style.display = 'none';
+        document.getElementById('my-investments-section').style.display = 'block';
+      });
+      
+      // Handle back to packages button
+      document.getElementById('back-to-packages').addEventListener('click', function() {
+        document.getElementById('my-investments-section').style.display = 'none';
+        document.getElementById('investment-packages').style.display = 'grid';
+      });
+      
+      // Handle withdraw early button
+      document.querySelectorAll('.withdraw-early').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const investmentId = this.getAttribute('data-investment-id');
+          
+          if (confirm('Are you sure you want to withdraw this investment early? Fees may apply.')) {
+            // Here you would normally send the withdrawal request to the backend
+            console.log(`Early withdrawal requested for investment ID: ${investmentId}`);
+            
+            // Show success message
+            showToast('Withdrawal request has been submitted successfully', 'success');
+          }
+        });
+      });
+      
+      // Theme toggle functionality
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+          document.body.classList.toggle('light-theme');
+          document.body.classList.toggle('dark-theme');
+          localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+        });
+        
+        // Set initial theme based on stored preference
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        themeToggle.checked = storedTheme === 'dark';
+        document.body.classList.add(storedTheme + '-theme');
+        document.body.classList.remove(storedTheme === 'dark' ? 'light-theme' : 'dark-theme');
+      }
+    });
+  </script>
+</body>
+</html>

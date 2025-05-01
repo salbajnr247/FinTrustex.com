@@ -1,531 +1,355 @@
 /**
  * WebSocket Client for FinTrustEX
- * 
- * Handles real-time data communication including:
- * - Cryptocurrency price updates
- * - Transaction notifications
- * - Wallet balance changes
- * - System status updates
+ * Handles real-time data connections and message handling
  */
 
 class WebSocketClient {
-  constructor() {
+  /**
+   * Initialize WebSocket client
+   * @param {string} url - WebSocket server URL
+   */
+  constructor(url) {
+    this.url = url;
     this.socket = null;
     this.isConnected = false;
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 2000; // Start with 2 seconds delay
-    this.subscriptions = new Map(); // Map of channels to callback arrays
-    this.messageHandlers = new Map(); // Map of message types to handlers
-    this.lastPingTime = null;
-    this.pingInterval = null;
+    this.reconnectInterval = 2000; // Start with 2 seconds
+    this.messageCallbacks = new Map();
+    this.subscriptions = new Map();
+    this.connectCallbacks = [];
+    this.disconnectCallbacks = [];
+    this.lastPingTime = 0;
+    this.pingInterval = 30000; // 30 seconds
+    this.pingTimeoutId = null;
+    this.reconnectTimeoutId = null;
   }
 
   /**
-   * Initialize the WebSocket connection
+   * Connect to WebSocket server
+   * @returns {Promise} - Resolves when connection is established
    */
-  init() {
-    if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
-      console.log('WebSocket already connected or connecting');
+  connect() {
+    return new Promise((resolve, reject) => {
+      if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
+        resolve();
+        return;
+      }
+
+      try {
+        this.socket = new WebSocket(this.url);
+
+        this.socket.onopen = () => {
+          console.log('WebSocket connection established');
+          this.isConnected = true;
+          this.reconnectAttempts = 0;
+          this.startPingInterval();
+          
+          // Reconnect all active subscriptions
+          this.resubscribeAll();
+          
+          // Execute connect callbacks
+          this.connectCallbacks.forEach(callback => callback());
+          
+          resolve();
+        };
+
+        this.socket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            this.handleMessage(message);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
+
+        this.socket.onclose = (event) => {
+          console.log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
+          this.isConnected = false;
+          this.stopPingInterval();
+          
+          // Execute disconnect callbacks
+          this.disconnectCallbacks.forEach(callback => callback(event));
+          
+          // Attempt to reconnect if not closed intentionally
+          if (event.code !== 1000) {
+            this.attemptReconnect();
+          }
+        };
+
+        this.socket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          reject(error);
+        };
+      } catch (error) {
+        console.error('Error creating WebSocket connection:', error);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Handle incoming WebSocket message
+   * @param {Object} message - Parsed message from server
+   */
+  handleMessage(message) {
+    // Handle pong responses
+    if (message.type === 'pong') {
+      const latency = Date.now() - this.lastPingTime;
+      console.log(`WebSocket ping: ${latency}ms`);
       return;
     }
-
-    try {
-      // Determine the correct WebSocket URL based on the current protocol
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/ws`;
-      
-      console.log(`Connecting to WebSocket at ${wsUrl}`);
-      this.socket = new WebSocket(wsUrl);
-      
-      // Set up event handlers
-      this.socket.onopen = this.handleOpen.bind(this);
-      this.socket.onmessage = this.handleMessage.bind(this);
-      this.socket.onclose = this.handleClose.bind(this);
-      this.socket.onerror = this.handleError.bind(this);
-      
-      // Register built-in message handlers
-      this.registerMessageHandler('price_update', this.handlePriceUpdate.bind(this));
-      this.registerMessageHandler('notification', this.handleNotification.bind(this));
-      this.registerMessageHandler('ticket_update', this.handleTicketUpdate.bind(this));
-      this.registerMessageHandler('ping', this.handlePing.bind(this));
-    } catch (error) {
-      console.error('Error initializing WebSocket:', error);
-      this.scheduleReconnect();
-    }
-  }
-
-  /**
-   * Handle WebSocket open event
-   */
-  handleOpen() {
-    console.log('WebSocket connection established');
-    this.isConnected = true;
-    this.reconnectAttempts = 0;
-    this.reconnectDelay = 2000; // Reset reconnect delay
     
-    // Resubscribe to channels after reconnect
-    if (this.subscriptions.size > 0) {
-      this.subscriptions.forEach((callbacks, channel) => {
-        this.sendSubscription(channel);
+    // Handle subscription messages
+    if (message.type === 'data' && message.channel && message.symbol) {
+      const key = this.getSubscriptionKey(message.channel, message.symbol, message.interval);
+      const callbacks = this.messageCallbacks.get(key) || [];
+      
+      callbacks.forEach(callback => {
+        try {
+          callback(message.data);
+        } catch (error) {
+          console.error('Error in subscription callback:', error);
+        }
       });
     }
     
-    // Start ping interval to keep connection alive
-    this.pingInterval = setInterval(() => {
-      if (this.isConnected) {
-        this.send({ type: 'pong', timestamp: new Date().toISOString() });
-      }
-    }, 30000);
-    
-    // Dispatch connected event
-    this.dispatchEvent('connected');
+    // Handle system messages
+    if (message.type === 'system') {
+      console.log('System message:', message.message);
+    }
   }
 
   /**
-   * Handle WebSocket message event
-   * @param {MessageEvent} event - WebSocket message event
+   * Send message to WebSocket server
+   * @param {Object} message - Message to send
+   * @returns {boolean} - Success status
    */
-  handleMessage(event) {
+  send(message) {
+    if (!this.isConnected || !this.socket || this.socket.readyState !== WebSocket.OPEN) {
+      console.error('Cannot send message: WebSocket not connected');
+      return false;
+    }
+
     try {
-      const message = JSON.parse(event.data);
-      
-      // Update last ping time for connection health monitoring
-      this.lastPingTime = new Date();
-      
-      // Log non-ping messages
-      if (message.type !== 'ping') {
-        console.log('WebSocket message received:', message);
-      }
-      
-      // Handle message based on type
-      if (message.type && this.messageHandlers.has(message.type)) {
-        const handler = this.messageHandlers.get(message.type);
-        handler(message);
-      }
-      
-      // Dispatch generic message event
-      this.dispatchEvent('message', message);
-      
-      // Dispatch type-specific event
-      if (message.type) {
-        this.dispatchEvent(message.type, message);
-      }
+      this.socket.send(JSON.stringify(message));
+      return true;
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      console.error('Error sending WebSocket message:', error);
+      return false;
     }
   }
 
   /**
-   * Handle WebSocket close event
-   * @param {CloseEvent} event - WebSocket close event
+   * Subscribe to data channel
+   * @param {string} channel - Data channel (e.g., 'ticker', 'trades', 'orderbook')
+   * @param {string} symbol - Trading symbol (e.g., 'BTCUSD', 'ETHUSD')
+   * @param {string|null} interval - Time interval for candle data (e.g., '1m', '1h', '1d')
+   * @param {Function} callback - Callback for data updates
+   * @returns {boolean} - Success status
    */
-  handleClose(event) {
-    console.log(`WebSocket connection closed. Code: ${event.code}, Reason: ${event.reason}`);
-    this.isConnected = false;
+  subscribe(channel, symbol, interval, callback) {
+    if (!channel || !symbol) {
+      console.error('Channel and symbol are required for subscription');
+      return false;
+    }
+
+    const key = this.getSubscriptionKey(channel, symbol, interval);
     
-    // Clear ping interval
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
+    // Add callback to message handlers
+    if (!this.messageCallbacks.has(key)) {
+      this.messageCallbacks.set(key, []);
+    }
+    this.messageCallbacks.get(key).push(callback);
+    
+    // Save subscription details for reconnection
+    this.subscriptions.set(key, { channel, symbol, interval });
+    
+    // Send subscription request if connected
+    if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.sendSubscription(channel, symbol, interval);
     }
     
-    // Schedule reconnect
-    this.scheduleReconnect();
+    return true;
+  }
+
+  /**
+   * Unsubscribe from data channel
+   * @param {string} channel - Data channel
+   * @param {string} symbol - Trading symbol
+   * @param {string|null} interval - Time interval for candle data
+   * @returns {boolean} - Success status
+   */
+  unsubscribe(channel, symbol, interval) {
+    const key = this.getSubscriptionKey(channel, symbol, interval);
     
-    // Dispatch disconnected event
-    this.dispatchEvent('disconnected');
+    // Remove from message callbacks
+    this.messageCallbacks.delete(key);
+    
+    // Remove from subscriptions list
+    this.subscriptions.delete(key);
+    
+    // Send unsubscribe request if connected
+    if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.send({
+        type: 'unsubscribe',
+        channel,
+        symbol,
+        interval: interval || undefined
+      });
+    }
+    
+    return true;
   }
 
   /**
-   * Handle WebSocket error event
-   * @param {Event} error - WebSocket error event
+   * Send subscription request to server
+   * @param {string} channel - Data channel
+   * @param {string} symbol - Trading symbol
+   * @param {string|null} interval - Time interval for candle data
    */
-  handleError(error) {
-    console.error('WebSocket error:', error);
-    this.dispatchEvent('error', error);
+  sendSubscription(channel, symbol, interval) {
+    this.send({
+      type: 'subscribe',
+      channel,
+      symbol,
+      interval: interval || undefined
+    });
   }
 
   /**
-   * Schedule a reconnection attempt
+   * Resubscribe to all active subscriptions
+   * Used after reconnection
    */
-  scheduleReconnect() {
+  resubscribeAll() {
+    this.subscriptions.forEach((details) => {
+      this.sendSubscription(details.channel, details.symbol, details.interval);
+    });
+  }
+
+  /**
+   * Generate unique key for subscription
+   * @param {string} channel - Data channel
+   * @param {string} symbol - Trading symbol
+   * @param {string|null} interval - Time interval
+   * @returns {string} - Unique subscription key
+   */
+  getSubscriptionKey(channel, symbol, interval) {
+    return `${channel}:${symbol}${interval ? ':' + interval : ''}`;
+  }
+
+  /**
+   * Add connection event handler
+   * @param {Function} callback - Function to call on connection
+   */
+  onConnect(callback) {
+    if (typeof callback === 'function') {
+      this.connectCallbacks.push(callback);
+    }
+  }
+
+  /**
+   * Add disconnection event handler
+   * @param {Function} callback - Function to call on disconnection
+   */
+  onDisconnect(callback) {
+    if (typeof callback === 'function') {
+      this.disconnectCallbacks.push(callback);
+    }
+  }
+
+  /**
+   * Start ping interval to keep connection alive
+   */
+  startPingInterval() {
+    this.stopPingInterval(); // Clear any existing interval
+    
+    this.pingTimeoutId = setInterval(() => {
+      if (this.isConnected && this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.lastPingTime = Date.now();
+        this.send({ type: 'ping' });
+      }
+    }, this.pingInterval);
+  }
+
+  /**
+   * Stop ping interval
+   */
+  stopPingInterval() {
+    if (this.pingTimeoutId) {
+      clearInterval(this.pingTimeoutId);
+      this.pingTimeoutId = null;
+    }
+  }
+
+  /**
+   * Attempt to reconnect to WebSocket server
+   */
+  attemptReconnect() {
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId);
+    }
+
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log(`Maximum reconnect attempts (${this.maxReconnectAttempts}) reached`);
-      this.dispatchEvent('max_reconnects');
+      console.log('Maximum reconnection attempts reached. Giving up.');
       return;
     }
-    
+
+    const delay = Math.min(30000, this.reconnectInterval * Math.pow(1.5, this.reconnectAttempts));
     this.reconnectAttempts++;
-    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
-    console.log(`Scheduling reconnect attempt ${this.reconnectAttempts} in ${delay}ms`);
+
+    console.log(`Attempting to reconnect in ${delay / 1000} seconds. Attempt ${this.reconnectAttempts} of ${this.maxReconnectAttempts}.`);
     
-    setTimeout(() => {
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-      this.init();
+    this.reconnectTimeoutId = setTimeout(() => {
+      console.log('Reconnecting...');
+      this.connect().catch(error => {
+        console.error('Reconnection failed:', error);
+      });
     }, delay);
   }
 
   /**
-   * Send data to the WebSocket server
-   * @param {Object} data - Data to send
-   */
-  send(data) {
-    if (!this.isConnected) {
-      console.warn('Cannot send data: WebSocket not connected');
-      return false;
-    }
-    
-    try {
-      this.socket.send(JSON.stringify(data));
-      return true;
-    } catch (error) {
-      console.error('Error sending WebSocket data:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Subscribe to a channel
-   * @param {string} channel - Channel name
-   * @param {Function} callback - Callback function
-   */
-  subscribe(channel, callback) {
-    // Add to local subscriptions
-    if (!this.subscriptions.has(channel)) {
-      this.subscriptions.set(channel, []);
-      // Send subscription message if connected
-      if (this.isConnected) {
-        this.sendSubscription(channel);
-      }
-    }
-    
-    // Add callback if provided
-    if (callback && typeof callback === 'function') {
-      const callbacks = this.subscriptions.get(channel);
-      callbacks.push(callback);
-    }
-  }
-
-  /**
-   * Send subscription message to the server
-   * @param {string} channel - Channel to subscribe to
-   */
-  sendSubscription(channel) {
-    this.send({
-      type: 'subscribe',
-      channel: channel
-    });
-  }
-
-  /**
-   * Unsubscribe from a channel
-   * @param {string} channel - Channel name
-   * @param {Function} callback - Specific callback to remove (optional)
-   */
-  unsubscribe(channel, callback) {
-    if (!this.subscriptions.has(channel)) {
-      return;
-    }
-    
-    if (callback) {
-      // Remove specific callback
-      const callbacks = this.subscriptions.get(channel);
-      const index = callbacks.indexOf(callback);
-      if (index !== -1) {
-        callbacks.splice(index, 1);
-      }
-      
-      // If no callbacks left, unsubscribe from channel
-      if (callbacks.length === 0) {
-        this.subscriptions.delete(channel);
-        this.send({
-          type: 'unsubscribe',
-          channel: channel
-        });
-      }
-    } else {
-      // Remove all callbacks
-      this.subscriptions.delete(channel);
-      this.send({
-        type: 'unsubscribe',
-        channel: channel
-      });
-    }
-  }
-
-  /**
-   * Register a handler for a specific message type
-   * @param {string} type - Message type
-   * @param {Function} handler - Handler function
-   */
-  registerMessageHandler(type, handler) {
-    if (typeof handler !== 'function') {
-      console.error('Handler must be a function');
-      return;
-    }
-    
-    this.messageHandlers.set(type, handler);
-  }
-
-  /**
-   * Handle price update messages
-   * @param {Object} message - Price update message
-   */
-  handlePriceUpdate(message) {
-    // Update price data in local storage for persistence
-    try {
-      localStorage.setItem('latest_prices', JSON.stringify({
-        pairs: message.data.pairs,
-        timestamp: message.data.timestamp
-      }));
-    } catch (error) {
-      console.error('Error storing price data:', error);
-    }
-    
-    // Trigger any price update callbacks
-    this.dispatchEvent('price_update', message.data);
-  }
-
-  /**
-   * Handle notification messages
-   * @param {Object} message - Notification message
-   */
-  handleNotification(message) {
-    // Store notification in session history
-    try {
-      const notifications = JSON.parse(sessionStorage.getItem('notifications') || '[]');
-      notifications.unshift(message.data);
-      
-      // Limit to 50 notifications
-      if (notifications.length > 50) {
-        notifications.pop();
-      }
-      
-      sessionStorage.setItem('notifications', JSON.stringify(notifications));
-    } catch (error) {
-      console.error('Error storing notification:', error);
-    }
-    
-    // Show notification if browser supports it
-    if ('Notification' in window) {
-      this.showNotification(message.data);
-    }
-    
-    // Trigger notification callbacks
-    this.dispatchEvent('notification', message.data);
-  }
-
-  /**
-   * Handle ping messages
-   * @param {Object} message - Ping message
-   */
-  handlePing(message) {
-    // Update last ping time
-    this.lastPingTime = new Date();
-    
-    // Send pong response
-    this.send({
-      type: 'pong',
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  /**
-   * Show browser notification
-   * @param {Object} notification - Notification data
-   */
-  showNotification(notification) {
-    // Check if browser notifications are supported and permission is granted
-    if (!('Notification' in window)) {
-      return;
-    }
-    
-    if (Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/assets/images/generated-icon.png'
-      });
-    } else if (Notification.permission !== 'denied') {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          new Notification(notification.title, {
-            body: notification.message,
-            icon: '/assets/images/generated-icon.png'
-          });
-        }
-      });
-    }
-  }
-
-  /**
-   * Disconnect the WebSocket
+   * Disconnect from WebSocket server
    */
   disconnect() {
     if (this.socket) {
-      this.socket.close();
-    }
-    
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
-    }
-    
-    this.isConnected = false;
-  }
-
-  /**
-   * Add event listener
-   * @param {string} event - Event name
-   * @param {Function} callback - Callback function
-   */
-  addEventListener(event, callback) {
-    if (!this.eventListeners) {
-      this.eventListeners = new Map();
-    }
-    
-    if (!this.eventListeners.has(event)) {
-      this.eventListeners.set(event, []);
-    }
-    
-    this.eventListeners.get(event).push(callback);
-  }
-
-  /**
-   * Remove event listener
-   * @param {string} event - Event name
-   * @param {Function} callback - Callback function
-   */
-  removeEventListener(event, callback) {
-    if (!this.eventListeners || !this.eventListeners.has(event)) {
-      return;
-    }
-    
-    const callbacks = this.eventListeners.get(event);
-    const index = callbacks.indexOf(callback);
-    
-    if (index !== -1) {
-      callbacks.splice(index, 1);
-    }
-  }
-
-  /**
-   * Dispatch event to registered listeners
-   * @param {string} event - Event name
-   * @param {*} data - Event data
-   */
-  dispatchEvent(event, data) {
-    if (!this.eventListeners || !this.eventListeners.has(event)) {
-      return;
-    }
-    
-    const callbacks = this.eventListeners.get(event);
-    callbacks.forEach(callback => {
-      try {
-        callback(data);
-      } catch (error) {
-        console.error(`Error in event listener for ${event}:`, error);
-      }
-    });
-  }
-
-  /**
-   * Get the connection status
-   * @returns {boolean} - Whether the connection is active
-   */
-  isActive() {
-    return this.isConnected;
-  }
-
-  /**
-   * Get the latest prices from local storage
-   * @returns {Object|null} - Latest price data or null if not available
-   */
-  getLatestPrices() {
-    try {
-      const pricesJson = localStorage.getItem('latest_prices');
-      return pricesJson ? JSON.parse(pricesJson) : null;
-    } catch (error) {
-      console.error('Error retrieving price data:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Handle ticket update messages
-   * @param {Object} message - Ticket update message
-   */
-  handleTicketUpdate(message) {
-    // Store ticket update in session history
-    try {
-      const ticketUpdates = JSON.parse(sessionStorage.getItem('ticket_updates') || '[]');
-      ticketUpdates.unshift(message.data);
+      this.stopPingInterval();
       
-      // Limit to 20 ticket updates
-      if (ticketUpdates.length > 20) {
-        ticketUpdates.pop();
+      if (this.reconnectTimeoutId) {
+        clearTimeout(this.reconnectTimeoutId);
+        this.reconnectTimeoutId = null;
       }
       
-      sessionStorage.setItem('ticket_updates', JSON.stringify(ticketUpdates));
-    } catch (error) {
-      console.error('Error storing ticket update:', error);
-    }
-    
-    // Trigger ticket update callbacks
-    this.dispatchEvent('ticket_update', message.data);
-    
-    // Create notification for ticket update
-    if (message.data.notification !== false) {
-      const notificationData = {
-        title: 'Support Ticket Updated',
-        message: `Ticket ${message.data.ticketId}: ${message.data.message || 'has been updated'}`,
-        timestamp: new Date().toISOString(),
-        type: 'ticket_update',
-        data: message.data
-      };
+      if (this.socket.readyState === WebSocket.OPEN) {
+        this.socket.close(1000, 'Normal closure');
+      }
       
-      this.handleNotification({ data: notificationData });
-    }
-  }
-  
-  /**
-   * Get recent notifications from session storage
-   * @returns {Array} - Array of recent notifications
-   */
-  getRecentNotifications() {
-    try {
-      const notificationsJson = sessionStorage.getItem('notifications');
-      return notificationsJson ? JSON.parse(notificationsJson) : [];
-    } catch (error) {
-      console.error('Error retrieving notifications:', error);
-      return [];
-    }
-  }
-  
-  /**
-   * Get recent ticket updates from session storage
-   * @returns {Array} - Array of recent ticket updates
-   */
-  getRecentTicketUpdates() {
-    try {
-      const ticketUpdatesJson = sessionStorage.getItem('ticket_updates');
-      return ticketUpdatesJson ? JSON.parse(ticketUpdatesJson) : [];
-    } catch (error) {
-      console.error('Error retrieving ticket updates:', error);
-      return [];
+      this.isConnected = false;
     }
   }
 }
 
-// Create and export a singleton instance
-const websocketClient = new WebSocketClient();
+// Create singleton instance
+const wsClient = (() => {
+  let instance;
+  
+  function createInstance() {
+    // Determine WebSocket URL based on current location
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    return new WebSocketClient(wsUrl);
+  }
+  
+  return {
+    getInstance: function() {
+      if (!instance) {
+        instance = createInstance();
+      }
+      return instance;
+    }
+  };
+})();
 
-// Auto-initialize when the DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    websocketClient.init();
-  }, 1000); // Slight delay to ensure page is fully loaded
-});
-
-// Make available globally
-window.websocketClient = websocketClient;
+// Export WebSocket client
+window.wsClient = wsClient.getInstance();

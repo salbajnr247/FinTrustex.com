@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FinTrustEX - Settings</title>
+  <!-- Auth check script - Must be loaded first to prevent unauthorized access -->
+  <script src="../assets/js/auth-check.js"></script>
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="../assets/css/settings.css">
+  <link rel="stylesheet" href="../assets/css/responsive.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dark-theme">
+  <div class="dashboard-wrapper">
+    <header class="header" id="navbar-container">
+      <div class="logo">
+        <div class="fintrust-logo">
+          <span class="fintrust-f">F</span>
+          <span class="fintrust-x">X</span>
+        </div>
+        <h1>FinTrustEX</h1>
+      </div>
+      
+      <div class="header-controls">
+        <div class="nav-actions">
+          <button class="btn deposit" data-nav="/dashboard/wallet/deposit.html" aria-label="Deposit funds">Deposit</button>
+          <button class="btn withdraw" data-nav="/dashboard/wallet/withdraw.html" aria-label="Withdraw funds">Withdraw</button>
+          <button class="btn trade" data-nav="/dashboard/trading/trading.html" aria-label="Start trading">Trade Now</button>
+          <button class="btn ar-toggle" aria-label="Toggle AR mode" id="ar-toggle">AR Mode</button>
+        </div>
+        
+        <div class="theme-toggle">
+          <i class="fas fa-sun"></i>
+          <label class="switch">
+            <input type="checkbox" id="themeToggle">
+            <span class="slider round"></span>
+          </label>
+          <i class="fas fa-moon"></i>
+        </div>
+        
+        <div class="notifications-icon" id="notifications-icon">
+          <i class="fas fa-bell"></i>
+          <span class="notifications-badge" id="notifications-badge"></span>
+        </div>
+        
+        <div class="user-menu">
+          <div class="user-avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <span class="profile-name">Trader!</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar" id="sidebar-container">
+        <nav class="main-nav">
+          <ul>
+            <li><a href="/dashboard/dashboard.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="/dashboard/trading/trading.html"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+            <li><a href="/dashboard/wallet/wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
+            <li><a href="/dashboard/history"><i class="fas fa-history"></i> History</a></li>
+            <li><a href="/dashboard/support-tickets.html"><i class="fas fa-ticket-alt"></i> Support</a></li>
+            <li class="active"><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+          </ul>
+        </nav>
+      </aside>
+
+      <div class="dashboard">
+        <div class="settings-wrapper">
+          <div class="section-header">
+            <h2>Account Settings</h2>
+          </div>
+          
+          <div class="settings-container">
+            <div class="settings-nav">
+              <div class="settings-nav-item active" data-tab="profile">
+                <i class="fas fa-user"></i> Profile
+              </div>
+              <div class="settings-nav-item" data-tab="security">
+                <i class="fas fa-shield-alt"></i> Security
+              </div>
+              <div class="settings-nav-item" data-tab="identity">
+                <i class="fas fa-id-card"></i> Identity Verification
+              </div>
+              <div class="settings-nav-item" data-tab="preferences">
+                <i class="fas fa-sliders-h"></i> Preferences
+              </div>
+              <div class="settings-nav-item" data-tab="notifications">
+                <i class="fas fa-bell"></i> Notifications
+              </div>
+              <div class="settings-nav-item" data-tab="api">
+                <i class="fas fa-code"></i> API Keys
+              </div>
+              <div class="settings-nav-item" data-tab="payment">
+                <i class="fas fa-credit-card"></i> Payment Methods
+              </div>
+            </div>
+            
+            <div class="settings-content">
+              <!-- Profile Tab -->
+              <div class="settings-tab active" id="profile-tab">
+                <h3>Profile Information</h3>
+                <div class="settings-form">
+                  <div class="form-group">
+                    <label for="profile-avatar">Profile Picture</label>
+                    <div class="avatar-upload">
+                      <div class="avatar-preview">
+                        <div id="avatar-preview-img" style="background-image: url('../assets/images/avatar-placeholder.png');"></div>
+                      </div>
+                      <label for="avatar-upload" class="btn btn-sm">Choose Image</label>
+                      <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="first-name">First Name</label>
+                    <input type="text" id="first-name" class="form-control" placeholder="First Name">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="last-name">Last Name</label>
+                    <input type="text" id="last-name" class="form-control" placeholder="Last Name">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="display-name">Display Name</label>
+                    <input type="text" id="display-name" class="form-control" placeholder="Display Name">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" class="form-control" placeholder="Email" disabled>
+                    <small>Email cannot be changed. Contact support if needed.</small>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-control" placeholder="Phone Number">
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="country">Country</label>
+                    <select id="country" class="form-control">
+                      <option value="">Select Country</option>
+                      <option value="us">United States</option>
+                      <option value="uk">United Kingdom</option>
+                      <option value="ca">Canada</option>
+                      <option value="au">Australia</option>
+                      <!-- More countries would be added here -->
+                    </select>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="timezone">Time Zone</label>
+                    <select id="timezone" class="form-control">
+                      <option value="">Select Time Zone</option>
+                      <option value="utc">UTC</option>
+                      <option value="est">Eastern Time (ET)</option>
+                      <option value="cst">Central Time (CT)</option>
+                      <option value="mst">Mountain Time (MT)</option>
+                      <option value="pst">Pacific Time (PT)</option>
+                      <!-- More timezones would be added here -->
+                    </select>
+                  </div>
+                  
+                  <div class="form-actions">
+                    <button type="button" class="btn btn-primary" id="save-profile">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" id="cancel-profile">Cancel</button>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Security Tab -->
+              <div class="settings-tab" id="security-tab">
+                <h3>Security Settings</h3>
+                
+                <div class="security-card">
+                  <div class="security-header">
+                    <h4>Change Password</h4>
+                    <i class="fas fa-lock"></i>
+                  </div>
+                  <div class="security-content">
+                    <div class="form-group">
+                      <label for="current-password">Current Password</label>
+                      <input type="password" id="current-password" class="form-control" placeholder="Current Password">
+                    </div>
+                    <div class="form-group">
+                      <label for="new-password">New Password</label>
+                      <input type="password" id="new-password" class="form-control" placeholder="New Password">
+                    </div>
+                    <div class="form-group">
+                      <label for="confirm-password">Confirm New Password</label>
+                      <input type="password" id="confirm-password" class="form-control" placeholder="Confirm New Password">
+                    </div>
+                    <div class="form-actions">
+                      <button type="button" class="btn btn-primary" id="change-password">Update Password</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="security-card">
+                  <div class="security-header">
+                    <h4>Two-Factor Authentication (2FA)</h4>
+                    <i class="fas fa-shield-alt"></i>
+                  </div>
+                  <div class="security-content">
+                    <div class="security-status">
+                      <div class="status-badge enabled">
+                        <i class="fas fa-check-circle"></i> Enabled
+                      </div>
+                      <p>Your account is secured with Two-Factor Authentication (Google Authenticator)</p>
+                    </div>
+                    <div class="form-actions">
+                      <button type="button" class="btn btn-secondary" id="disable-2fa">Disable 2FA</button>
+                      <button type="button" class="btn btn-primary" id="reset-2fa">Reset 2FA</button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="security-card">
+                  <div class="security-header">
+                    <h4>Login History</h4>
+                    <i class="fas fa-history"></i>
+                  </div>
+                  <div class="security-content">
+                    <div class="login-history">
+                      <div class="login-item">
+                        <div class="login-info">
+                          <span class="login-device"><i class="fas fa-desktop"></i> Windows 10, Chrome</span>
+                          <span class="login-location">New York, United States</span>
+                        </div>
+                        <div class="login-time">
+                          <span>May 1, 2025 10:15 AM</span>
+                          <span class="login-status">Current Session</span>
+                        </div>
+                      </div>
+                      
+                      <div class="login-item">
+                        <div class="login-info">
+                          <span class="login-device"><i class="fas fa-mobile-alt"></i> iOS 16, Safari</span>
+                          <span class="login-location">New York, United States</span>
+                        </div>
+                        <div class="login-time">
+                          <span>April 28, 2025 9:23 PM</span>
+                        </div>
+                      </div>
+                      
+                      <div class="login-item">
+                        <div class="login-info">
+                          <span class="login-device"><i class="fas fa-desktop"></i> macOS, Chrome</span>
+                          <span class="login-location">Boston, United States</span>
+                        </div>
+                        <div class="login-time">
+                          <span>April 25, 2025 3:42 PM</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="form-actions">
+                      <button type="button" class="btn btn-secondary" id="view-all-sessions">View All Sessions</button>
+                      <button type="button" class="btn btn-danger" id="logout-all">Logout All Devices</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Identity Verification Tab -->
+              <div class="settings-tab" id="identity-tab">
+                <h3>Identity Verification</h3>
+                
+                <div class="verification-status">
+                  <h4>Current Verification Level: <span class="badge level-2">Level 2</span></h4>
+                  <p>Complete all verification levels to unlock all platform features and higher trading limits.</p>
+                </div>
+                
+                <div class="verification-levels">
+                  <div class="verification-level completed">
+                    <div class="level-header">
+                      <h4>Level 1 - Basic</h4>
+                      <div class="level-status">
+                        <i class="fas fa-check-circle"></i> Completed
+                      </div>
+                    </div>
+                    <div class="level-body">
+                      <p>Basic information verification</p>
+                      <ul>
+                        <li><i class="fas fa-check"></i> Email verification</li>
+                        <li><i class="fas fa-check"></i> Phone verification</li>
+                      </ul>
+                      <div class="level-limits">
+                        <p><strong>Trading Limit:</strong> $10,000 daily</p>
+                        <p><strong>Withdrawal Limit:</strong> $2,000 daily</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="verification-level completed">
+                    <div class="level-header">
+                      <h4>Level 2 - Identity</h4>
+                      <div class="level-status">
+                        <i class="fas fa-check-circle"></i> Completed
+                      </div>
+                    </div>
+                    <div class="level-body">
+                      <p>Personal identity verification</p>
+                      <ul>
+                        <li><i class="fas fa-check"></i> Government ID upload</li>
+                        <li><i class="fas fa-check"></i> Facial verification</li>
+                      </ul>
+                      <div class="level-limits">
+                        <p><strong>Trading Limit:</strong> $100,000 daily</p>
+                        <p><strong>Withdrawal Limit:</strong> $10,000 daily</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="verification-level">
+                    <div class="level-header">
+                      <h4>Level 3 - Advanced</h4>
+                      <div class="level-status">
+                        Pending
+                      </div>
+                    </div>
+                    <div class="level-body">
+                      <p>Address and advanced verification</p>
+                      <ul>
+                        <li>Proof of address</li>
+                        <li>Source of funds declaration</li>
+                      </ul>
+                      <div class="level-limits">
+                        <p><strong>Trading Limit:</strong> $500,000 daily</p>
+                        <p><strong>Withdrawal Limit:</strong> $100,000 daily</p>
+                      </div>
+                      <button class="btn btn-primary" id="start-level3">Start Verification</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Other tabs would be implemented similarly -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      AOS.init({ duration: 800 });
+    });
+  </script>
+  <script src="../assets/js/api.js"></script>
+  <script src="../assets/js/auth-service.js"></script>
+  <script src="../assets/js/utils.js"></script>
+  <script src="../assets/js/components.js"></script>
+  <script src="../assets/js/notification-service.js"></script>
+  <script src="../assets/js/main.js"></script>
+  <script src="../assets/js/settings.js"></script>
+  
+  <script>
+    // Update user info in header on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.authService) {
+        const user = authService.getCurrentUser();
+        if (user) {
+          const profileNameElement = document.querySelector('.profile-name');
+          
+          if (profileNameElement) {
+            profileNameElement.textContent = user.username || 'Trader';
+          }
+          
+          // Set initial form values
+          document.getElementById('display-name').value = user.username || '';
+          document.getElementById('email').value = user.email || '';
+          document.getElementById('phone').value = user.phone || '';
+          
+          if (user.firstName) document.getElementById('first-name').value = user.firstName;
+          if (user.lastName) document.getElementById('last-name').value = user.lastName;
+          if (user.country) document.getElementById('country').value = user.country;
+          if (user.timezone) document.getElementById('timezone').value = user.timezone;
+        }
+      }
+      
+      // Settings tab navigation
+      const tabLinks = document.querySelectorAll('.settings-nav-item');
+      const tabContents = document.querySelectorAll('.settings-tab');
+      
+      tabLinks.forEach(link => {
+        link.addEventListener('click', function() {
+          // Remove active class from all tabs and contents
+          tabLinks.forEach(item => item.classList.remove('active'));
+          tabContents.forEach(content => content.classList.remove('active'));
+          
+          // Add active class to clicked tab and corresponding content
+          this.classList.add('active');
+          const tabId = this.getAttribute('data-tab');
+          document.getElementById(tabId + '-tab').classList.add('active');
+        });
+      });
+      
+      // Handle save profile button
+      document.getElementById('save-profile').addEventListener('click', function() {
+        // Gather form data
+        const userData = {
+          firstName: document.getElementById('first-name').value,
+          lastName: document.getElementById('last-name').value,
+          username: document.getElementById('display-name').value,
+          phone: document.getElementById('phone').value,
+          country: document.getElementById('country').value,
+          timezone: document.getElementById('timezone').value
+        };
+        
+        // Call API to update user
+        if (window.api && api.user) {
+          api.user.updateProfile(userData)
+            .then(response => {
+              showToast('Profile updated successfully', 'success');
+              
+              // Update user in auth service
+              if (window.authService) {
+                const currentUser = authService.getCurrentUser();
+                authService.setCurrentUser({
+                  ...currentUser,
+                  ...userData
+                });
+                
+                // Update display name in header
+                const profileNameElement = document.querySelector('.profile-name');
+                if (profileNameElement) {
+                  profileNameElement.textContent = userData.username || 'Trader';
+                }
+              }
+            })
+            .catch(error => {
+              console.error('Error updating profile:', error);
+              showToast('Failed to update profile. Please try again.', 'error');
+            });
+        } else {
+          // For demo without API
+          console.log('Update profile:', userData);
+          showToast('Profile updated successfully (Demo)', 'success');
+          
+          // Update display name in header
+          const profileNameElement = document.querySelector('.profile-name');
+          if (profileNameElement) {
+            profileNameElement.textContent = userData.username || 'Trader';
+          }
+        }
+      });
+      
+      // Handle avatar upload
+      document.getElementById('avatar-upload').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            document.getElementById('avatar-preview-img').style.backgroundImage = `url(${e.target.result})`;
+          }
+          reader.readAsDataURL(file);
+        }
+      });
+      
+      // Theme toggle functionality
+      const themeToggle = document.getElementById('themeToggle');
+      if (themeToggle) {
+        themeToggle.addEventListener('change', function() {
+          document.body.classList.toggle('light-theme');
+          document.body.classList.toggle('dark-theme');
+          localStorage.setItem('theme', this.checked ? 'dark' : 'light');
+        });
+        
+        // Set initial theme based on stored preference
+        const storedTheme = localStorage.getItem('theme') || 'dark';
+        themeToggle.checked = storedTheme === 'dark';
+        document.body.classList.add(storedTheme + '-theme');
+        document.body.classList.remove(storedTheme === 'dark' ? 'light-theme' : 'dark-theme');
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoinZ | Crypto Trading Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Add this style to make the chart square */
+        .tradingview-widget-container {
+            width: 100%;
+            aspect-ratio: 1/1; /* This makes it square */
+            position: relative;
+        }
+        #tradingview-chart {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="coinz-logo">
+                    <span class="coinz-c">C</span>
+                    <span class="coinz-z">Z</span>
+                </div>
+                <h1>CoinZ</h1>
+            </div>
+            
+            <div class="header-controls">
+                <div class="theme-toggle">
+                    <i class="fas fa-sun"></i>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <i class="fas fa-moon"></i>
+                </div>
+                <div class="user-menu">
+                    <div class="user-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <aside class="sidebar">
+                <nav class="main-nav">
+                    <ul>
+                        <li class="active"><a href="#"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+                        <li><a href="#"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+                        <li><a href="#"><i class="fas fa-wallet"></i> Wallet</a></li>
+                        <li><a href="#"><i class="fas fa-history"></i> History</a></li>
+                    </ul>
+                </nav>
+
+                <div class="portfolio-summary">
+                    <h3>Portfolio Value</h3>
+                    <div class="portfolio-value">$24,589.42</div>
+                    <div class="portfolio-change positive">+2.34%</div>
+                    <div class="portfolio-assets">
+                        <div class="asset">
+                            <span class="asset-name">BTC</span>
+                            <span class="asset-amount">0.42</span>
+                            <span class="asset-value">$12,453.21</span>
+                        </div>
+                        <div class="asset">
+                            <span class="asset-name">ETH</span>
+                            <span class="asset-amount">3.2</span>
+                            <span class="asset-value">$6,124.32</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="dashboard">
+                <div class="market-overview">
+                    <div class="section-header">
+                        <h2>Market Overview</h2>
+                        <div class="market-selector">
+                            <select id="marketSelect">
+                                <option value="all">All Markets</option>
+                                <option value="usd">USD Pairs</option>
+                                <option value="inr">INR Pairs</option>
+                                <option value="btc">BTC Pairs</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="crypto-tickers">
+                        <!-- Tickers will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="chart-trading-section">
+                    <div class="price-chart">
+                        <div class="chart-header">
+                            <h3 id="chartPair">BTC/USD</h3>
+                            <!-- Interval buttons removed from here -->
+                        </div>
+                        <!-- TradingView Chart Widget -->
+                        <div class="tradingview-widget-container">
+                            <div id="tradingview-chart"></div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                            <script type="text/javascript">
+                                new TradingView.widget({
+                                    "autosize": false,  /* Disable autosize to maintain square */
+                                    "width": "100%",
+                                    "height": "100%",
+                                    "symbol": "BINANCE:BTCUSDT",
+                                    "interval": "D",
+                                    "timezone": "Etc/UTC",
+                                    "theme": "dark",
+                                    "style": "1",
+                                    "locale": "en",
+                                    "toolbar_bg": "#f1f3f6",
+                                    "enable_publishing": false,
+                                    "hide_top_toolbar": false,
+                                    "hide_side_toolbar": false,
+                                    "allow_symbol_change": true,
+                                    "container_id": "tradingview-chart"
+                                });
+                            </script>
+                        </div>
+                    </div>
+
+                    <div class="order-trading-panel">
+                        <div class="order-book">
+                            <div class="panel-header">
+                                <h3>Order Book</h3>
+                            </div>
+                            <div class="order-book-content">
+                                <div class="asks">
+                                    <div class="order-book-header">
+                                        <span>Price (USD)</span>
+                                        <span>Amount</span>
+                                        <span>Total</span>
+                                    </div>
+                                    <div class="ask-orders"></div>
+                                </div>
+                                <div class="market-price">
+                                    <span class="price">$0.00</span>
+                                    <span class="change">0.00%</span>
+                                </div>
+                                <div class="bids">
+                                    <div class="bid-orders"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="trading-panel">
+                            <div class="trading-tabs">
+                                <button class="trading-tab active" data-tab="market">Market</button>
+                                <button class="trading-tab" data-tab="limit">Limit</button>
+                            </div>
+                            <div class="trading-form" id="marketForm">
+                                <div class="form-group">
+                                    <label>Amount</label>
+                                    <div class="input-group">
+                                        <input type="number" placeholder="0.00" id="marketAmount">
+                                        <span class="input-group-text" id="marketAmountCurrency">BTC</span>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-buy">Buy</button>
+                                    <button class="btn-sell">Sell</button>
+                                </div>
+                            </div>
+                            <div class="trading-form hidden" id="limitForm">
+                                <div class="form-group">
+                                    <label>Price (USD)</label>
+                                    <div class="input-group">
+                                        <input type="number" placeholder="0.00" id="limitPrice">
+                                        <span class="input-group-text">USD</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Amount</label>
+                                    <div class="input-group">
+                                        <input type="number" placeholder="0.00" id="limitAmount">
+                                        <span class="input-group-text" id="limitAmountCurrency">BTC</span>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn-buy" id="placeLimitBuy">Buy</button>
+                                    <button class="btn-sell" id="placeLimitSell">Sell</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

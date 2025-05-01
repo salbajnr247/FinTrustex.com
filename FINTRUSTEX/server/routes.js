@@ -1566,235 +1566,492 @@ router.get('/admin/users/:userId/restrictions', requireAdmin, async (req, res) =
 });
 
 // Setup WebSocket server for real-time updates
+// WebSocket Server implementation has been moved to a dedicated file
+// This function now delegates to the specialized implementation
 function setupWebSocketServer(httpServer) {
-  const wss = new WebSocket.Server({ 
-    server: httpServer,
-    path: '/ws'
-  });
-  
-  // Store connected clients and their subscriptions
-  const clients = new Map();
-  
-  wss.on('connection', (ws) => {
-    // Add client to map with empty subscriptions array
-    clients.set(ws, { subscriptions: [] });
-    
-    // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'connection',
-      message: 'Connected to FinTrustEX WebSocket Server',
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Handle messages from client
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        
-        switch (data.type) {
-          case 'subscribe':
-            handleSubscription(ws, data);
-            break;
-          case 'unsubscribe':
-            handleUnsubscription(ws, data);
-            break;
-          default:
-            ws.send(JSON.stringify({
-              type: 'error',
-              message: 'Unknown message type',
-              timestamp: new Date().toISOString()
-            }));
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-        ws.send(JSON.stringify({
-          type: 'error',
-          message: 'Invalid message format',
-          timestamp: new Date().toISOString()
-        }));
-      }
+  const { setupWebSocketServer: setupWS } = require('./websocket-server');
+  return setupWS(httpServer);
+}
+
+// WebSocket handlers have been moved to websocket-server.js
+
+// =============================
+// Support Ticket System Routes
+// =============================
+
+// Get all support tickets (admin only)
+router.get('/support/tickets', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const tickets = await storage.getAllSupportTickets();
+    res.json({
+      success: true,
+      tickets
     });
-    
-    // Handle client disconnect
-    ws.on('close', () => {
-      clients.delete(ws);
+  } catch (error) {
+    console.error('Error getting all support tickets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get support tickets'
     });
-  });
-  
-  // Start sending periodic updates
-  startPeriodicUpdates(clients);
-  
-  return wss;
-}
-
-function handleSubscription(ws, data) {
-  const client = clients.get(ws);
-  
-  if (!client) return;
-  
-  // Add channel to client's subscriptions if not already subscribed
-  if (!client.subscriptions.includes(data.channel)) {
-    client.subscriptions.push(data.channel);
-    
-    // Send confirmation
-    ws.send(JSON.stringify({
-      type: 'subscribed',
-      channel: data.channel,
-      timestamp: new Date().toISOString()
-    }));
-    
-    // Send initial data for the channel
-    sendInitialData(ws, data.channel, data.symbol);
   }
-}
+});
 
-function handleUnsubscription(ws, data) {
-  const client = clients.get(ws);
-  
-  if (!client) return;
-  
-  // Remove channel from subscriptions
-  const index = client.subscriptions.indexOf(data.channel);
-  if (index !== -1) {
-    client.subscriptions.splice(index, 1);
+// Get user's support tickets
+router.get('/support/tickets/user', requireAuth, async (req, res) => {
+  try {
+    const tickets = await storage.getSupportTicketsByUserId(req.user.id);
+    res.json({
+      success: true,
+      tickets
+    });
+  } catch (error) {
+    console.error(`Error getting support tickets for user ${req.user.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get your support tickets'
+    });
+  }
+});
+
+// Get support ticket by ID
+router.get('/support/tickets/:id', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await storage.getSupportTicket(id);
     
-    // Send confirmation
-    ws.send(JSON.stringify({
-      type: 'unsubscribed',
-      channel: data.channel,
-      timestamp: new Date().toISOString()
-    }));
-  }
-}
-
-function sendInitialData(ws, channel, symbol) {
-  // Send initial data based on channel
-  switch (channel) {
-    case 'ticker':
-      // Example ticker data
-      ws.send(JSON.stringify({
-        type: 'ticker',
-        data: {
-          symbol: symbol || 'BTC/USD',
-          price: 75234.56,
-          change: 2.35,
-          high: 75987.43,
-          low: 73456.78,
-          volume: 1234.56,
-          timestamp: new Date().toISOString()
-        }
-      }));
-      break;
-    case 'orderbook':
-      // Example orderbook data
-      ws.send(JSON.stringify({
-        type: 'orderbook',
-        data: {
-          symbol: symbol || 'BTC/USD',
-          bids: [
-            { price: '75200', amount: '0.5432', total: '40850.64' },
-            { price: '75150', amount: '1.2345', total: '92722.67' },
-            { price: '75100', amount: '0.8765', total: '65825.15' }
-          ],
-          asks: [
-            { price: '75250', amount: '0.3456', total: '26006.40' },
-            { price: '75300', amount: '1.5678', total: '118053.54' },
-            { price: '75350', amount: '0.6789', total: '51149.81' }
-          ],
-          timestamp: new Date().toISOString()
-        }
-      }));
-      break;
-    case 'trades':
-      // Example trades data
-      ws.send(JSON.stringify({
-        type: 'trades',
-        data: {
-          symbol: symbol || 'BTC/USD',
-          trades: [
-            { id: '1', price: '75234.56', amount: '0.1234', side: 'buy', timestamp: new Date().toISOString() },
-            { id: '2', price: '75230.12', amount: '0.0567', side: 'sell', timestamp: new Date(Date.now() - 5000).toISOString() },
-            { id: '3', price: '75245.78', amount: '0.0789', side: 'buy', timestamp: new Date(Date.now() - 10000).toISOString() }
-          ]
-        }
-      }));
-      break;
-  }
-}
-
-function startPeriodicUpdates(clients) {
-  // Send updates every second
-  setInterval(() => {
-    // For each client
-    for (const [ws, client] of clients.entries()) {
-      // Skip if websocket is not open
-      if (ws.readyState !== WebSocket.OPEN) continue;
-      
-      // Send updates for each subscription
-      for (const channel of client.subscriptions) {
-        // Generate random updates
-        switch (channel) {
-          case 'ticker':
-            const tickerUpdate = {
-              type: 'ticker',
-              data: {
-                symbol: 'BTC/USD',
-                price: 75234.56 + (Math.random() * 200 - 100),
-                change: 2.35 + (Math.random() - 0.5),
-                high: 75987.43,
-                low: 73456.78,
-                volume: 1234.56 + Math.random() * 10,
-                timestamp: new Date().toISOString()
-              }
-            };
-            ws.send(JSON.stringify(tickerUpdate));
-            break;
-          case 'orderbook':
-            // Send orderbook updates less frequently (every 3 seconds)
-            if (Math.random() < 0.3) {
-              const orderbookUpdate = {
-                type: 'orderbook_update',
-                data: {
-                  symbol: 'BTC/USD',
-                  bids: [
-                    { price: (75200 + Math.random() * 10).toFixed(2), amount: (Math.random() * 2).toFixed(4), total: (75200 * Math.random() * 2).toFixed(2) }
-                  ],
-                  asks: [
-                    { price: (75250 + Math.random() * 10).toFixed(2), amount: (Math.random() * 2).toFixed(4), total: (75250 * Math.random() * 2).toFixed(2) }
-                  ],
-                  timestamp: new Date().toISOString()
-                }
-              };
-              ws.send(JSON.stringify(orderbookUpdate));
-            }
-            break;
-          case 'trades':
-            // Send new trades randomly
-            if (Math.random() < 0.5) {
-              const side = Math.random() > 0.5 ? 'buy' : 'sell';
-              const price = 75234.56 + (Math.random() * 100 - 50);
-              const amount = (Math.random() * 0.2).toFixed(6);
-              
-              const tradeUpdate = {
-                type: 'trade',
-                data: {
-                  symbol: 'BTC/USD',
-                  trade: {
-                    id: Date.now().toString(),
-                    price: price.toFixed(2),
-                    amount,
-                    side,
-                    timestamp: new Date().toISOString()
-                  }
-                }
-              };
-              ws.send(JSON.stringify(tradeUpdate));
-            }
-            break;
-        }
-      }
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
     }
-  }, 1000);
+    
+    // Check permission: only admins or ticket owner can view
+    if (!req.user.isAdmin && ticket.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to view this ticket'
+      });
+    }
+    
+    res.json({
+      success: true,
+      ticket
+    });
+  } catch (error) {
+    console.error(`Error getting support ticket ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get support ticket'
+    });
+  }
+});
+
+// Create a new support ticket
+router.post('/support/tickets', requireAuth, requireActiveAccount, async (req, res) => {
+  try {
+    const { subject, description, category, priority = 'medium' } = req.body;
+    
+    // Validation
+    if (!subject || !description || !category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Subject, description, and category are required'
+      });
+    }
+    
+    const ticket = await storage.createSupportTicket({
+      userId: req.user.id,
+      subject,
+      description,
+      category,
+      priority,
+      status: 'open',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    
+    // Create a notification for the user
+    await storage.createNotification({
+      userId: req.user.id,
+      type: 'ticket_created',
+      title: 'Support Ticket Created',
+      message: `Your support ticket #${ticket.id} has been created and is pending review.`,
+      data: {
+        ticketId: ticket.id,
+        subject: ticket.subject
+      }
+    });
+    
+    // Send notification to admins (in a real implementation, we would fetch all admins)
+    // This is a placeholder for demonstration purposes
+    const ticketCreatedEvent = {
+      type: 'new_ticket',
+      data: {
+        ticketId: ticket.id,
+        subject: ticket.subject,
+        userId: req.user.id,
+        username: req.user.username,
+        priority: ticket.priority,
+        timestamp: ticket.createdAt
+      }
+    };
+    
+    // Broadcast to all admin clients
+    broadcastToAdmins(JSON.stringify(ticketCreatedEvent));
+    
+    res.json({
+      success: true,
+      message: 'Support ticket created successfully',
+      ticket
+    });
+  } catch (error) {
+    console.error('Error creating support ticket:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create support ticket'
+    });
+  }
+});
+
+// Update support ticket status (admin only or user can close their own ticket)
+router.put('/support/tickets/:id/status', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['open', 'pending', 'closed'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid status provided'
+      });
+    }
+    
+    // Get the ticket
+    const ticket = await storage.getSupportTicket(id);
+    
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+    
+    // Check permission: only admins can set to pending, users can only close their own tickets
+    if (!req.user.isAdmin && (status !== 'closed' || ticket.userId !== req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to update this ticket'
+      });
+    }
+    
+    // Update the ticket status
+    const updatedTicket = await storage.updateSupportTicketStatus(id, status);
+    
+    // Create notification for ticket owner
+    await storage.createNotification({
+      userId: ticket.userId,
+      type: 'ticket_updated',
+      title: 'Support Ticket Updated',
+      message: `Your support ticket #${id} status has been updated to ${status}.`,
+      data: {
+        ticketId: id,
+        subject: ticket.subject,
+        status
+      }
+    });
+    
+    // Broadcast status change to websocket clients
+    const statusUpdateEvent = {
+      type: 'ticket_status_updated',
+      data: {
+        ticketId: id,
+        status,
+        updatedBy: req.user.isAdmin ? 'admin' : 'user',
+        timestamp: new Date().toISOString()
+      }
+    };
+    
+    broadcastToUser(ticket.userId, JSON.stringify(statusUpdateEvent));
+    if (req.user.isAdmin) {
+      broadcastToAdmins(JSON.stringify(statusUpdateEvent));
+    }
+    
+    res.json({
+      success: true,
+      message: `Support ticket status updated to ${status}`,
+      ticket: updatedTicket
+    });
+  } catch (error) {
+    console.error(`Error updating support ticket ${req.params.id} status:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update support ticket status'
+    });
+  }
+});
+
+// Add reply to support ticket
+router.post('/support/tickets/:id/replies', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reply content is required'
+      });
+    }
+    
+    // Get the ticket
+    const ticket = await storage.getSupportTicket(id);
+    
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Support ticket not found'
+      });
+    }
+    
+    // Check permission: only admins or ticket owner can reply
+    if (!req.user.isAdmin && ticket.userId !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to reply to this ticket'
+      });
+    }
+    
+    // Don't allow replies to closed tickets
+    if (ticket.status === 'closed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot reply to a closed ticket'
+      });
+    }
+    
+    // Create the reply
+    const reply = await storage.addTicketReply({
+      ticketId: id,
+      userId: req.user.id,
+      content,
+      isAdmin: req.user.isAdmin,
+      createdAt: new Date().toISOString()
+    });
+    
+    // If ticket is open and admin replies, update status to pending
+    if (ticket.status === 'open' && req.user.isAdmin) {
+      await storage.updateSupportTicketStatus(id, 'pending');
+    }
+    
+    // If ticket is pending and user replies, update status to open
+    if (ticket.status === 'pending' && !req.user.isAdmin) {
+      await storage.updateSupportTicketStatus(id, 'open');
+    }
+    
+    // Create notification for the other party
+    const notificationUserId = req.user.isAdmin ? ticket.userId : ticket.userId;
+    const notificationType = req.user.isAdmin ? 'admin_reply' : 'user_reply';
+    const notificationTitle = req.user.isAdmin ? 'Support Reply Received' : 'New Reply to Your Support Ticket';
+    
+    await storage.createNotification({
+      userId: notificationUserId,
+      type: notificationType,
+      title: notificationTitle,
+      message: `New reply to support ticket #${id}: ${ticket.subject}`,
+      data: {
+        ticketId: id,
+        subject: ticket.subject,
+        replyId: reply.id
+      }
+    });
+    
+    // Broadcast reply to websocket clients
+    const replyEvent = {
+      type: 'ticket_reply',
+      data: {
+        ticketId: id,
+        replyId: reply.id,
+        content: reply.content,
+        userId: req.user.id,
+        username: req.user.username,
+        isAdmin: req.user.isAdmin,
+        timestamp: reply.createdAt
+      }
+    };
+    
+    if (req.user.isAdmin) {
+      broadcastToUser(ticket.userId, JSON.stringify(replyEvent));
+    } else {
+      broadcastToAdmins(JSON.stringify(replyEvent));
+    }
+    
+    res.json({
+      success: true,
+      message: 'Reply added successfully',
+      reply
+    });
+  } catch (error) {
+    console.error(`Error adding reply to ticket ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add reply'
+    });
+  }
+});
+
+// Get FAQ categories
+router.get('/support/faq/categories', async (req, res) => {
+  try {
+    const categories = await storage.getAllFaqCategories();
+    res.json({
+      success: true,
+      categories
+    });
+  } catch (error) {
+    console.error('Error getting FAQ categories:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get FAQ categories'
+    });
+  }
+});
+
+// Get FAQs by category
+router.get('/support/faq/categories/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = await storage.getFaqCategory(id);
+    
+    if (!category) {
+      return res.status(404).json({
+        success: false,
+        message: 'FAQ category not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      category
+    });
+  } catch (error) {
+    console.error(`Error getting FAQs for category ${req.params.id}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get FAQs'
+    });
+  }
+});
+
+// Get all FAQs
+router.get('/support/faq', async (req, res) => {
+  try {
+    const faqs = await storage.getAllFaqs();
+    res.json({
+      success: true,
+      faqs
+    });
+  } catch (error) {
+    console.error('Error getting all FAQs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get FAQs'
+    });
+  }
+});
+
+// Create FAQ category (admin only)
+router.post('/support/faq/categories', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { name, slug, description, icon, displayOrder } = req.body;
+    
+    if (!name || !slug) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and slug are required'
+      });
+    }
+    
+    const category = await storage.createFaqCategory({
+      name,
+      slug,
+      description,
+      icon,
+      displayOrder: displayOrder || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    
+    res.json({
+      success: true,
+      message: 'FAQ category created successfully',
+      category
+    });
+  } catch (error) {
+    console.error('Error creating FAQ category:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create FAQ category'
+    });
+  }
+});
+
+// Create FAQ (admin only)
+router.post('/support/faq', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const { categoryId, question, answer, isPublished, displayOrder } = req.body;
+    
+    if (!categoryId || !question || !answer) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category ID, question, and answer are required'
+      });
+    }
+    
+    const faq = await storage.createFaq({
+      categoryId,
+      question,
+      answer,
+      isPublished: isPublished !== undefined ? isPublished : true,
+      displayOrder: displayOrder || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    
+    res.json({
+      success: true,
+      message: 'FAQ created successfully',
+      faq
+    });
+  } catch (error) {
+    console.error('Error creating FAQ:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create FAQ'
+    });
+  }
+});
+
+// Helper function to broadcast to admin users
+function broadcastToAdmins(message) {
+  if (!global.websocketClients) return;
+  
+  for (const client of global.websocketClients) {
+    if (client.readyState === WebSocket.OPEN && client.userId && client.isAdmin) {
+      client.send(message);
+    }
+  }
+}
+
+// Helper function to broadcast to a specific user
+function broadcastToUser(userId, message) {
+  if (!global.websocketClients) return;
+  
+  for (const client of global.websocketClients) {
+    if (client.readyState === WebSocket.OPEN && client.userId === userId) {
+      client.send(message);
+    }
+  }
 }
 
 module.exports = {

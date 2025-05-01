@@ -1,0 +1,316 @@
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize variables
+    let currentPair = 'BTC/USD';
+    let currentInterval = '1D';
+    let tvWidget;
+    
+    // Supported coins with image URLs
+    const supportedCoins = [
+        { symbol: 'BTC', name: 'Bitcoin', img: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png' },
+        { symbol: 'ETH', name: 'Ethereum', img: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+        { symbol: 'BNB', name: 'Binance Coin', img: 'https://cryptologos.cc/logos/bnb-bnb-logo.png' },
+        { symbol: 'SOL', name: 'Solana', img: 'https://cryptologos.cc/logos/solana-sol-logo.png' },
+        { symbol: 'XRP', name: 'XRP', img: 'https://cryptologos.cc/logos/xrp-xrp-logo.png' },
+        { symbol: 'ADA', name: 'Cardano', img: 'https://cryptologos.cc/logos/cardano-ada-logo.png' },
+        { symbol: 'DOGE', name: 'Dogecoin', img: 'https://cryptologos.cc/logos/dogecoin-doge-logo.png' },
+        { symbol: 'DOT', name: 'Polkadot', img: 'https://cryptologos.cc/logos/polkadot-new-dot-logo.png' }
+    ];
+
+    // Mock prices for demonstration
+    const mockPrices = {
+        'BTC/USD': 42356.78,
+        'ETH/USD': 2345.67,
+        'BNB/USD': 312.45,
+        'SOL/USD': 102.34,
+        'XRP/USD': 0.5678,
+        'ADA/USD': 0.45,
+        'DOGE/USD': 0.078,
+        'DOT/USD': 6.78
+    };
+
+    // Initialize TradingView widget
+    function initTradingView() {
+        tvWidget = new TradingView.widget({
+            "autosize": true,
+            "symbol": "BINANCE:BTCUSDT",
+            "interval": currentInterval,
+            "timezone": "Etc/UTC",
+            "theme": document.body.classList.contains('dark-mode') ? "dark" : "light",
+            "style": "1",
+            "locale": "en",
+            "toolbar_bg": "#f1f3f6",
+            "enable_publishing": false,
+            "hide_top_toolbar": false,
+            "hide_side_toolbar": false,
+            "allow_symbol_change": true,
+            "container_id": "tradingview-chart"
+        });
+    }
+
+    // Load market data with prices
+    function loadMarketData() {
+        const tickersContainer = document.querySelector('.crypto-tickers');
+        tickersContainer.innerHTML = '';
+        
+        supportedCoins.forEach((coin, index) => {
+            const pair = `${coin.symbol}/USD`;
+            const ticker = document.createElement('div');
+            ticker.className = `ticker ${index === 0 ? 'active' : ''}`;
+            ticker.dataset.symbol = pair;
+            
+            const price = mockPrices[pair];
+            const change = (Math.random() * 4 - 2).toFixed(2); // Random change between -2% and +2%
+            
+            ticker.innerHTML = `
+                <div class="ticker-header">
+                    <img src="${coin.img}" alt="${coin.symbol}" onerror="this.src='https://cryptologos.cc/logos/bitcoin-btc-logo.png'">
+                    <span class="ticker-name">${pair}</span>
+                </div>
+                <div class="ticker-price">$${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="ticker-change ${change >= 0 ? 'positive' : 'negative'}">
+                    ${change >= 0 ? '+' : ''}${change}%
+                </div>
+            `;
+            
+            tickersContainer.appendChild(ticker);
+        });
+    }
+
+    // Update TradingView chart when pair changes
+    function updateChart(symbol) {
+        const exchange = symbol.includes('BTC') ? 'BINANCE' : 'BINANCE';
+        const tvSymbol = `${exchange}:${symbol.replace('/', '')}`;
+        
+        if (tvWidget) {
+            tvWidget.chart().setSymbol(tvSymbol);
+            document.getElementById('chartPair').textContent = symbol;
+        }
+    }
+
+    // Update order book with prices
+    function updateOrderBook(marketPrice) {
+        const askOrders = document.querySelector('.ask-orders');
+        const bidOrders = document.querySelector('.bid-orders');
+        const marketPriceElement = document.querySelector('.market-price .price');
+        const marketChangeElement = document.querySelector('.market-price .change');
+        
+        askOrders.innerHTML = '';
+        bidOrders.innerHTML = '';
+        
+        // Generate asks (higher than market price)
+        for (let i = 0; i < 5; i++) {
+            const price = marketPrice * (1 + (i + 1) * 0.001);
+            const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
+            const total = (price * amount).toFixed(2);
+            
+            const askRow = document.createElement('div');
+            askRow.className = 'order-row';
+            askRow.innerHTML = `
+                <span>${price.toFixed(2)}</span>
+                <span>${amount}</span>
+                <span>${total}</span>
+            `;
+            askOrders.appendChild(askRow);
+        }
+        
+        // Generate bids (lower than market price)
+        for (let i = 0; i < 5; i++) {
+            const price = marketPrice * (1 - (i + 1) * 0.001);
+            const amount = (Math.random() * 0.5 + 0.1).toFixed(4);
+            const total = (price * amount).toFixed(2);
+            
+            const bidRow = document.createElement('div');
+            bidRow.className = 'order-row';
+            bidRow.innerHTML = `
+                <span>${price.toFixed(2)}</span>
+                <span>${amount}</span>
+                <span>${total}</span>
+            `;
+            bidOrders.appendChild(bidRow);
+        }
+        
+        // Update market price display
+        marketPriceElement.textContent = `$${marketPrice.toFixed(2)}`;
+        
+        // Random change between -2% and +2%
+        const changePercent = (Math.random() * 4 - 2).toFixed(2);
+        marketChangeElement.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent}%`;
+        
+        if (changePercent >= 0) {
+            marketChangeElement.classList.add('positive');
+            marketChangeElement.classList.remove('negative');
+        } else {
+            marketChangeElement.classList.add('negative');
+            marketChangeElement.classList.remove('positive');
+        }
+    }
+
+    // Theme toggle
+    function setupThemeToggle() {
+        const themeToggle = document.getElementById('themeToggle');
+        
+        themeToggle.addEventListener('change', function() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', this.checked);
+            
+            // Update TradingView theme
+            if (tvWidget) {
+                tvWidget.changeTheme(this.checked ? "dark" : "light");
+            }
+        });
+        
+        // Initialize theme
+        if (localStorage.getItem('darkMode') === 'true') {
+            themeToggle.checked = true;
+            document.body.classList.add('dark-mode');
+        }
+    }
+
+    // Setup ticker click events
+    function setupTickerEvents() {
+        document.addEventListener('click', function(e) {
+            const ticker = e.target.closest('.ticker');
+            if (ticker) {
+                document.querySelectorAll('.ticker').forEach(t => t.classList.remove('active'));
+                ticker.classList.add('active');
+                
+                const symbol = ticker.dataset.symbol;
+                currentPair = symbol;
+                
+                // Update currency display in forms
+                const baseCurrency = symbol.split('/')[0];
+                document.getElementById('marketAmountCurrency').textContent = baseCurrency;
+                document.getElementById('limitAmountCurrency').textContent = baseCurrency;
+                
+                updateChart(symbol);
+                updateOrderBook(mockPrices[symbol]);
+            }
+        });
+    }
+
+    // Setup interval buttons
+    function setupIntervalButtons() {
+        document.querySelectorAll('.interval-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.interval-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentInterval = this.dataset.interval;
+                
+                // Update TradingView interval
+                if (tvWidget) {
+                    tvWidget.chart().setResolution(currentInterval);
+                }
+            });
+        });
+    }
+
+    // Setup trading form
+    function setupTradingForm() {
+        // Market/Limit tabs
+        document.querySelectorAll('.trading-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.trading-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                document.querySelectorAll('.trading-form').forEach(form => {
+                    form.classList.add('hidden');
+                });
+                
+                document.getElementById(this.dataset.tab + 'Form').classList.remove('hidden');
+            });
+        });
+
+        // Market order buy/sell
+        document.querySelector('#marketForm .btn-buy').addEventListener('click', function() {
+            const amount = parseFloat(document.getElementById('marketAmount').value);
+            if (amount) {
+                const price = parseFloat(document.querySelector('.market-price .price').textContent.replace('$', ''));
+                alert(`Market buy order placed: ${amount} ${currentPair.split('/')[0]} at $${price}`);
+            }
+        });
+
+        document.querySelector('#marketForm .btn-sell').addEventListener('click', function() {
+            const amount = parseFloat(document.getElementById('marketAmount').value);
+            if (amount) {
+                const price = parseFloat(document.querySelector('.market-price .price').textContent.replace('$', ''));
+                alert(`Market sell order placed: ${amount} ${currentPair.split('/')[0]} at $${price}`);
+            }
+        });
+
+        // Limit order buy/sell
+        document.getElementById('placeLimitBuy').addEventListener('click', function() {
+            const price = parseFloat(document.getElementById('limitPrice').value);
+            const amount = parseFloat(document.getElementById('limitAmount').value);
+            if (price && amount) {
+                alert(`Limit buy order placed: ${amount} ${currentPair.split('/')[0]} at $${price}`);
+            }
+        });
+
+        document.getElementById('placeLimitSell').addEventListener('click', function() {
+            const price = parseFloat(document.getElementById('limitPrice').value);
+            const amount = parseFloat(document.getElementById('limitAmount').value);
+            if (price && amount) {
+                alert(`Limit sell order placed: ${amount} ${currentPair.split('/')[0]} at $${price}`);
+            }
+        });
+    }
+
+    // Simulate price updates
+    function simulatePriceUpdates() {
+        setInterval(() => {
+            document.querySelectorAll('.ticker').forEach(ticker => {
+                const pair = ticker.dataset.symbol;
+                const priceElement = ticker.querySelector('.ticker-price');
+                const changeElement = ticker.querySelector('.ticker-change');
+                
+                if (priceElement && changeElement) {
+                    const currentPrice = parseFloat(priceElement.textContent.replace('$', '').replace(',', ''));
+                    const currentChange = parseFloat(changeElement.textContent);
+                    
+                    // Small random price change
+                    const change = (Math.random() * 0.4 - 0.2); // -0.2% to +0.2%
+                    const newPrice = currentPrice * (1 + change/100);
+                    const newChange = (currentChange + change).toFixed(2);
+                    
+                    // Update mock price
+                    mockPrices[pair] = newPrice;
+                    
+                    priceElement.textContent = `$${newPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+                    changeElement.textContent = `${newChange >= 0 ? '+' : ''}${newChange}%`;
+                    
+                    if (newChange >= 0) {
+                        changeElement.classList.add('positive');
+                        changeElement.classList.remove('negative');
+                    } else {
+                        changeElement.classList.add('negative');
+                        changeElement.classList.remove('positive');
+                    }
+                }
+            });
+            
+            // Update order book if viewing the active pair
+            const activeTicker = document.querySelector('.ticker.active');
+            if (activeTicker) {
+                const currentPrice = parseFloat(activeTicker.querySelector('.ticker-price').textContent.replace('$', '').replace(',', ''));
+                updateOrderBook(currentPrice);
+            }
+        }, 5000);
+    }
+
+    // Initialize everything
+    function init() {
+        initTradingView();
+        loadMarketData();
+        setupThemeToggle();
+        setupTickerEvents();
+        setupIntervalButtons();
+        setupTradingForm();
+        simulatePriceUpdates();
+        
+        // Initialize order book
+        updateOrderBook(mockPrices[currentPair]);
+    }
+
+    // Start the application
+    init();
+});

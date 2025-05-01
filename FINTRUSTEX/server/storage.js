@@ -567,6 +567,288 @@ class DatabaseStorage {
       throw error;
     }
   }
+
+  /**
+   * Support Ticket Methods
+   */
+  
+  // Get all support tickets (admin only)
+  async getAllSupportTickets() {
+    try {
+      return await db.supportTickets.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error getting all support tickets:', error);
+      throw error;
+    }
+  }
+  
+  // Get support ticket by ID
+  async getSupportTicket(id) {
+    try {
+      return await db.supportTickets.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              email: true
+            }
+          },
+          replies: {
+            orderBy: { createdAt: 'asc' },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  isAdmin: true
+                }
+              }
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Error getting support ticket ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Get support tickets by user ID
+  async getSupportTicketsByUserId(userId) {
+    try {
+      return await db.supportTickets.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' }
+      });
+    } catch (error) {
+      console.error(`Error getting support tickets for user ${userId}:`, error);
+      throw error;
+    }
+  }
+  
+  // Create support ticket
+  async createSupportTicket(ticketData) {
+    try {
+      return await db.supportTickets.create({
+        data: ticketData
+      });
+    } catch (error) {
+      console.error('Error creating support ticket:', error);
+      throw error;
+    }
+  }
+  
+  // Update support ticket status
+  async updateSupportTicketStatus(id, status) {
+    try {
+      const updates = {
+        status,
+        updatedAt: new Date().toISOString(),
+      };
+      
+      if (status === 'closed') {
+        updates.closedAt = new Date().toISOString();
+      }
+      
+      return await db.supportTickets.update({
+        where: { id },
+        data: updates
+      });
+    } catch (error) {
+      console.error(`Error updating support ticket ${id} status:`, error);
+      throw error;
+    }
+  }
+  
+  // Add reply to support ticket
+  async addTicketReply(replyData) {
+    try {
+      const reply = await db.ticketReplies.create({
+        data: replyData
+      });
+      
+      // Update the ticket's updatedAt field
+      await db.supportTickets.update({
+        where: { id: replyData.ticketId },
+        data: { updatedAt: new Date().toISOString() }
+      });
+      
+      return reply;
+    } catch (error) {
+      console.error('Error adding reply to support ticket:', error);
+      throw error;
+    }
+  }
+  
+  // Get replies for a ticket
+  async getTicketReplies(ticketId) {
+    try {
+      return await db.ticketReplies.findMany({
+        where: { ticketId },
+        orderBy: { createdAt: 'asc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              isAdmin: true
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Error getting replies for ticket ${ticketId}:`, error);
+      throw error;
+    }
+  }
+  
+  /**
+   * FAQ Methods
+   */
+  
+  // Get all FAQ categories
+  async getAllFaqCategories() {
+    try {
+      return await db.faqCategories.findMany({
+        orderBy: { displayOrder: 'asc' }
+      });
+    } catch (error) {
+      console.error('Error getting all FAQ categories:', error);
+      throw error;
+    }
+  }
+  
+  // Get FAQ category by ID
+  async getFaqCategory(id) {
+    try {
+      return await db.faqCategories.findUnique({
+        where: { id },
+        include: {
+          faqs: {
+            where: { isPublished: true },
+            orderBy: { displayOrder: 'asc' }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(`Error getting FAQ category ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Create FAQ category
+  async createFaqCategory(categoryData) {
+    try {
+      return await db.faqCategories.create({
+        data: categoryData
+      });
+    } catch (error) {
+      console.error('Error creating FAQ category:', error);
+      throw error;
+    }
+  }
+  
+  // Update FAQ category
+  async updateFaqCategory(id, categoryData) {
+    try {
+      return await db.faqCategories.update({
+        where: { id },
+        data: categoryData
+      });
+    } catch (error) {
+      console.error(`Error updating FAQ category ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Delete FAQ category
+  async deleteFaqCategory(id) {
+    try {
+      return await db.faqCategories.delete({
+        where: { id }
+      });
+    } catch (error) {
+      console.error(`Error deleting FAQ category ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Get all FAQs
+  async getAllFaqs() {
+    try {
+      return await db.faqs.findMany({
+        where: { isPublished: true },
+        orderBy: { displayOrder: 'asc' },
+        include: { category: true }
+      });
+    } catch (error) {
+      console.error('Error getting all FAQs:', error);
+      throw error;
+    }
+  }
+  
+  // Get FAQ by ID
+  async getFaq(id) {
+    try {
+      return await db.faqs.findUnique({
+        where: { id },
+        include: { category: true }
+      });
+    } catch (error) {
+      console.error(`Error getting FAQ ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Create FAQ
+  async createFaq(faqData) {
+    try {
+      return await db.faqs.create({
+        data: faqData
+      });
+    } catch (error) {
+      console.error('Error creating FAQ:', error);
+      throw error;
+    }
+  }
+  
+  // Update FAQ
+  async updateFaq(id, faqData) {
+    try {
+      return await db.faqs.update({
+        where: { id },
+        data: faqData
+      });
+    } catch (error) {
+      console.error(`Error updating FAQ ${id}:`, error);
+      throw error;
+    }
+  }
+  
+  // Delete FAQ
+  async deleteFaq(id) {
+    try {
+      return await db.faqs.delete({
+        where: { id }
+      });
+    } catch (error) {
+      console.error(`Error deleting FAQ ${id}:`, error);
+      throw error;
+    }
+  }
 }
 
 // Export singleton instance

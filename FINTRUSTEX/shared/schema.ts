@@ -18,6 +18,9 @@ export const investmentStatusEnum = pgEnum('investment_status', ['active', 'comp
 // Account status enum
 export const accountStatusEnum = pgEnum('account_status', ['active', 'restricted', 'suspended']);
 
+// Ticket status enum
+export const ticketStatusEnum = pgEnum('ticket_status', ['open', 'pending', 'closed']);
+
 // Users table
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -319,3 +322,121 @@ export const insertAccountRestrictionSchema = createInsertSchema(accountRestrict
 
 export type AccountRestriction = typeof accountRestrictions.$inferSelect;
 export type InsertAccountRestriction = z.infer<typeof insertAccountRestrictionSchema>;
+
+// Support Tickets table
+export const supportTickets = pgTable('support_tickets', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').notNull().references(() => users.id),
+  subject: text('subject').notNull(),
+  description: text('description').notNull(),
+  category: text('category').notNull(), // account, deposit, withdrawal, trading, security, etc.
+  priority: text('priority').notNull().default('medium'), // low, medium, high
+  status: ticketStatusEnum('status').default('open'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+  closedAt: timestamp('closed_at'),
+});
+
+// Support Ticket relationships
+export const supportTicketsRelations = relations(supportTickets, ({ one, many }) => ({
+  user: one(users, {
+    fields: [supportTickets.userId],
+    references: [users.id],
+  }),
+  replies: many(ticketReplies),
+}));
+
+// Support Ticket schema for inserting
+export const insertSupportTicketSchema = createInsertSchema(supportTickets).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  closedAt: true,
+});
+
+// Ticket Replies table
+export const ticketReplies = pgTable('ticket_replies', {
+  id: serial('id').primaryKey(),
+  ticketId: integer('ticket_id').notNull().references(() => supportTickets.id),
+  userId: integer('user_id').notNull().references(() => users.id),
+  content: text('content').notNull(),
+  isAdmin: boolean('is_admin').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Ticket Reply relationships
+export const ticketRepliesRelations = relations(ticketReplies, ({ one }) => ({
+  ticket: one(supportTickets, {
+    fields: [ticketReplies.ticketId],
+    references: [supportTickets.id],
+  }),
+  user: one(users, {
+    fields: [ticketReplies.userId],
+    references: [users.id],
+  }),
+}));
+
+// Ticket Reply schema for inserting
+export const insertTicketReplySchema = createInsertSchema(ticketReplies).omit({
+  id: true,
+  createdAt: true,
+});
+
+// FAQ Categories table
+export const faqCategories = pgTable('faq_categories', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  slug: text('slug').notNull().unique(),
+  description: text('description'),
+  icon: text('icon'),
+  displayOrder: integer('display_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// FAQ Category schema for inserting
+export const insertFaqCategorySchema = createInsertSchema(faqCategories).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// FAQs table
+export const faqs = pgTable('faqs', {
+  id: serial('id').primaryKey(),
+  categoryId: integer('category_id').references(() => faqCategories.id),
+  question: text('question').notNull(),
+  answer: text('answer').notNull(),
+  isPublished: boolean('is_published').default(true),
+  displayOrder: integer('display_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// FAQ relationships
+export const faqsRelations = relations(faqs, ({ one }) => ({
+  category: one(faqCategories, {
+    fields: [faqs.categoryId],
+    references: [faqCategories.id],
+  }),
+}));
+
+// FAQ schema for inserting
+export const insertFaqSchema = createInsertSchema(faqs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Type definitions for support system
+export type SupportTicket = typeof supportTickets.$inferSelect;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+
+export type TicketReply = typeof ticketReplies.$inferSelect;
+export type InsertTicketReply = z.infer<typeof insertTicketReplySchema>;
+
+export type FaqCategory = typeof faqCategories.$inferSelect;
+export type InsertFaqCategory = z.infer<typeof insertFaqCategorySchema>;
+
+export type Faq = typeof faqs.$inferSelect;
+export type InsertFaq = z.infer<typeof insertFaqSchema>;

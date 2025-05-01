@@ -1,271 +1,845 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fintrust - Next Gen Crypto Trading Platform</title>
-  <meta name="description" content="Fintrust - Next generation cryptocurrency trading platform with secure, intuitive features for all experience levels" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
-  <link rel="preload" href="assets/css/index.css" as="style" />
-  <link rel="preload" href="assets/js/index.js" as="script" />
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/index.css" />
-  <link rel="stylesheet" href="assets/css/responsive.css" />
-</head>
-<body>
-  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FinTrustEX - Next Gen Crypto Trading Platform</title>
+    <meta
+      name="description"
+      content="FinTrustEX - Next generation cryptocurrency trading platform with secure, intuitive features for all experience levels"
+    />
+    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Orbitron:wght@700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/css/index.css" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-  <header class="header">
-    <div class="container header-container">
-      <h1 class="logo">Fintrust</h1>
-      <nav class="nav" aria-label="Primary Navigation">
-        <ul class="nav-list">
-          <li><a href="#hero" class="nav-link active">Home</a></li>
-          <li><a href="#features" class="nav-link">Features</a></li>
-          <li><a href="#markets" class="nav-link">Markets</a></li>
-          <li><a href="#community" class="nav-link">Community</a></li>
-          <li><a href="#about-us" class="nav-link">About</a></li>
-        </ul>
-        <button class="btn btn-primary nav-cta" id="getStartedBtn">Get Started</button>
-      </nav>
-      <button class="mobile-menu-toggle" aria-label="Toggle navigation" aria-expanded="false" id="mobileMenuToggle">
-        <span class="hamburger"></span>
-      </button>
+    <div class="shadow-sm">
+      <coingecko-coin-price-marquee-widget
+        coin-ids="bitcoin,ethereum,eos,ripple,litecoin"
+        currency="usd"
+        background-color="#1E1E1E"
+        locale="en"
+      ></coingecko-coin-price-marquee-widget>
     </div>
-  </header>
 
-  <main id="main-content">
-    <!-- Hero with 3D Elements -->
-    <section id="hero" class="hero">
-      <div class="hero-3d-bg">
-        <div class="floating-crypto btc"></div>
-        <div class="floating-crypto eth"></div>
-        <div class="floating-crypto usdt"></div>
-        <div class="particle-network"></div>
+    <header class="header">
+      <div class="container header-container">
+        <h1 class="logo">FinTrustEX</h1>
+        <h3><span class="highlight">safe&secure</span></h3>
+        <nav class="nav" aria-label="Primary Navigation">
+          <ul class="nav-list">
+            <li><a href="#hero" class="nav-link active">Home</a></li>
+            <li><a href="#features" class="nav-link">Features</a></li>
+            <li><a href="#markets" class="nav-link">Markets</a></li>
+            <li><a href="#partners" class="nav-link">Partners</a></li>
+            <li><a href="#community" class="nav-link">Community</a></li>
+            <li><a href="#about-us" class="nav-link">About</a></li>
+            <li>
+              <a
+                href="/auth.html"
+                class="btn btn-primary nav-cta"
+                id="getStartedBtn"
+                >Get Started</a
+              >
+            </li>
+          </ul>
+        </nav>
+        <button
+          class="mobile-menu-toggle"
+          aria-label="Toggle navigation"
+          aria-expanded="false"
+          id="mobileMenuToggle"
+        >
+          <span class="hamburger"></span>
+        </button>
       </div>
-      <div class="container hero-container">
-        <div class="hero-text">
-          <h2 class="animate-title">Explore and <span class="highlight">invest</span> with Fintrust</h2>
-          <p class="animate-text">Your enjoyable crypto trading journey starts here. Discover, learn, and trade in a secure, intuitive, and rewarding environment.</p>
-          <div class="hero-cta">
-            <a href="/auth" class="btn btn-primary btn-3d">
-              <span class="btn-text">Register Now</span>
-              <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
-            </a>
-            <a href="#features" class="btn btn-secondary btn-3d">Learn More</a>
-          </div>
-          <div class="login-prompt">
-            Already have an account? <a href="/auth" class="login-link">Log In</a>
-          </div>
+    </header>
+
+    <main id="main-content">
+      <!-- Hero -->
+      <section id="hero" class="hero">
+        <div class="hero-3d-bg">
+          <div class="floating-crypto btc"></div>
+          <div class="floating-crypto eth"></div>
+          <div class="floating-crypto usdt"></div>
+          <div class="particle-network"></div>
         </div>
-        <div class="hero-image">
-          <div class="dashboard-3d-wrapper">
-            <img src="assets/images/generated-icon.png" alt="Fintrust Dashboard Preview" loading="lazy" class="dashboard-image" />
-            <div class="glow-effect"></div>
-            <div class="reflection"></div>
+        <div class="container hero-container">
+          <div class="hero-text">
+            <h2 class="animate-title">
+              Explore and <span class="highlight">invest</span> with FinTrustEX
+            </h2>
+            <p class="animate-text">
+              Complete Embedded Crypto Infrastructure & Trading Platform. Your
+              enjoyable crypto trading journey starts here. Discover, learn, and
+              trade in a secure, intuitive, and rewarding environment.
+            </p>
+            <div class="hero-cta">
+              <a href="/auth.html" class="btn btn-primary btn-3d">
+                <span class="btn-text">Register Now</span>
+                <span class="btn-icon"><i class="fas fa-arrow-right"></i></span>
+              </a>
+              <a href="#features" class="btn btn-secondary btn-3d"
+                >Learn More</a
+              >
+            </div>
+            <div class="login-prompt">
+              Already have an account?
+              <a href="/auth" class="login-link">Log In</a>
+            </div>
           </div>
-          <div class="live-data-badge">
-            <div class="pulse-dot"></div>
-            Live Market Data
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Partners Carousel -->
-    <section class="partners">
-      <div class="container partners-container">
-        <h3>Trusted by industry leaders</h3>
-        <div class="partners-carousel" aria-label="Trusted partners logos">
-          <div class="partners-track">
-            <img src="images/shopify.svg" alt="Shopify" />
-            <img src="images/airbnb.svg" alt="Airbnb" />
-            <img src="images/amazon.svg" alt="Amazon" />
-            <img src="images/reddit.svg" alt="Reddit" />
-            <img src="images/disney.svg" alt="Disney+" />
-            <!-- Repeat logos for continuous scroll -->
-            <img src="images/shopify.svg" alt="Shopify" />
-            <img src="images/airbnb.svg" alt="Airbnb" />
-            <img src="images/amazon.svg" alt="Amazon" />
-            <img src="images/reddit.svg" alt="Reddit" />
-            <img src="images/disney.svg" alt="Disney+" />
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section id="features" class="features">
-      <div class="container features-container">
-        <h3>Why Choose Fintrust?</h3>
-        <div class="features-grid">
-          <article class="feature-card">
-            <img src="images/friendly.svg" alt="Friendly & Enjoyable" loading="lazy" />
-            <h4>Friendly & Enjoyable</h4>
-            <p>User-centric design with easy navigation and expert support.</p>
-            <small>987 Tests | 4,327 Users</small>
-          </article>
-          <article class="feature-card">
-            <img src="images/fast.svg" alt="Fast & Easy Platform" loading="lazy" />
-            <h4>Fast & Easy Platform</h4>
-            <p>Quick onboarding and instant trades to seize every opportunity.</p>
-            <small>1,327 Trades</small>
-          </article>
-          <article class="feature-card">
-            <img src="images/prizes.svg" alt="Weekly Prizes" loading="lazy" />
-            <h4>Weekly Prizes</h4>
-            <p>Regular rewards and contests to keep you motivated.</p>
-            <small>Exciting Prizes</small>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- Markets (Placeholder for nav link) -->
-    <section id="markets" class="markets">
-      <div class="container markets-container">
-        <h3>Market Overview</h3>
-        <p>Stay updated with live cryptocurrency prices and market trends. Coming soon!</p>
-      </div>
-    </section>
-
-    <!-- Community -->
-    <section id="community" class="community">
-      <div class="container community-container">
-        <h3>Join the Best Fintrust Community</h3>
-        <p>Create your profile, engage in contests, and learn with fellow crypto enthusiasts.</p>
-        <a href="#getStartedBtn" class="btn btn-primary">Explore Now</a>
-      </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section id="testimonials" class="testimonials">
-      <div class="container testimonials-container">
-        <h3>What Our Users Say</h3>
-        <div class="testimonial-cards">
-          <article class="testimonial-card">
-            <img src="images/user1.jpg" alt="Michael Davis" class="testimonial-avatar" loading="lazy" />
-            <p>"Since implementing their strategies, our website's traffic has grown exponentially and we've experienced a substantial increase in lead generation."</p>
-            <strong>Michael Davis</strong>
-            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-          </article>
-          <article class="testimonial-card">
-            <img src="images/user2.jpg" alt="Sarah Lee" class="testimonial-avatar" loading="lazy" />
-            <p>"Fintrust's platform is intuitive and fast. I love the community and weekly prizes that keep me motivated."</p>
-            <strong>Sarah Lee</strong>
-            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-          </article>
-          <article class="testimonial-card">
-            <img src="images/user3.jpg" alt="Amina Yusuf" class="testimonial-avatar" loading="lazy" />
-            <p>"The security features give me peace of mind. Highly recommended for both beginners and pros."</p>
-            <strong>Amina Yusuf</strong>
-            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-          </article>
-          <article class="testimonial-card">
-            <img src="images/user4.jpg" alt="Carlos Mendez" class="testimonial-avatar" loading="lazy" />
-            <p>"Their support team is responsive and helpful. Trading has never been this smooth!"</p>
-            <strong>Carlos Mendez</strong>
-            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-          </article>
-          <article class="testimonial-card">
-            <img src="images/user5.jpg" alt="Priya Singh" class="testimonial-avatar" loading="lazy" />
-            <p>"I love the advanced analytics and the community contests. Fintrust is the future!"</p>
-            <strong>Priya Singh</strong>
-            <div class="stars" aria-label="5 out of 5 stars">★★★★★</div>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- About Us -->
-    <section id="about-us" class="about-us">
-      <div class="container about-us-container">
-        <h3>About Fintrust</h3>
-        <p>At Fintrust, our mission is to democratize access to the world of cryptocurrency trading. We believe that everyone, regardless of their experience level, should have the opportunity to participate in this exciting and evolving market. Founded in 2020, our team of experienced financial professionals, technology experts, and crypto enthusiasts is dedicated to building a secure, intuitive, and rewarding platform...</p>
-        <div class="team-section">
-          <h4>Our Team</h4>
-          <div class="team-grid">
-            <figure class="team-member">
-              <img src="images/team-member1.jpg" alt="John Doe, CEO" loading="lazy" />
-              <figcaption>
-                <strong>John Doe</strong>
-                <span>CEO</span>
-              </figcaption>
-            </figure>
-            <figure class="team-member">
-              <img src="images/team-member2.jpg" alt="Jane Smith, CTO" loading="lazy" />
-              <figcaption>
-                <strong>Jane Smith</strong>
-                <span>CTO</span>
-              </figcaption>
-            </figure>
+          <div class="hero-image">
+            <div class="dashboard-3d-wrapper">
+              <img
+                src="/assets/images/generated-icon.png"
+                alt="FinTrustEX Dashboard Preview"
+                loading="lazy"
+                class="dashboard-image"
+              />
+              <div class="glow-effect"></div>
+              <div class="reflection"></div>
+            </div>
+            <div class="live-data-badge">
+              <div class="pulse-dot"></div>
+              Live Market Data
+            </div>
           </div>
         </div>
-        <a href="/about" class="btn btn-secondary">Learn More About Us</a>
-      </div>
-    </section>
-  </main>
+      </section>
 
-  <footer class="footer">
-    <div class="container footer-container">
-      <div class="footer-grid">
-        <div class="footer-logo">
-          <h2 class="logo">Fintrust</h2>
-          <p>Your trusted crypto trading partner</p>
+      <!-- Partners Carousel -->
+      <section id="partners" class="partners">
+        <div class="container partners-container">
+          <h3>Trusted by industry leaders</h3>
+          <div class="partners-carousel" aria-label="Trusted partners logos">
+            <div class="partners-track">
+              <img src="/assets/images/shopify.svg" alt="Shopify" />
+              <img src="/assets/images/airbnb.jpeg" alt="Airbnb" />
+              <img src="/assets/images/amazon.svg" alt="Amazon" />
+              <img src="/assets/images/reddit.jpeg" alt="Reddit" />
+              <img src="/assets/images/disney.jpeg" alt="Disney+" />
+              <img src="/assets/images/bitcoin.svg" alt="Bitcoin" />
+              <img src="/assets/images/ethereum.svg" alt="Ethereum" />
+              <img src="/assets/images/coinbase.jpeg" alt="Coinbase" />
+              <img src="/assets/images/binance.jpeg" alt="Binance" />
+              <!-- Repeat logos for continuous scroll -->
+              <img src="/assets/images/shopify.svg" alt="Shopify" />
+              <img src="/assets/images/airbnb.jpeg" alt="Airbnb" />
+              <img src="/assets/images/amazon.svg" alt="Amazon" />
+              <img src="/assets/images/reddit.jpeg" alt="Reddit" />
+              <img src="/assets/images/disney.jpeg" alt="Disney+" />
+              <img src="/assets/images/bitcoin.svg" alt="Bitcoin" />
+              <img src="/assets/images/ethereum.svg" alt="Ethereum" />
+              <img src="/assets/images/coinbase.jpeg" alt="Coinbase" />
+              <img src="/assets/images/binance.jpeg" alt="Binance" />
+            </div>
+          </div>
         </div>
-        <div class="footer-links">
-          <div class="footer-column">
+      </section>
+
+      <!-- Features -->
+      <section id="features" class="features">
+        <div class="container features-container">
+          <h3>Why Choose FinTrustEX?</h3>
+          <div class="features-grid">
+            <article class="feature-card">
+              <img
+                src="/assets/images/friendly.svg"
+                alt="Friendly & Enjoyable"
+                loading="lazy"
+              />
+              <h4>Friendly & Enjoyable</h4>
+              <p>
+                User-centric design with easy navigation and expert support.
+              </p>
+              <small>987 Tests | 4,327 Users</small>
+            </article>
+            <article class="feature-card">
+              <img
+                src="/assets/images/fast.svg"
+                alt="Fast & Easy Platform"
+                loading="lazy"
+              />
+              <h4>Fast & Easy Platform</h4>
+              <p>
+                Quick onboarding and instant trades to seize every opportunity.
+              </p>
+              <small>1,327 Trades</small>
+            </article>
+            <article class="feature-card">
+              <img
+                src="/assets/images/prizes.svg"
+                alt="Weekly Prizes"
+                loading="lazy"
+              />
+              <h4>Weekly Prizes</h4>
+              <p>Regular rewards and contests to keep you motivated.</p>
+              <small>Exciting Prizes</small>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- Video Animation -->
+      <section id="videoanime" class="videoanime">
+        <div class="container">
+          <div class="video-container">
+            <h3>
+              Discover how FinTrustEX can transform your trading experience.
+            </h3>
+            <video
+              src="/assets/images/Fintrustexhomeanime.mp4"
+              autoplay
+              loop
+              muted
+            ></video>
+          </div>
+        </div>
+      </section>
+
+      <!-- About FinTrustEX -->
+      <section id="about-us" class="containerpy-5">
+        <div class="row">
+          <div class="col-md-7 py-5">
+            <div class="text-primary text-uppercase small font-weight-bold">
+              ABOUT FinTrustEX
+            </div>
+            <h1 class="my-4">Connect with the right Broker.</h1>
+            <p class="text-muted">
+              Whether you are experienced or a beginner, connecting with the
+              right broker is everything. FinTrustEX in EUROPE is a leading
+              trade and investment company with years of industry experience.
+              Our decision risk analytics empower clients to develop rational
+              decision-making models and development.
+            </p>
+            <div class="pt-3 row">
+              <div class="col-md-6">
+                <ul class="list-unstyled text-muted">
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i> High
+                    Frequency Trading
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i>
+                    Guaranteed ROIs
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i> Fast
+                    and Secure
+                  </li>
+                </ul>
+              </div>
+              <div class="col-md-6">
+                <ul class="list-unstyled text-muted">
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i>
+                    Instant Withdrawals
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i>
+                    Multiple Funding Options
+                  </li>
+                  <li class="mb-2">
+                    <i class="fas fa-check-circle mr-1 text-primary"></i> Learn
+                    from customer feedback
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How It Works -->
+      <section id="spiderweb" class="spiderweb">
+        <div class="container">
+          <div class="text-center">
+            <div class="text-primary text-uppercase small font-weight-bold">
+              How it works
+            </div>
+            <h1 class="my-4">Three Simple Steps To Start<br />Earning</h1>
+            <div class="divider"></div>
+          </div>
+          <div class="row mt-5">
+            <div class="col-lg-12">
+              <div class="row ttm-processbox-wrapper">
+                <div class="col-lg-4">
+                  <div class="ttm-processbox">
+                    <div class="ttm-box-image">
+                      <div class="process-num">
+                        <span class="number">01</span>
+                      </div>
+                    </div>
+                    <div class="featured-content">
+                      <div class="featured-title"><h5>CREATE ACCOUNT</h5></div>
+                      <div class="ttm-box-description">
+                        Create and verify your account for free to get started.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="ttm-processbox mt-5 mb-5">
+                    <div class="ttm-box-image">
+                      <div class="process-num">
+                        <span class="number">02</span>
+                      </div>
+                    </div>
+                    <div class="featured-content">
+                      <div class="featured-title"><h5>MAKE DEPOSIT</h5></div>
+                      <div class="ttm-box-description">
+                        After account verification, simply make deposits from
+                        the funding page in your dashboard.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4">
+                  <div class="ttm-processbox">
+                    <div class="ttm-box-image">
+                      <div class="process-num">
+                        <span class="number">03</span>
+                      </div>
+                    </div>
+                    <div class="featured-content">
+                      <div class="featured-title"><h5>EARN & GET PAID</h5></div>
+                      <div class="ttm-box-description">
+                        You can make withdrawals as soon as you start making
+                        profits.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- What We Do (restored, with video) -->
+      <section
+        class="ttm-row ttm-bgcolor-darkgrey ttm-bg ttm-bgimage-yes bg-img1 services-section clearfix text-light"
+      >
+        <div class="ttm-row-wrapper-bg-layer ttm-bg-layer"></div>
+        <div class="container">
+          <div class="row">
+            <div class="col-md-2 col-sm-1"></div>
+            <div class="col-md-8 col-sm-10">
+              <div class="text-center">
+                <div class="text-primary text-uppercase small font-weight-bold">
+                  WHAT WE DO
+                </div>
+                <h1 class="my-4">
+                  We create solutions for your<br />investment needs
+                </h1>
+                <div class="divider"></div>
+              </div>
+            </div>
+            <div class="col-md-2 col-sm-1"></div>
+          </div>
+          <div class="row">
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-consultation"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Business Finance<br />
+                      Strategy
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      Devise and implement business strategies that drive
+                      success-for an entire business or division, technology, or
+                      asset.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-branding"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Portfolio & Resource<br />
+                      Allocation
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      By balancing and optimizing the many competing assets and
+                      initiatives achieve deep & lasting improvements.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-viral-marketing"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Organization &<br />
+                      Decision Process
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      Organizations are designed to be effective and an
+                      efficient. The processes require cross-functional teaming.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-talk-1"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Decision & Risk<br />
+                      Analytic
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      Our decision risk analytics empower clients to develop
+                      rational decision-making models and development.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-business-and-finance-1"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Banking &<br />
+                      Capital Markets
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      The venues where savings and investments are channeled
+                      between the suppliers who have capital and those.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4 col-md-6 mt-3">
+              <div class="featured-icon-box style3 text-center mb-3 h-100">
+                <div class="featured-icon">
+                  <div class="ttm-icon text-primary ttm-icon_element-size-lg">
+                    <i class="flaticon flaticon-document"></i>
+                  </div>
+                </div>
+                <div class="featured-content">
+                  <div class="featured-title">
+                    <h5>
+                      Modern & Tribe<br />
+                      Workplace
+                    </h5>
+                  </div>
+                  <div class="featured-desc">
+                    <p>
+                      Redefine your workplace value equation that encourage
+                      staff to work more attentively and gracefully.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Video -->
+          <div class="row mt-5 justify-content-center">
+            <div class="col-lg-8">
+              <div class="services-video-wrapper" style="text-align: center">
+                <video
+                  src="/assets/videos/what-we-do-demo.mp4"
+                  controls
+                  poster="/assets/images/what-we-do-thumb.jpg"
+                  style="
+                    max-width: 100%;
+                    border-radius: 16px;
+                    box-shadow: 0 0 20px #ffd60055;
+                  "
+                ></video>
+                <p class="mt-2 text-muted">
+                  Watch how FinTrustEX delivers value to our clients.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section id="testimonials" class="testimonials">
+        <div class="container">
+          <h2>What Our Users Say</h2>
+          <div class="testimonial-cards">
+            <div class="testimonial-card">
+              <img
+                src="https://randomuser.me/api/portraits/men/32.jpg"
+                alt="Michael Davis"
+              />
+              <p>
+                "Since implementing their strategies our website’s traffic has
+                grown exponentially and we’ve experienced a substantial increase
+                in lead generation."
+              </p>
+              <h4>Michael Davis</h4>
+              <div class="stars">★★★★★</div>
+            </div>
+            <div class="testimonial-card">
+              <img
+                src="https://randomuser.me/api/portraits/women/44.jpg"
+                alt="Sarah Lee"
+              />
+              <p>
+                "FinTrustEX’s platform is intuitive and secure. Trading crypto
+                has never been easier or more enjoyable."
+              </p>
+              <h4>Sarah Lee</h4>
+              <div class="stars">★★★★★</div>
+            </div>
+            <div class="testimonial-card">
+              <img
+                src="https://randomuser.me/api/portraits/men/65.jpg"
+                alt="James Smith"
+              />
+              <p>
+                "The weekly prizes and community events keep me motivated and
+                engaged with the platform."
+              </p>
+              <h4>James Smith</h4>
+              <div class="stars">★★★★★</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="faq container">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq1"
+              id="faq1-btn"
+            >
+              01. How do I start trading cryptocurrencies on FinTrustEX?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq1"
+              role="region"
+              aria-labelledby="faq1-btn"
+              hidden
+            >
+              <p>
+                Learn how to create an account, verify your identity, and fund
+                your wallet to begin trading digital assets on our platform.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq2"
+              id="faq2-btn"
+            >
+              02. What security measures does FinTrustEX use to protect my
+              funds?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq2"
+              role="region"
+              aria-labelledby="faq2-btn"
+              hidden
+            >
+              <p>
+                We use advanced encryption, two-factor authentication, and cold
+                storage solutions to ensure your assets and personal information
+                are safe from hacks and unauthorized access.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq3"
+              id="faq3-btn"
+            >
+              03. What are the fees for trading or withdrawing crypto on
+              FinTrustEX?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq3"
+              role="region"
+              aria-labelledby="faq3-btn"
+              hidden
+            >
+              <p>
+                Trading and withdrawal fees vary depending on the asset and
+                transaction type. Please refer to our Fees page for a detailed
+                breakdown of all applicable charges.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq4"
+              id="faq4-btn"
+            >
+              04. How can I withdraw my crypto or convert it to fiat currency?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq4"
+              role="region"
+              aria-labelledby="faq4-btn"
+              hidden
+            >
+              <p>
+                You can easily withdraw your crypto to an external wallet or
+                convert it to fiat directly from your dashboard. Follow our
+                step-by-step guide in the Help Center for more details.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq5"
+              id="faq5-btn"
+            >
+              05. What are the best strategies for trading cryptocurrencies?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq5"
+              role="region"
+              aria-labelledby="faq5-btn"
+              hidden
+            >
+              <p>
+                Popular strategies include day trading, swing trading, and
+                holding (HODLing). We recommend starting with small amounts and
+                using stop-loss orders to manage risk.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq6"
+              id="faq6-btn"
+            >
+              06. How do I choose which cryptocurrencies to trade?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq6"
+              role="region"
+              aria-labelledby="faq6-btn"
+              hidden
+            >
+              <p>
+                Research each coin’s technology, market trends, and use cases.
+                Our platform provides tools and analytics to help you make
+                informed decisions.
+              </p>
+            </div>
+          </div>
+          <div class="faq-item">
+            <button
+              class="faq-question"
+              aria-expanded="false"
+              aria-controls="faq7"
+              id="faq7-btn"
+            >
+              07. Is my crypto wallet safe from hacking?
+              <span class="faq-icon" aria-hidden="true">+</span>
+            </button>
+            <div
+              class="faq-answer"
+              id="faq7"
+              role="region"
+              aria-labelledby="faq7-btn"
+              hidden
+            >
+              <p>
+                While we implement industry-leading security, it’s important to
+                use strong passwords, enable two-factor authentication, and
+                never share your credentials.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>About FinTrustEX</h3>
+            <p>
+              At FinTrustEX, our mission is to democratize access to the world
+              of cryptocurrency trading. We believe that everyone, regardless of
+              their experience level, should have the opportunity to participate
+              in this exciting and evolving market.
+            </p>
+          </div>
+          <div class="footer-section">
+            <h3>Our Team</h3>
+            <p>
+              John Doe, CEO<br />Josep Sarle, CEO<br />Jane Smith, CTO<br />Marc
+              Garcia, Financial Analyst/Consultant
+            </p>
+            <a href="#" class="learn-more-btn">Learn More About Us</a>
+          </div>
+          <div class="footer-section">
+            <h3>FinTrustEX</h3>
+            <ul>
+              <li><a href="#">Your trusted crypto trading partner</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
             <h3>Company</h3>
             <ul>
-              <li><a href="/about">About Us</a></li>
-              <li><a href="/careers">Careers</a></li>
-              <li><a href="/press">Press</a></li>
+              <li><a href="#">About Us</a></li>
+              <li><a href="#">Careers</a></li>
+              <li><a href="#">Press</a></li>
             </ul>
           </div>
-          <div class="footer-column">
+          <div class="footer-section">
             <h3>Resources</h3>
             <ul>
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/guides">Guides</a></li>
-              <li><a href="/help">Help Center</a></li>
+              <li><a href="#">Blog</a></li>
+              <li><a href="#">Guides</a></li>
+              <li><a href="#">Help Center</a></li>
             </ul>
           </div>
-          <div class="footer-column">
+          <div class="footer-section">
             <h3>Legal</h3>
             <ul>
-              <li><a href="/privacy">Privacy Policy</a></li>
-              <li><a href="/terms">Terms of Service</a></li>
-              <li><a href="/compliance">Compliance</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+              <li><a href="#">Terms of Service</a></li>
+              <li><a href="#">Compliance</a></li>
             </ul>
           </div>
+          <div class="footer-section">
+            <h3>Stay Updated</h3>
+            <form class="subscribe-form">
+              <input type="email" placeholder="Your email" />
+              <button type="submit">Subscribe</button>
+            </form>
+          </div>
         </div>
-        <div class="footer-newsletter">
-          <h3>Stay Updated</h3>
-          <form class="newsletter-form" aria-label="Newsletter subscription">
-            <input type="email" placeholder="Your email" required />
-            <button type="submit" class="btn btn-secondary">Subscribe</button>
-          </form>
-          <div class="social-links">
+        <div class="footer-bottom">
+          <p>© 2025 FinTrustEX. All rights reserved.</p>
+          <p class="legal-links">
+            <a href="#">Privacy Policy</a> | <a href="#">Terms of Service</a> |
+            <a href="#">Cookie Policy</a>
+          </p>
+          <div class="footer-social">
+            <a href="#" aria-label="Facebook"
+              ><i class="fab fa-facebook-f"></i
+            ></a>
+            <a href="#" aria-label="WhatsApp"
+              ><i class="fab fa-whatsapp"></i
+            ></a>
+            <a href="#" aria-label="Telegram"
+              ><i class="fab fa-telegram-plane"></i
+            ></a>
+            <a href="#" aria-label="Instagram"
+              ><i class="fab fa-instagram"></i
+            ></a>
             <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-            <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
-            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           </div>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>© 2025 Fintrust. All rights reserved.</p>
-        <div class="footer-legal">
-          <a href="/privacy">Privacy Policy</a>
-          <a href="/terms">Terms of Service</a>
-          <a href="/cookies">Cookie Policy</a>
-        </div>
-      </div>
-    </div>
-  </footer>
+    </footer>
 
-  <script src="assets/js/index.js" defer></script>
-  <script src="assets/js/main.js" defer></script>
-  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous" defer></script>
-</body>
+    <script>
+      // Mobile menu toggle
+      const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+      const navList = document.querySelector(".nav-list");
+      mobileMenuToggle.addEventListener("click", () => {
+        const expanded =
+          mobileMenuToggle.getAttribute("aria-expanded") === "true";
+        mobileMenuToggle.setAttribute("aria-expanded", !expanded);
+        navList.classList.toggle("active");
+      });
+
+      // FAQ toggle
+      document.querySelectorAll(".faq-question").forEach((button) => {
+        button.addEventListener("click", () => {
+          const expanded = button.getAttribute("aria-expanded") === "true";
+          button.setAttribute("aria-expanded", !expanded);
+          const answer = document.getElementById(
+            button.getAttribute("aria-controls"),
+          );
+          if (answer) {
+            answer.hidden = expanded;
+          }
+        });
+      });
+    </script>
+  </body>
 </html>

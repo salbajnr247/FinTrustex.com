@@ -140,94 +140,27 @@ async function loadTickets() {
     
     // Fetch tickets from API
     let tickets = [];
-    if (window.api && api.support) {
-      tickets = await api.support.getTickets();
-    } else {
-      // Mock data for testing when API is not available
-      tickets = [
-        {
-          id: 'T12345',
-          subject: 'Withdrawal Issue',
-          category: 'withdrawal',
-          priority: 'high',
-          status: 'open',
-          description: 'I initiated a withdrawal 3 days ago but it\'s still pending. Transaction ID: TXN123456',
-          createdAt: new Date(Date.now() - 86400000 * 2), // 2 days ago
-          responses: [
-            {
-              id: 'R1',
-              author: 'Admin',
-              isAdmin: true,
-              content: 'Thank you for reaching out. We\'re investigating your withdrawal issue and will update you shortly.',
-              createdAt: new Date(Date.now() - 86400000 * 1) // 1 day ago
-            }
-          ]
-        },
-        {
-          id: 'T12346',
-          subject: 'API Access Request',
-          category: 'api',
-          priority: 'medium',
-          status: 'pending',
-          description: 'I would like to request API access for trading. My account has been verified to Tier 2.',
-          createdAt: new Date(Date.now() - 86400000 * 5), // 5 days ago
-          responses: [
-            {
-              id: 'R2',
-              author: 'Admin',
-              isAdmin: true,
-              content: 'We\'ve received your API access request. Please provide your IP address range that will be accessing our API.',
-              createdAt: new Date(Date.now() - 86400000 * 4) // 4 days ago
-            },
-            {
-              id: 'R3',
-              author: 'You',
-              isAdmin: false,
-              content: 'My IP address range is 192.168.1.0/24',
-              createdAt: new Date(Date.now() - 86400000 * 3) // 3 days ago
-            }
-          ]
-        },
-        {
-          id: 'T12347',
-          subject: 'Account Verification',
-          category: 'account',
-          priority: 'low',
-          status: 'closed',
-          description: 'I\'ve submitted my KYC documents but haven\'t received any update for a week.',
-          createdAt: new Date(Date.now() - 86400000 * 10), // 10 days ago
-          responses: [
-            {
-              id: 'R4',
-              author: 'Admin',
-              isAdmin: true,
-              content: 'Your KYC documents have been reviewed and approved. Your account is now verified to Tier 2.',
-              createdAt: new Date(Date.now() - 86400000 * 8) // 8 days ago
-            },
-            {
-              id: 'R5',
-              author: 'You',
-              isAdmin: false,
-              content: 'Thank you for the update!',
-              createdAt: new Date(Date.now() - 86400000 * 7) // 7 days ago
-            },
-            {
-              id: 'R6',
-              author: 'Admin',
-              isAdmin: true,
-              content: 'You\'re welcome! Is there anything else we can help you with?',
-              createdAt: new Date(Date.now() - 86400000 * 7) // 7 days ago
-            },
-            {
-              id: 'R7',
-              author: 'System',
-              isAdmin: true,
-              content: 'This ticket has been closed due to inactivity. Please create a new ticket if you need further assistance.',
-              createdAt: new Date(Date.now() - 86400000 * 6) // 6 days ago
-            }
-          ]
+    try {
+      if (window.api && api.support) {
+        const response = await api.support.getTickets();
+        
+        if (response.success && response.tickets) {
+          tickets = response.tickets;
+        } else if (response.tickets) {
+          // Some APIs might not include success field
+          tickets = response.tickets;
+        } else if (Array.isArray(response)) {
+          // Response might be the direct array
+          tickets = response;
+        } else {
+          throw new Error(response.message || "Failed to fetch tickets");
         }
-      ];
+      } else {
+        throw new Error("API not available");
+      }
+    } catch (apiError) {
+      console.error("API error:", apiError);
+      throw new Error(apiError.message || "Failed to load tickets from API");
     }
     
     // Store in global variable
@@ -502,15 +435,24 @@ async function submitNewTicket() {
     
     // Submit to API
     let createdTicket;
-    if (window.api && api.support) {
-      createdTicket = await api.support.createTicket(newTicket);
-    } else {
-      // Mock created ticket for testing
-      createdTicket = {
-        ...newTicket,
-        id: 'T' + Math.floor(Math.random() * 100000),
-        responses: []
-      };
+    try {
+      if (window.api && api.support) {
+        const response = await api.support.createTicket(newTicket);
+        
+        if (response.success && response.ticket) {
+          createdTicket = response.ticket;
+        } else if (response.ticket) {
+          // Some APIs might not include success field
+          createdTicket = response.ticket;
+        } else {
+          throw new Error(response.message || "Failed to create ticket");
+        }
+      } else {
+        throw new Error("API not available");
+      }
+    } catch (apiError) {
+      console.error("API error:", apiError);
+      throw new Error(apiError.message || "Failed to create ticket using API");
     }
     
     // Add to tickets data
@@ -557,30 +499,34 @@ async function addTicketReply(ticketId) {
     
     // Submit to API
     let updatedTicket;
-    if (window.api && api.support) {
-      updatedTicket = await api.support.addTicketReply(ticketId, reply);
-    } else {
-      // Mock for testing
-      const ticket = ticketsData.find(t => t.id === ticketId);
-      if (!ticket) {
-        throw new Error('Ticket not found');
+    try {
+      if (window.api && api.support) {
+        // The server only needs the content
+        const response = await api.support.addTicketReply(ticketId, { content: replyContent });
+        
+        if (response.success && response.ticket) {
+          // Use the updated ticket directly from the response
+          updatedTicket = response.ticket;
+        } else if (response.ticket) {
+          // Some APIs might not include success field
+          updatedTicket = response.ticket;
+        } else {
+          // If the response structure is different, fetch the updated ticket
+          const updatedTicketResponse = await api.support.getTicket(ticketId);
+          if (updatedTicketResponse.success && updatedTicketResponse.ticket) {
+            updatedTicket = updatedTicketResponse.ticket;
+          } else if (updatedTicketResponse.ticket) {
+            updatedTicket = updatedTicketResponse.ticket;
+          } else {
+            throw new Error(response.message || "Failed to get updated ticket");
+          }
+        }
+      } else {
+        throw new Error("API not available");
       }
-      
-      // Generate reply ID
-      reply.id = 'R' + Math.floor(Math.random() * 100000);
-      
-      // Add reply to ticket
-      if (!ticket.responses) {
-        ticket.responses = [];
-      }
-      ticket.responses.push(reply);
-      
-      // Update ticket status to pending
-      if (ticket.status === 'open') {
-        ticket.status = 'pending';
-      }
-      
-      updatedTicket = ticket;
+    } catch (apiError) {
+      console.error("API error:", apiError);
+      throw new Error(apiError.message || "Failed to add reply using API");
     }
     
     // Update ticket in data
@@ -612,32 +558,33 @@ async function updateTicketStatus(ticketId, status) {
   try {
     // Submit to API
     let updatedTicket;
-    if (window.api && api.support) {
-      updatedTicket = await api.support.updateTicketStatus(ticketId, status);
-    } else {
-      // Mock for testing
-      const ticket = ticketsData.find(t => t.id === ticketId);
-      if (!ticket) {
-        throw new Error('Ticket not found');
+    try {
+      if (window.api && api.support) {
+        const response = await api.support.updateTicketStatus(ticketId, status);
+        
+        if (response.success && response.ticket) {
+          // Use the updated ticket directly from the response
+          updatedTicket = response.ticket;
+        } else if (response.ticket) {
+          // Some APIs might not include success field
+          updatedTicket = response.ticket;
+        } else {
+          // If the response structure is different, fetch the updated ticket
+          const updatedTicketResponse = await api.support.getTicket(ticketId);
+          if (updatedTicketResponse.success && updatedTicketResponse.ticket) {
+            updatedTicket = updatedTicketResponse.ticket;
+          } else if (updatedTicketResponse.ticket) {
+            updatedTicket = updatedTicketResponse.ticket;
+          } else {
+            throw new Error(response.message || "Failed to get updated ticket");
+          }
+        }
+      } else {
+        throw new Error("API not available");
       }
-      
-      // Update status
-      ticket.status = status;
-      
-      // Add system message for status change
-      if (!ticket.responses) {
-        ticket.responses = [];
-      }
-      
-      ticket.responses.push({
-        id: 'R' + Math.floor(Math.random() * 100000),
-        author: 'System',
-        isAdmin: true,
-        content: `Ticket status changed to ${status}`,
-        createdAt: new Date()
-      });
-      
-      updatedTicket = ticket;
+    } catch (apiError) {
+      console.error("API error:", apiError);
+      throw new Error(apiError.message || "Failed to update ticket status using API");
     }
     
     // Update ticket in data

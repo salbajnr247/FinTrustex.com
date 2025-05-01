@@ -632,7 +632,7 @@ const support = {
    * @returns {Promise<Array>} - Support tickets
    */
   async getTickets() {
-    return apiRequest('/support/tickets', 'GET');
+    return apiRequest('/support/tickets/user', 'GET');
   },
 
   /**
@@ -670,7 +670,7 @@ const support = {
    * @returns {Promise<Object>} - Updated ticket
    */
   async updateTicketStatus(ticketId, status) {
-    return apiRequest(`/support/tickets/${ticketId}/status`, 'PATCH', { status });
+    return apiRequest(`/support/tickets/${ticketId}/status`, 'PUT', { status });
   },
 
   /**

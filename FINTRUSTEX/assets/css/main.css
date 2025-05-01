@@ -1,5 +1,6 @@
-/* Root variables for consistent theming - Bybit Yellow and Black Theme */
+/* Root variables for consistent theming - Updated for CoinZ-inspired theme */
 :root {
+  /* Original Bybit colors */
   --primary-bg: #121212; /* Pure black background like Bybit */
   --card-bg: #1a1a1a; /* Slightly lighter black for cards */
   --accent-color: #f6ca45; /* Bybit yellow */
@@ -12,6 +13,33 @@
   --transition: all 0.3s ease;
   --positive-color: #04aa6d; /* Green for positive values */
   --negative-color: #e63946; /* Red for negative values */
+  
+  /* New CoinZ-inspired colors */
+  --primary-color: #3B82F6; /* Blue */
+  --primary-light: #60A5FA;
+  --secondary-color: #10B981; /* Green */
+  --danger-color: #EF4444; /* Red */
+  --text-primary: #F9FAFB; /* Light gray for text */
+  --text-secondary: #9CA3AF; /* Medium gray for secondary text */
+  --bg-primary: #111827; /* Dark blue-gray background */
+  --bg-secondary: #1F2937; /* Medium blue-gray for cards */
+  --bg-tertiary: #374151; /* Light blue-gray for highlights */
+  --border-color: #374151; /* Border color */
+  
+  /* RGB values for opacity */
+  --primary-rgb: 59, 130, 246;
+  --secondary-rgb: 16, 185, 129;
+  --danger-rgb: 239, 68, 68;
+  --success-rgb: 16, 185, 129;
+  --warning-rgb: 245, 158, 11;
+  --info-rgb: 59, 130, 246;
+  
+  /* Aliases for compatibility */
+  --success: var(--secondary-color);
+  --danger: var(--danger-color);
+  --warning: #F59E0B;
+  --info: var(--primary-color);
+  --text-muted: var(--text-secondary);
 }
 
 /* Reset */
