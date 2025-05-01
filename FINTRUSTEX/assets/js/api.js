@@ -580,6 +580,126 @@ const security = {
   }
 };
 
+// Notifications API
+const notifications = {
+  /**
+   * Get all notifications for the current user
+   * @returns {Promise<Array>} - User notifications
+   */
+  async getAll() {
+    return apiRequest('/notifications', 'GET');
+  },
+
+  /**
+   * Get unread notifications for the current user
+   * @returns {Promise<Array>} - Unread notifications
+   */
+  async getUnread() {
+    return apiRequest('/notifications/unread', 'GET');
+  },
+
+  /**
+   * Mark a notification as read
+   * @param {number} id - Notification ID
+   * @returns {Promise<Object>} - Updated notification
+   */
+  async markAsRead(id) {
+    return apiRequest(`/notifications/${id}/read`, 'PATCH');
+  },
+
+  /**
+   * Mark all notifications as read
+   * @returns {Promise<Object>} - Confirmation
+   */
+  async markAllAsRead() {
+    return apiRequest('/notifications/mark-all-read', 'POST');
+  },
+
+  /**
+   * Create a notification (admin only)
+   * @param {Object} notificationData - Notification data
+   * @returns {Promise<Object>} - Created notification
+   */
+  async create(notificationData) {
+    return apiRequest('/notifications', 'POST', notificationData);
+  }
+};
+
+// Support API
+const support = {
+  /**
+   * Get all support tickets for the current user
+   * @returns {Promise<Array>} - Support tickets
+   */
+  async getTickets() {
+    return apiRequest('/support/tickets', 'GET');
+  },
+
+  /**
+   * Get a specific support ticket
+   * @param {string} ticketId - Ticket ID
+   * @returns {Promise<Object>} - Ticket details
+   */
+  async getTicket(ticketId) {
+    return apiRequest(`/support/tickets/${ticketId}`, 'GET');
+  },
+
+  /**
+   * Create a new support ticket
+   * @param {Object} ticketData - Ticket data
+   * @returns {Promise<Object>} - Created ticket
+   */
+  async createTicket(ticketData) {
+    return apiRequest('/support/tickets', 'POST', ticketData);
+  },
+
+  /**
+   * Add a reply to a support ticket
+   * @param {string} ticketId - Ticket ID
+   * @param {Object} replyData - Reply data
+   * @returns {Promise<Object>} - Updated ticket
+   */
+  async addTicketReply(ticketId, replyData) {
+    return apiRequest(`/support/tickets/${ticketId}/replies`, 'POST', replyData);
+  },
+
+  /**
+   * Update ticket status
+   * @param {string} ticketId - Ticket ID
+   * @param {string} status - New status
+   * @returns {Promise<Object>} - Updated ticket
+   */
+  async updateTicketStatus(ticketId, status) {
+    return apiRequest(`/support/tickets/${ticketId}/status`, 'PATCH', { status });
+  },
+
+  /**
+   * Get FAQ categories
+   * @returns {Promise<Array>} - FAQ categories
+   */
+  async getFaqCategories() {
+    return apiRequest('/support/faq/categories', 'GET');
+  },
+
+  /**
+   * Get FAQs by category
+   * @param {string} category - Category ID
+   * @returns {Promise<Array>} - FAQs
+   */
+  async getFaqsByCategory(category) {
+    return apiRequest(`/support/faq/categories/${category}`, 'GET');
+  },
+
+  /**
+   * Search FAQs
+   * @param {string} query - Search query
+   * @returns {Promise<Array>} - Search results
+   */
+  async searchFaq(query) {
+    return apiRequest(`/support/faq/search?q=${encodeURIComponent(query)}`, 'GET');
+  }
+};
+
 // Export API
 const api = {
   setAuthHeader,
@@ -591,7 +711,9 @@ const api = {
   transactions,
   user,
   admin,
-  security
+  security,
+  notifications,
+  support
 };
 
 // Make API globally accessible

@@ -14,6 +14,7 @@ async function initDashboard() {
     // Initialize dashboard components
     await initPortfolioOverview();
     await initMarketTickers();
+    await initNotificationsPanel();
     setupEventListeners();
 
     // Set theme based on user preference
@@ -339,6 +340,243 @@ function getAssetColor(symbol) {
 }
 
 /**
+ * Initialize notifications panel
+ */
+async function initNotificationsPanel() {
+  try {
+    // Check if notifications list exists
+    const notificationsList = document.getElementById('notifications-list');
+    if (!notificationsList) return;
+    
+    // Check if API is available
+    if (!window.api || !window.api.notifications) {
+      console.warn('Notifications API not available');
+      return;
+    }
+    
+    // Get the latest notifications
+    const notifications = await api.notifications.getAll();
+    
+    // If no notifications
+    if (!notifications || notifications.length === 0) {
+      notificationsList.innerHTML = `
+        <div class="empty-notification">
+          <i class="fas fa-bell-slash"></i>
+          <p>No notifications yet</p>
+        </div>
+      `;
+      return;
+    }
+    
+    // Sort notifications by date (newest first)
+    const sortedNotifications = [...notifications].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    
+    // Take only the first 3 notifications
+    const recentNotifications = sortedNotifications.slice(0, 3);
+    
+    // Build HTML
+    let html = '';
+    
+    recentNotifications.forEach(notification => {
+      // Determine icon based on notification type
+      let iconClass = 'fa-bell';
+      let iconType = '';
+      
+      if (notification.type.includes('deposit')) {
+        iconClass = 'fa-money-bill-wave';
+        iconType = 'deposit';
+      } else if (notification.type.includes('withdrawal')) {
+        iconClass = 'fa-money-bill-transfer';
+        iconType = 'withdrawal';
+      } else if (notification.type.includes('login') || notification.type.includes('security')) {
+        iconClass = 'fa-shield-alt';
+        iconType = 'login';
+      } else if (notification.type.includes('price')) {
+        iconClass = 'fa-chart-line';
+        iconType = 'price';
+      } else if (notification.type.includes('system')) {
+        iconClass = 'fa-server';
+        iconType = 'system';
+      }
+      
+      // Format time
+      const timeAgo = utils.formatTimeAgo ? utils.formatTimeAgo(new Date(notification.createdAt)) : 
+        new Date(notification.createdAt).toLocaleString();
+      
+      html += `
+        <div class="notification-item ${notification.isRead ? '' : 'unread'}" data-id="${notification.id}">
+          <div class="notification-icon ${iconType}">
+            <i class="fas ${iconClass}"></i>
+          </div>
+          <div class="notification-content">
+            <h4>${notification.title}</h4>
+            <p>${notification.message}</p>
+            <span class="notification-time">${timeAgo}</span>
+          </div>
+          <button class="notification-action" data-action="mark-read" title="${notification.isRead ? 'Mark as unread' : 'Mark as read'}">
+            <i class="fas ${notification.isRead ? 'fa-envelope' : 'fa-envelope-open'}"></i>
+          </button>
+        </div>
+      `;
+    });
+    
+    // Update the notifications list
+    notificationsList.innerHTML = html;
+    
+    // Add event listeners
+    setupNotificationListeners();
+    
+    // Add "Mark All Read" button listener
+    const markAllReadButton = document.getElementById('mark-all-read');
+    if (markAllReadButton) {
+      markAllReadButton.addEventListener('click', markAllNotificationsAsRead);
+    }
+    
+    // Add "View All Notifications" link listener
+    const viewAllNotificationsLink = document.getElementById('view-all-notifications');
+    if (viewAllNotificationsLink) {
+      viewAllNotificationsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = '/dashboard/notifications.html';
+      });
+    }
+  } catch (error) {
+    console.error('Error initializing notifications panel:', error);
+    
+    // Show error message in the panel
+    const notificationsList = document.getElementById('notifications-list');
+    if (notificationsList) {
+      notificationsList.innerHTML = `
+        <div class="empty-notification">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Failed to load notifications</p>
+        </div>
+      `;
+    }
+  }
+}
+
+/**
+ * Set up notification listeners
+ */
+function setupNotificationListeners() {
+  // Add click listener to mark as read buttons
+  document.querySelectorAll('.notification-action[data-action="mark-read"]').forEach(button => {
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      const notificationItem = button.closest('.notification-item');
+      const notificationId = parseInt(notificationItem.dataset.id);
+      toggleNotificationReadStatus(notificationId, notificationItem);
+    });
+  });
+  
+  // Add click listener to notification items
+  document.querySelectorAll('.notification-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const notificationId = parseInt(item.dataset.id);
+      
+      // Mark as read if unread
+      if (item.classList.contains('unread')) {
+        markNotificationAsRead(notificationId, item);
+      }
+      
+      // If we have notification data with action URL, navigate to it
+      const notification = window.notificationsData?.find(n => n.id === notificationId);
+      if (notification?.data?.action?.url) {
+        window.location.href = notification.data.action.url;
+      }
+    });
+  });
+}
+
+/**
+ * Toggle notification read status
+ * @param {number} notificationId - Notification ID
+ * @param {Element} element - Notification element
+ */
+async function toggleNotificationReadStatus(notificationId, element) {
+  try {
+    const isCurrentlyUnread = element.classList.contains('unread');
+    
+    if (isCurrentlyUnread) {
+      await markNotificationAsRead(notificationId, element);
+    } else {
+      // Marking as unread is not supported by the API yet
+      // Just update the UI for now
+      element.classList.add('unread');
+      
+      // Update icon
+      const iconElement = element.querySelector('.notification-action i');
+      if (iconElement) {
+        iconElement.className = 'fas fa-envelope-open';
+      }
+    }
+  } catch (error) {
+    console.error('Error toggling notification read status:', error);
+    showToast('Failed to update notification', 'error');
+  }
+}
+
+/**
+ * Mark notification as read
+ * @param {number} notificationId - Notification ID
+ * @param {Element} element - Notification element
+ */
+async function markNotificationAsRead(notificationId, element) {
+  try {
+    // Call API
+    await api.notifications.markAsRead(notificationId);
+    
+    // Update UI
+    element.classList.remove('unread');
+    
+    // Update icon
+    const iconElement = element.querySelector('.notification-action i');
+    if (iconElement) {
+      iconElement.className = 'fas fa-envelope';
+    }
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    showToast('Failed to mark notification as read', 'error');
+  }
+}
+
+/**
+ * Mark all notifications as read
+ */
+async function markAllNotificationsAsRead() {
+  try {
+    // Call API
+    await api.notifications.markAllAsRead();
+    
+    // Update UI - remove unread class from all notification items
+    document.querySelectorAll('.notification-item.unread').forEach(item => {
+      item.classList.remove('unread');
+      
+      // Update icon
+      const iconElement = item.querySelector('.notification-action i');
+      if (iconElement) {
+        iconElement.className = 'fas fa-envelope';
+      }
+    });
+    
+    // Also update the notifications count in the header
+    const notificationsCount = document.getElementById('notifications-count');
+    if (notificationsCount) {
+      notificationsCount.textContent = '';
+    }
+    
+    // Show success message
+    showToast('All notifications marked as read', 'success');
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    showToast('Failed to mark all notifications as read', 'error');
+  }
+}
+
+/**
  * Set up event listeners
  */
 function setupEventListeners() {
@@ -348,6 +586,7 @@ function setupEventListeners() {
     refreshButton.addEventListener('click', () => {
       initPortfolioOverview();
       initMarketTickers();
+      initNotificationsPanel();
       showToast('Data refreshed', 'success');
     });
   }

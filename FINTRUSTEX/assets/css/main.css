@@ -158,6 +158,39 @@ body {
   gap: 1rem;
 }
 
+.notifications-icon {
+  position: relative;
+  font-size: 1.25rem;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: var(--transition);
+}
+
+.notifications-icon:hover {
+  color: var(--accent-color);
+}
+
+.notifications-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--accent-color);
+  color: var(--primary-bg);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 0.7rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.notifications-badge:empty {
+  display: none;
+}
+
 .profile {
   display: flex;
   align-items: center;

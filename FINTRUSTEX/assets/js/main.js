@@ -34,6 +34,13 @@ const initPage = () => {
       initWallet();
     } else if (path.includes('trading.html')) {
       initTrading();
+    } else if (path.includes('notifications.html')) {
+      // The notifications.js file will handle initialization
+      if (typeof initNotificationsPage === 'function') {
+        initNotificationsPage();
+      } else {
+        console.warn('Notifications page script not loaded');
+      }
     }
   } catch (error) {
     console.error('Error initializing page:', error);
@@ -107,6 +114,81 @@ const fetchApiData = async (type) => {
   }
 };
 
+// Initialize notifications
+const initNotifications = async () => {
+  try {
+    // Get notification bell and count elements
+    const notificationCount = document.getElementById('notifications-count');
+    const notificationIcon = document.querySelector('.notifications-icon');
+    
+    if (!notificationCount || !notificationIcon) return;
+    
+    // Check if API is available
+    if (!window.api || !window.api.notifications) {
+      console.warn('Notifications API not available');
+      return;
+    }
+    
+    // Update notification count
+    const updateNotificationCount = async () => {
+      try {
+        const unreadNotifications = await api.notifications.getUnread();
+        const count = unreadNotifications.length;
+        
+        // Update badge
+        notificationCount.textContent = count > 0 ? count : '';
+        
+        // Return the unread notifications for potential use
+        return unreadNotifications;
+      } catch (error) {
+        console.error('Error fetching unread notifications:', error);
+        return [];
+      }
+    };
+    
+    // Initial update
+    await updateNotificationCount();
+    
+    // Set up WebSocket listener for new notifications
+    if (window.websocketClient) {
+      websocketClient.addEventListener('notification', async () => {
+        await updateNotificationCount();
+      });
+    }
+    
+    // Add click event to notification bell
+    notificationIcon.addEventListener('click', () => {
+      // Navigate to notifications page
+      window.location.href = '/dashboard/notifications.html';
+    });
+    
+    // Set up periodic refresh (every 60 seconds)
+    setInterval(updateNotificationCount, 60000);
+  } catch (error) {
+    console.error('Error initializing notifications:', error);
+  }
+};
+
+// Initialize navigation links
+const initNavigationLinks = () => {
+  // Get all elements with data-nav attribute
+  const navLinks = document.querySelectorAll('[data-nav]');
+  
+  navLinks.forEach(link => {
+    link.addEventListener('click', (event) => {
+      // Prevent default for <a> elements
+      if (link.tagName === 'A') {
+        event.preventDefault();
+      }
+      
+      const navPath = link.getAttribute('data-nav');
+      if (navPath) {
+        window.location.href = navPath;
+      }
+    });
+  });
+};
+
 // Initialize on Load
 document.addEventListener('DOMContentLoaded', () => {
   // Load required scripts
@@ -117,6 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
     apiScript.onload = () => {
       console.log('API service loaded successfully.');
       initThemeToggle();
+      initNotifications();
+      initNavigationLinks();
       initPage();
     };
     apiScript.onerror = () => {
@@ -126,6 +210,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(apiScript);
   } else {
     initThemeToggle();
+    initNotifications();
+    initNavigationLinks();
     initPage();
   }
 });

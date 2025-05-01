@@ -106,7 +106,7 @@ const utils = {
    * @param {string|Date} date - Date to format
    * @returns {string} - Relative time (e.g., '5 minutes ago')
    */
-  timeAgo: (date) => {
+  formatTimeAgo: (date) => {
     if (!date) return '—';
     
     const d = new Date(date);
@@ -139,6 +139,11 @@ const utils = {
     
     const years = Math.floor(months / 12);
     return `${years} year${years !== 1 ? 's' : ''} ago`;
+  },
+  
+  // Keep timeAgo as an alias for backward compatibility
+  timeAgo: function(date) {
+    return this.formatTimeAgo(date);
   },
   
   /**

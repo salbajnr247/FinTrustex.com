@@ -47,6 +47,7 @@ class WebSocketClient {
       // Register built-in message handlers
       this.registerMessageHandler('price_update', this.handlePriceUpdate.bind(this));
       this.registerMessageHandler('notification', this.handleNotification.bind(this));
+      this.registerMessageHandler('ticket_update', this.handleTicketUpdate.bind(this));
       this.registerMessageHandler('ping', this.handlePing.bind(this));
     } catch (error) {
       console.error('Error initializing WebSocket:', error);
@@ -451,6 +452,43 @@ class WebSocketClient {
   }
 
   /**
+   * Handle ticket update messages
+   * @param {Object} message - Ticket update message
+   */
+  handleTicketUpdate(message) {
+    // Store ticket update in session history
+    try {
+      const ticketUpdates = JSON.parse(sessionStorage.getItem('ticket_updates') || '[]');
+      ticketUpdates.unshift(message.data);
+      
+      // Limit to 20 ticket updates
+      if (ticketUpdates.length > 20) {
+        ticketUpdates.pop();
+      }
+      
+      sessionStorage.setItem('ticket_updates', JSON.stringify(ticketUpdates));
+    } catch (error) {
+      console.error('Error storing ticket update:', error);
+    }
+    
+    // Trigger ticket update callbacks
+    this.dispatchEvent('ticket_update', message.data);
+    
+    // Create notification for ticket update
+    if (message.data.notification !== false) {
+      const notificationData = {
+        title: 'Support Ticket Updated',
+        message: `Ticket ${message.data.ticketId}: ${message.data.message || 'has been updated'}`,
+        timestamp: new Date().toISOString(),
+        type: 'ticket_update',
+        data: message.data
+      };
+      
+      this.handleNotification({ data: notificationData });
+    }
+  }
+  
+  /**
    * Get recent notifications from session storage
    * @returns {Array} - Array of recent notifications
    */
@@ -460,6 +498,20 @@ class WebSocketClient {
       return notificationsJson ? JSON.parse(notificationsJson) : [];
     } catch (error) {
       console.error('Error retrieving notifications:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * Get recent ticket updates from session storage
+   * @returns {Array} - Array of recent ticket updates
+   */
+  getRecentTicketUpdates() {
+    try {
+      const ticketUpdatesJson = sessionStorage.getItem('ticket_updates');
+      return ticketUpdatesJson ? JSON.parse(ticketUpdatesJson) : [];
+    } catch (error) {
+      console.error('Error retrieving ticket updates:', error);
       return [];
     }
   }
