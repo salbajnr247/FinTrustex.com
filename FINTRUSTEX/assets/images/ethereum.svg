@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <polygon fill="#9ca3af" points="24,44 24,32 36,25"/>
-  <polygon fill="#d1d5db" points="24,44 12,25 24,32"/>
-  <polygon fill="#e5e7eb" points="24,4 24,24 12,17"/>
-  <polygon fill="#f3f4f6" points="24,4 36,17 24,24"/>
-  <polygon fill="#6b7280" points="24,24 24,32 12,17"/>
-  <polygon fill="#9ca3af" points="24,24 36,17 24,32"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.36 100.47">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #627eea;
+      }
+      .cls-2 {
+        fill: #fff;
+        fill-opacity: 0.6;
+      }
+      .cls-3 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g id="Layer_2" data-name="Layer 2">
+    <g id="Layer_1-2" data-name="Layer 1">
+      <path class="cls-1" d="M31.18,0,30.79.13V68.37l.39.38,31.18-18.44Z"/>
+      <path class="cls-1" d="M31.18,0,0,50.31l31.18,18.44V0Z"/>
+      <path class="cls-2" d="M31.18,75.16l-.39.47v24l.39,1.13L62.36,56.9Z"/>
+      <path class="cls-2" d="M31.18,100.76V75.16L0,56.9Z"/>
+      <path class="cls-3" d="M31.18,68.75l31.18-18.44L31.18,36.83Z"/>
+      <path class="cls-2" d="M0,50.31l31.18,18.44V36.83Z"/>
+    </g>
+  </g>
 </svg>

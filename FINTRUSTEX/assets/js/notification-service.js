@@ -1,535 +1,425 @@
 /**
  * Notification Service for FinTrustEX
- * Handles user notifications for deposits, withdrawals, login attempts, and price alerts
+ * 
+ * Handles displaying notifications to the user including:
+ * - Transaction notifications
+ * - System alerts
+ * - Price alerts
+ * - Security notifications
  */
 
 class NotificationService {
   constructor() {
-    this.initialized = false;
-    this.notificationCount = 0;
+    this.notificationContainer = null;
     this.notifications = [];
-    
-    // Initialize service
-    this.init();
+    this.maxNotifications = 5; // Maximum number of notifications to show at once
+    this.notificationLifetime = 5000; // How long notifications stay visible (ms)
+    this.notificationCount = 0; // Counter for generating unique IDs
   }
-  
+
   /**
    * Initialize the notification service
    */
   init() {
-    document.addEventListener('DOMContentLoaded', () => {
-      // Load notifications from storage
-      this.loadNotifications();
+    // Create notification container if it doesn't exist
+    if (!this.notificationContainer) {
+      this.notificationContainer = document.createElement('div');
+      this.notificationContainer.className = 'notification-container';
+      document.body.appendChild(this.notificationContainer);
       
-      // Set up WebSocket listeners for real-time notifications
-      this.setupWebSocketListeners();
-      
-      // Set up UI event listeners
-      this.setupEventListeners();
-      
-      // Update UI
-      this.updateUI();
-    });
-    
-    this.initialized = true;
-  }
-  
-  /**
-   * Load notifications from localStorage
-   */
-  loadNotifications() {
-    try {
-      const savedNotifications = localStorage.getItem('fintrustex_notifications');
-      if (savedNotifications) {
-        this.notifications = JSON.parse(savedNotifications);
-        
-        // Mark as read if user has seen them before
-        const lastSeen = localStorage.getItem('fintrustex_notifications_last_seen');
-        if (lastSeen) {
-          const lastSeenTime = new Date(lastSeen).getTime();
-          
-          this.notificationCount = this.notifications.filter(
-            n => !n.read && new Date(n.timestamp).getTime() > lastSeenTime
-          ).length;
-        } else {
-          this.notificationCount = this.notifications.filter(n => !n.read).length;
-        }
-      }
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-      this.notifications = [];
-      this.notificationCount = 0;
-    }
-  }
-  
-  /**
-   * Save notifications to localStorage
-   */
-  saveNotifications() {
-    try {
-      localStorage.setItem('fintrustex_notifications', JSON.stringify(this.notifications));
-    } catch (error) {
-      console.error('Error saving notifications:', error);
-    }
-  }
-  
-  /**
-   * Set up WebSocket listeners for real-time notifications
-   */
-  setupWebSocketListeners() {
-    if (window.WebSocketClient && window.WebSocketClient.addMessageListener) {
-      // Listen for transaction updates (deposits and withdrawals)
-      window.WebSocketClient.addMessageListener('transaction_update', (data) => {
-        if (data.status === 'completed') {
-          if (data.type === 'deposit') {
-            this.addNotification({
-              type: 'deposit',
-              title: 'Deposit Confirmed',
-              message: `Your deposit of ${data.amount} ${data.currency} has been confirmed.`,
-              timestamp: new Date().toISOString()
-            });
-          } else if (data.type === 'withdrawal') {
-            this.addNotification({
-              type: 'withdrawal',
-              title: 'Withdrawal Processed',
-              message: `Your withdrawal of ${data.amount} ${data.currency} has been processed.`,
-              timestamp: new Date().toISOString()
-            });
-          }
-        }
-      });
-      
-      // Listen for price alerts
-      window.WebSocketClient.addMessageListener('price_alert', (data) => {
-        this.addNotification({
-          type: 'price_alert',
-          title: 'Price Alert',
-          message: `${data.pair} has ${data.direction === 'above' ? 'reached above' : 'dropped below'} ${data.price}.`,
-          timestamp: new Date().toISOString()
-        });
-      });
-      
-      // Listen for security alerts (login attempts)
-      window.WebSocketClient.addMessageListener('security_alert', (data) => {
-        this.addNotification({
-          type: 'security',
-          title: 'Security Alert',
-          message: data.message,
-          timestamp: new Date().toISOString()
-        });
-      });
-    }
-  }
-  
-  /**
-   * Set up UI event listeners
-   */
-  setupEventListeners() {
-    // Toggle notification panel
-    const notificationToggle = document.getElementById('notification-toggle');
-    const notificationPanel = document.getElementById('notification-panel');
-    
-    if (notificationToggle && notificationPanel) {
-      notificationToggle.addEventListener('click', () => {
-        notificationPanel.classList.toggle('show');
-        
-        // Mark notifications as seen
-        if (notificationPanel.classList.contains('show')) {
-          this.markNotificationsAsSeen();
-        }
-      });
-      
-      // Close notification panel when clicking outside
-      document.addEventListener('click', (event) => {
-        if (!notificationToggle.contains(event.target) && 
-            !notificationPanel.contains(event.target) && 
-            notificationPanel.classList.contains('show')) {
-          notificationPanel.classList.remove('show');
-        }
-      });
-      
-      // Mark all as read button
-      const markAllReadBtn = document.getElementById('mark-all-read');
-      if (markAllReadBtn) {
-        markAllReadBtn.addEventListener('click', () => {
-          this.markAllAsRead();
-        });
-      }
-      
-      // Clear all notifications button
-      const clearAllBtn = document.getElementById('clear-notifications');
-      if (clearAllBtn) {
-        clearAllBtn.addEventListener('click', () => {
-          this.clearAllNotifications();
-        });
-      }
-    }
-  }
-  
-  /**
-   * Update the UI with current notifications data
-   */
-  updateUI() {
-    // Update notification badge count
-    const notificationBadge = document.getElementById('notification-badge');
-    if (notificationBadge) {
-      if (this.notificationCount > 0) {
-        notificationBadge.textContent = this.notificationCount;
-        notificationBadge.style.display = 'flex';
-      } else {
-        notificationBadge.style.display = 'none';
-      }
+      // Add styles if not already present
+      this.addStyles();
     }
     
-    // Update notification list
-    const notificationList = document.getElementById('notification-list');
-    if (notificationList) {
-      // Clear existing notifications
-      notificationList.innerHTML = '';
+    // Connect to WebSocket notifications if available
+    if (window.websocketClient) {
+      websocketClient.addEventListener('notification', this.handleWebSocketNotification.bind(this));
       
-      if (this.notifications.length === 0) {
-        const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'notification-empty';
-        emptyMessage.innerHTML = `
-          <div class="empty-icon">
-            <i class="fas fa-bell-slash"></i>
-          </div>
-          <p>You have no notifications</p>
-        `;
-        notificationList.appendChild(emptyMessage);
-      } else {
-        // Sort notifications by timestamp (newest first)
-        const sortedNotifications = [...this.notifications].sort((a, b) => {
-          return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-        });
-        
-        // Add notifications to the list
-        sortedNotifications.forEach(notification => {
-          const notificationItem = document.createElement('div');
-          notificationItem.className = `notification-item ${notification.read ? 'read' : 'unread'} ${notification.type}`;
-          
-          // Format the timestamp
-          const timestamp = new Date(notification.timestamp);
-          const now = new Date();
-          let timeDisplay;
-          
-          if (timestamp.toDateString() === now.toDateString()) {
-            // Today: show time
-            timeDisplay = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          } else if (timestamp.getFullYear() === now.getFullYear()) {
-            // This year: show month and day
-            timeDisplay = timestamp.toLocaleDateString([], { month: 'short', day: 'numeric' });
-          } else {
-            // Different year: show date with year
-            timeDisplay = timestamp.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-          }
-          
-          // Get icon based on notification type
-          let icon;
-          switch (notification.type) {
-            case 'deposit':
-              icon = 'fa-arrow-down';
-              break;
-            case 'withdrawal':
-              icon = 'fa-arrow-up';
-              break;
-            case 'price_alert':
-              icon = 'fa-chart-line';
-              break;
-            case 'security':
-              icon = 'fa-shield-alt';
-              break;
-            default:
-              icon = 'fa-bell';
-          }
-          
-          notificationItem.innerHTML = `
-            <div class="notification-icon">
-              <i class="fas ${icon}"></i>
-            </div>
-            <div class="notification-content">
-              <div class="notification-header">
-                <h4>${notification.title}</h4>
-                <span class="notification-time">${timeDisplay}</span>
-              </div>
-              <p>${notification.message}</p>
-            </div>
-            <div class="notification-actions">
-              <button class="notification-mark-read" title="${notification.read ? 'Mark as unread' : 'Mark as read'}">
-                <i class="fas ${notification.read ? 'fa-envelope' : 'fa-envelope-open'}"></i>
-              </button>
-              <button class="notification-delete" title="Delete notification">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-          `;
-          
-          // Add event listeners for the action buttons
-          notificationList.appendChild(notificationItem);
-          
-          // Mark as read/unread button
-          const markReadBtn = notificationItem.querySelector('.notification-mark-read');
-          markReadBtn.addEventListener('click', () => {
-            this.toggleNotificationRead(notification);
-          });
-          
-          // Delete button
-          const deleteBtn = notificationItem.querySelector('.notification-delete');
-          deleteBtn.addEventListener('click', () => {
-            this.deleteNotification(notification);
-          });
-        });
-      }
+      // Load any stored notifications
+      const storedNotifications = websocketClient.getRecentNotifications();
+      this.notifications = storedNotifications.slice(0, 10);
     }
   }
-  
+
   /**
-   * Add a new notification
-   * @param {Object} notification - The notification object
+   * Add necessary CSS styles
    */
-  addNotification(notification) {
-    // Add read property and ID
-    const newNotification = {
-      ...notification,
-      id: Date.now().toString(),
-      read: false
-    };
+  addStyles() {
+    const styleId = 'notification-service-styles';
     
-    // Add to the beginning of the array
-    this.notifications.unshift(newNotification);
-    
-    // Keep only the most recent 50 notifications
-    if (this.notifications.length > 50) {
-      this.notifications = this.notifications.slice(0, 50);
-    }
-    
-    // Increment unread count
-    this.notificationCount++;
-    
-    // Save to localStorage
-    this.saveNotifications();
-    
-    // Update UI
-    this.updateUI();
-    
-    // Show toast notification
-    this.showToastNotification(newNotification);
-  }
-  
-  /**
-   * Toggle the read status of a notification
-   * @param {Object} notification - The notification to toggle
-   */
-  toggleNotificationRead(notification) {
-    const index = this.notifications.findIndex(n => n.id === notification.id);
-    if (index !== -1) {
-      const wasRead = this.notifications[index].read;
-      this.notifications[index].read = !wasRead;
-      
-      // Update unread count
-      if (wasRead) {
-        this.notificationCount++;
-      } else {
-        this.notificationCount--;
-      }
-      
-      // Save to localStorage
-      this.saveNotifications();
-      
-      // Update UI
-      this.updateUI();
-    }
-  }
-  
-  /**
-   * Delete a notification
-   * @param {Object} notification - The notification to delete
-   */
-  deleteNotification(notification) {
-    const index = this.notifications.findIndex(n => n.id === notification.id);
-    if (index !== -1) {
-      // If deleting an unread notification, decrement count
-      if (!this.notifications[index].read) {
-        this.notificationCount--;
-      }
-      
-      // Remove from array
-      this.notifications.splice(index, 1);
-      
-      // Save to localStorage
-      this.saveNotifications();
-      
-      // Update UI
-      this.updateUI();
-    }
-  }
-  
-  /**
-   * Mark all notifications as read
-   */
-  markAllAsRead() {
-    this.notifications.forEach(notification => {
-      notification.read = true;
-    });
-    
-    this.notificationCount = 0;
-    
-    // Save to localStorage
-    this.saveNotifications();
-    
-    // Update UI
-    this.updateUI();
-  }
-  
-  /**
-   * Mark notifications as seen (update last seen timestamp)
-   */
-  markNotificationsAsSeen() {
-    localStorage.setItem('fintrustex_notifications_last_seen', new Date().toISOString());
-  }
-  
-  /**
-   * Clear all notifications
-   */
-  clearAllNotifications() {
-    this.notifications = [];
-    this.notificationCount = 0;
-    
-    // Save to localStorage
-    this.saveNotifications();
-    
-    // Update UI
-    this.updateUI();
-  }
-  
-  /**
-   * Show a toast notification
-   * @param {Object} notification - The notification to show
-   */
-  showToastNotification(notification) {
-    // Skip if we're not on a page that supports toast notifications
-    if (!document.querySelector('.toast-container')) {
+    // Check if styles already exist
+    if (document.getElementById(styleId)) {
       return;
     }
     
-    // Create toast container if it doesn't exist
-    let toastContainer = document.querySelector('.toast-container');
-    if (!toastContainer) {
-      toastContainer = document.createElement('div');
-      toastContainer.className = 'toast-container';
-      document.body.appendChild(toastContainer);
-    }
-    
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `toast ${notification.type}`;
-    
-    // Get icon based on notification type
-    let icon;
-    switch (notification.type) {
-      case 'deposit':
-        icon = 'fa-arrow-down';
-        break;
-      case 'withdrawal':
-        icon = 'fa-arrow-up';
-        break;
-      case 'price_alert':
-        icon = 'fa-chart-line';
-        break;
-      case 'security':
-        icon = 'fa-shield-alt';
-        break;
-      default:
-        icon = 'fa-bell';
-    }
-    
-    toast.innerHTML = `
-      <div class="toast-icon">
-        <i class="fas ${icon}"></i>
-      </div>
-      <div class="toast-content">
-        <h4>${notification.title}</h4>
-        <p>${notification.message}</p>
-      </div>
-      <button class="toast-close">
-        <i class="fas fa-times"></i>
-      </button>
+    // Create style element
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+      .notification-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        max-width: 350px;
+        z-index: 10000;
+      }
+      
+      .notification {
+        display: flex;
+        align-items: flex-start;
+        background: rgba(40, 44, 52, 0.9);
+        border-left: 4px solid #f7c948;
+        color: #fff;
+        border-radius: 4px;
+        padding: 12px 15px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(120%);
+        transition: transform 0.3s ease;
+        animation: slide-in 0.3s forwards;
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .notification.closing {
+        animation: slide-out 0.3s forwards;
+      }
+      
+      .notification-icon {
+        margin-right: 12px;
+        font-size: 20px;
+        color: #f7c948;
+      }
+      
+      .notification-content {
+        flex: 1;
+      }
+      
+      .notification-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      
+      .notification-message {
+        font-size: 13px;
+        opacity: 0.9;
+      }
+      
+      .notification-close {
+        background: none;
+        border: none;
+        color: rgba(255, 255, 255, 0.5);
+        cursor: pointer;
+        padding: 4px;
+        margin-left: 8px;
+        border-radius: 4px;
+        transition: color 0.3s ease;
+      }
+      
+      .notification-close:hover {
+        color: rgba(255, 255, 255, 0.9);
+      }
+      
+      .notification-progress {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        background: rgba(247, 201, 72, 0.7);
+        width: 100%;
+        transform-origin: left;
+        animation: shrink linear forwards;
+      }
+      
+      .notification-deposit {
+        border-left-color: #4CAF50;
+      }
+      
+      .notification-deposit .notification-icon {
+        color: #4CAF50;
+      }
+      
+      .notification-deposit .notification-progress {
+        background: rgba(76, 175, 80, 0.7);
+      }
+      
+      .notification-withdrawal {
+        border-left-color: #2196F3;
+      }
+      
+      .notification-withdrawal .notification-icon {
+        color: #2196F3;
+      }
+      
+      .notification-withdrawal .notification-progress {
+        background: rgba(33, 150, 243, 0.7);
+      }
+      
+      .notification-price {
+        border-left-color: #9C27B0;
+      }
+      
+      .notification-price .notification-icon {
+        color: #9C27B0;
+      }
+      
+      .notification-price .notification-progress {
+        background: rgba(156, 39, 176, 0.7);
+      }
+      
+      .notification-security {
+        border-left-color: #F44336;
+      }
+      
+      .notification-security .notification-icon {
+        color: #F44336;
+      }
+      
+      .notification-security .notification-progress {
+        background: rgba(244, 67, 54, 0.7);
+      }
+      
+      @keyframes slide-in {
+        0% { transform: translateX(120%); }
+        100% { transform: translateX(0); }
+      }
+      
+      @keyframes slide-out {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(120%); }
+      }
+      
+      @keyframes shrink {
+        0% { transform: scaleX(1); }
+        100% { transform: scaleX(0); }
+      }
+      
+      @media (max-width: 480px) {
+        .notification-container {
+          top: 10px;
+          right: 10px;
+          left: 10px;
+          max-width: none;
+        }
+      }
     `;
     
-    // Add to container
-    toastContainer.appendChild(toast);
-    
-    // Add removal event
-    const closeBtn = toast.querySelector('.toast-close');
-    closeBtn.addEventListener('click', () => {
-      toast.classList.add('toast-hiding');
-      setTimeout(() => {
-        toast.remove();
-      }, 300);
-    });
-    
-    // Auto-remove toast after 5 seconds
-    setTimeout(() => {
-      if (toast.parentElement) {
-        toast.classList.add('toast-hiding');
-        setTimeout(() => {
-          if (toast.parentElement) {
-            toast.remove();
-          }
-        }, 300);
-      }
-    }, 5000);
-    
-    // Animate in
-    setTimeout(() => {
-      toast.classList.add('toast-visible');
-    }, 10);
+    document.head.appendChild(style);
   }
-  
+
   /**
-   * Add a test notification (for development purposes)
+   * Handle notification from WebSocket
+   * @param {Object} notification - Notification data
    */
-  addTestNotification(type = 'deposit') {
-    let notification;
+  handleWebSocketNotification(notification) {
+    // Get notification type
+    const type = notification.type || 'info';
     
-    switch (type) {
-      case 'deposit':
-        notification = {
-          type: 'deposit',
-          title: 'Deposit Confirmed',
-          message: `Your deposit of 0.5 BTC has been confirmed.`,
-          timestamp: new Date().toISOString()
-        };
-        break;
-      case 'withdrawal':
-        notification = {
-          type: 'withdrawal',
-          title: 'Withdrawal Processed',
-          message: `Your withdrawal of 1.25 ETH has been processed.`,
-          timestamp: new Date().toISOString()
-        };
-        break;
-      case 'price_alert':
-        notification = {
-          type: 'price_alert',
-          title: 'Price Alert',
-          message: `BTC/USDT has reached above 45,000 USDT.`,
-          timestamp: new Date().toISOString()
-        };
-        break;
-      case 'security':
-        notification = {
-          type: 'security',
-          title: 'Security Alert',
-          message: `New login detected from San Francisco, United States.`,
-          timestamp: new Date().toISOString()
-        };
-        break;
+    // Map notification types to icons
+    const typeIcons = {
+      'deposit_completed': 'fa-arrow-down',
+      'withdrawal_completed': 'fa-arrow-up',
+      'price_alert': 'fa-chart-line',
+      'security_alert': 'fa-shield-alt',
+      'info': 'fa-info-circle'
+    };
+    
+    // Map notification types to CSS classes
+    const typeClasses = {
+      'deposit_completed': 'notification-deposit',
+      'withdrawal_completed': 'notification-withdrawal',
+      'price_alert': 'notification-price',
+      'security_alert': 'notification-security',
+      'info': 'notification-info'
+    };
+    
+    // Show notification
+    this.showNotification({
+      title: notification.title,
+      message: notification.message,
+      icon: typeIcons[type] || 'fa-info-circle',
+      className: typeClasses[type] || '',
+      duration: 6000 // Show for 6 seconds
+    });
+  }
+
+  /**
+   * Show a notification
+   * @param {Object} options - Notification options
+   * @param {string} options.title - Notification title
+   * @param {string} options.message - Notification message
+   * @param {string} options.icon - Icon class (fontawesome)
+   * @param {string} options.className - Additional CSS class
+   * @param {number} options.duration - Duration in ms
+   * @returns {string} - Notification ID
+   */
+  showNotification({ title, message, icon = 'fa-info-circle', className = '', duration = 5000 }) {
+    // Check if notification container exists
+    if (!this.notificationContainer) {
+      this.init();
     }
     
-    this.addNotification(notification);
+    // Generate notification ID
+    const id = `notification-${Date.now()}-${this.notificationCount++}`;
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${className}`;
+    notification.dataset.id = id;
+    
+    // Set notification content
+    notification.innerHTML = `
+      <div class="notification-icon">
+        <i class="fas ${icon}"></i>
+      </div>
+      <div class="notification-content">
+        <div class="notification-title">${title}</div>
+        <div class="notification-message">${message}</div>
+      </div>
+      <button class="notification-close" aria-label="Close notification">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="notification-progress" style="animation-duration: ${duration}ms;"></div>
+    `;
+    
+    // Add notification to container
+    this.notificationContainer.appendChild(notification);
+    
+    // Add event listener to close button
+    const closeBtn = notification.querySelector('.notification-close');
+    closeBtn.addEventListener('click', () => {
+      this.closeNotification(id);
+    });
+    
+    // Store notification
+    this.notifications.push({
+      id,
+      element: notification,
+      timeout: setTimeout(() => {
+        this.closeNotification(id);
+      }, duration)
+    });
+    
+    // Remove oldest notification if we have too many
+    if (this.notifications.length > this.maxNotifications) {
+      const oldest = this.notifications.shift();
+      this.closeNotification(oldest.id, true);
+    }
+    
+    return id;
+  }
+
+  /**
+   * Close a notification
+   * @param {string} id - Notification ID
+   * @param {boolean} immediate - Whether to close immediately
+   */
+  closeNotification(id, immediate = false) {
+    // Find notification
+    const index = this.notifications.findIndex(n => n.id === id);
+    
+    if (index === -1) return;
+    
+    const notification = this.notifications[index];
+    
+    // Clear timeout
+    clearTimeout(notification.timeout);
+    
+    // Remove from array
+    this.notifications.splice(index, 1);
+    
+    // Close with animation
+    if (!immediate) {
+      notification.element.classList.add('closing');
+      
+      setTimeout(() => {
+        if (notification.element.parentNode) {
+          notification.element.parentNode.removeChild(notification.element);
+        }
+      }, 300); // Match animation duration
+    } else {
+      // Remove immediately
+      if (notification.element.parentNode) {
+        notification.element.parentNode.removeChild(notification.element);
+      }
+    }
+  }
+
+  /**
+   * Show a success notification
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   * @returns {string} - Notification ID
+   */
+  success(title, message) {
+    return this.showNotification({
+      title,
+      message,
+      icon: 'fa-check-circle',
+      className: 'notification-deposit',
+      duration: 5000
+    });
+  }
+
+  /**
+   * Show an error notification
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   * @returns {string} - Notification ID
+   */
+  error(title, message) {
+    return this.showNotification({
+      title,
+      message,
+      icon: 'fa-exclamation-circle',
+      className: 'notification-security',
+      duration: 8000 // Show errors longer
+    });
+  }
+
+  /**
+   * Show a warning notification
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   * @returns {string} - Notification ID
+   */
+  warning(title, message) {
+    return this.showNotification({
+      title,
+      message,
+      icon: 'fa-exclamation-triangle',
+      className: 'notification-price',
+      duration: 6000
+    });
+  }
+
+  /**
+   * Show an info notification
+   * @param {string} title - Notification title
+   * @param {string} message - Notification message
+   * @returns {string} - Notification ID
+   */
+  info(title, message) {
+    return this.showNotification({
+      title,
+      message,
+      icon: 'fa-info-circle',
+      className: '',
+      duration: 5000
+    });
   }
 }
 
-// Create a global notification service instance
-window.notificationService = new NotificationService();
+// Create and export a singleton instance
+const notificationService = new NotificationService();
+
+// Auto-initialize when the DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    notificationService.init();
+  }, 1500); // Slight delay to ensure page and WebSocket are loaded
+});
+
+// Make available globally
+window.notificationService = notificationService;

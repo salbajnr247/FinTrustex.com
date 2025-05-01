@@ -40,54 +40,281 @@
       <aside class="sidebar" id="sidebar-container"></aside>
       <main class="main-content" id="app">
         <section id="index">
-          <h1 class="section-title">Wallet</h1>
-          <div class="wallet-controls">
-            <button id="backup-wallet" class="btn btn-yellow"><i class="fas fa-download"></i> Backup Wallet</button>
-            <button id="export-transactions" class="btn btn-outline"><i class="fas fa-file-export"></i> Export Transactions</button>
+          <h1 class="section-title">Wallet Dashboard</h1>
+          <div class="wallet-header">
+            <div class="wallet-controls">
+              <button id="add-wallet" class="btn btn-primary"><i class="fas fa-plus"></i> Add Wallet</button>
+              <button id="backup-wallet" class="btn btn-yellow"><i class="fas fa-download"></i> Backup Wallet</button>
+              <button id="export-transactions" class="btn btn-outline"><i class="fas fa-file-export"></i> Export Transactions</button>
+            </div>
+            <div class="wallet-actions">
+              <button class="btn btn-primary" id="deposit-funds"><i class="fas fa-arrow-down"></i> Deposit</button>
+              <button class="btn btn-outline" id="withdraw-funds"><i class="fas fa-arrow-up"></i> Withdraw</button>
+              <button class="btn btn-yellow" id="transfer-funds"><i class="fas fa-exchange-alt"></i> Transfer</button>
+            </div>
           </div>
+          
           <div class="portfolio-overview card glassmorph">
-            <h3>Portfolio Overview</h3>
-            <p>Total Balance: $10,000</p>
-          </div>
-          <div class="wallet-stats">
-            <div class="wallet-stat card glassmorph">
-              <h3>BTC</h3>
-              <p id="btc-balance">0.0000</p>
-              <span id="btc-address" class="address">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
-              <button class="btn btn-yellow copy-address" data-coin="btc" aria-label="Copy BTC address"><i class="fas fa-copy"></i> Copy</button>
-              <canvas id="btc-qr" class="qr-code" aria-label="QR code for BTC address"></canvas>
-              <div class="progress-bar"><div id="btc-progress" style="width: 50%;"></div></div>
-              <div id="btc-transactions">
-                <h4>Recent Transactions</h4>
-                <p>2025-04-17: +0.01 BTC</p>
+            <div class="portfolio-header">
+              <h3>Portfolio Overview</h3>
+              <div class="portfolio-timeframe">
+                <button class="timeframe-btn active" data-timeframe="24h">24h</button>
+                <button class="timeframe-btn" data-timeframe="7d">7d</button>
+                <button class="timeframe-btn" data-timeframe="30d">30d</button>
+                <button class="timeframe-btn" data-timeframe="all">All</button>
               </div>
             </div>
-            <div class="wallet-stat card glassmorph">
-              <h3>ETH</h3>
-              <p id="eth-balance">0.0000</p>
-              <span id="eth-address" class="address">0x1234567890abcdef1234567890abcdef12345678</span>
-              <button class="btn btn-yellow copy-address" data-coin="eth" aria-label="Copy ETH address"><i class="fas fa-copy"></i> Copy</button>
-              <canvas id="eth-qr" class="qr-code" aria-label="QR code for ETH address"></canvas>
-              <div class="progress-bar"><div id="eth-progress" style="width: 30%;"></div></div>
-              <div id="eth-transactions">
-                <h4>Recent Transactions</h4>
-                <p>2025-04-17: +0.5 ETH</p>
+            <div class="portfolio-details">
+              <div class="total-balance">
+                <span class="label">Total Balance</span>
+                <span class="value" id="total-balance">$0.00</span>
+                <span class="change positive" id="total-change">+0.00%</span>
+              </div>
+              <div class="portfolio-chart">
+                <canvas id="portfolio-chart"></canvas>
+              </div>
+            </div>
+            <div class="portfolio-allocation">
+              <h4>Asset Allocation</h4>
+              <div class="allocation-chart">
+                <canvas id="allocation-chart"></canvas>
+              </div>
+              <div class="allocation-legend" id="allocation-legend"></div>
+            </div>
+          </div>
+          
+          <h3 class="section-subtitle">Your Wallets</h3>
+          <div class="wallet-list" id="wallet-list">
+            <div class="wallet-loading">
+              <div class="spinner"></div>
+              <p>Loading your wallets...</p>
+            </div>
+          </div>
+          
+          <h3 class="section-subtitle">Recent Transactions</h3>
+          <div class="transactions-container card glassmorph">
+            <div class="transactions-header">
+              <div class="transaction-filters">
+                <select id="transaction-type" class="glassmorph-input">
+                  <option value="all">All Transactions</option>
+                  <option value="deposit">Deposits</option>
+                  <option value="withdrawal">Withdrawals</option>
+                  <option value="transfer">Transfers</option>
+                </select>
+                <select id="transaction-currency" class="glassmorph-input">
+                  <option value="all">All Currencies</option>
+                  <option value="btc">Bitcoin (BTC)</option>
+                  <option value="eth">Ethereum (ETH)</option>
+                  <option value="usdt">Tether (USDT)</option>
+                </select>
+              </div>
+              <div class="transaction-search">
+                <input type="text" id="transaction-search" class="glassmorph-input" placeholder="Search transactions...">
+              </div>
+            </div>
+            <div class="transactions-table-container">
+              <table class="transactions-table">
+                <thead>
+                  <tr>
+                    <th>Date & Time</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Currency</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="transactions-table-body">
+                  <!-- Transaction rows will be populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+            <div class="transactions-pagination">
+              <button id="prev-page" class="pagination-btn" disabled><i class="fas fa-chevron-left"></i> Previous</button>
+              <span id="pagination-info">Page 1 of 1</span>
+              <button id="next-page" class="pagination-btn" disabled>Next <i class="fas fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Deposit Section -->
+        <section id="deposit" class="hidden">
+          <h1 class="section-title">Deposit Funds</h1>
+          <a href="#index" class="back-link"><i class="fas fa-arrow-left"></i> Back to Wallet</a>
+          
+          <div class="deposit-container">
+            <div class="card glassmorph deposit-card">
+              <h3>Select Cryptocurrency</h3>
+              <div class="currency-selector">
+                <div class="currency-option active" data-currency="btc">
+                  <img src="../../assets/images/bitcoin.svg" alt="Bitcoin">
+                  <span>Bitcoin (BTC)</span>
+                </div>
+                <div class="currency-option" data-currency="eth">
+                  <img src="../../assets/images/ethereum.svg" alt="Ethereum">
+                  <span>Ethereum (ETH)</span>
+                </div>
+                <div class="currency-option" data-currency="usdt">
+                  <img src="../../assets/images/tether.svg" alt="Tether">
+                  <span>Tether (USDT)</span>
+                </div>
+              </div>
+              
+              <div class="deposit-address-container">
+                <h4>Your Deposit Address</h4>
+                <div class="address-qr-container">
+                  <div class="address-container">
+                    <p class="address-label">Only send <span id="deposit-currency-name">Bitcoin (BTC)</span> to this address. Sending any other cryptocurrency may result in permanent loss.</p>
+                    <div class="address-box">
+                      <span id="deposit-address" class="deposit-address">Loading address...</span>
+                      <button id="copy-deposit-address" class="btn btn-small"><i class="fas fa-copy"></i></button>
+                    </div>
+                    <div class="address-info">
+                      <p><i class="fas fa-info-circle"></i> Minimum deposit: <span id="min-deposit">0.0001 BTC</span></p>
+                      <p><i class="fas fa-clock"></i> Average confirmation time: <span id="confirmation-time">10-60 minutes</span></p>
+                    </div>
+                  </div>
+                  <div class="qr-container">
+                    <div id="deposit-qr-loading" class="qr-loading">
+                      <div class="spinner"></div>
+                    </div>
+                    <canvas id="deposit-qr-code" class="deposit-qr"></canvas>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="deposit-notice">
+                <h4><i class="fas fa-exclamation-triangle"></i> Important Notice</h4>
+                <ul>
+                  <li>Please double-check the address before sending funds.</li>
+                  <li>Transactions are irreversible once confirmed on the blockchain.</li>
+                  <li>Deposits typically require blockchain confirmations before being credited to your account.</li>
+                  <li>Contact support if your deposit hasn't been credited after the expected confirmation time.</li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="card glassmorph deposit-history-card">
+              <h3>Recent Deposits</h3>
+              <div class="deposit-history-table-container">
+                <table class="deposit-history-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deposit-history-table-body">
+                    <!-- Deposit history rows will be populated by JavaScript -->
+                  </tbody>
+                </table>
+              </div>
+              <div class="deposit-history-empty" id="deposit-history-empty">
+                <i class="fas fa-inbox"></i>
+                <p>No recent deposits</p>
               </div>
             </div>
           </div>
         </section>
-        <section id="deposit" class="hidden">
-          <h1 class="section-title">Deposit</h1>
-          <div class="card glassmorph">
-            <form id="deposit-form">
-              <label for="deposit-coin">Select cryptocurrency:</label>
-              <select id="deposit-coin" class="glassmorph-input" aria-label="Select cryptocurrency">
-                <option value="btc">BTC</option>
-                <option value="eth">ETH</option>
-              </select>
-              <p>Address: <span id="deposit-address">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span></p>
-              <button type="submit" class="btn btn-yellow"><i class="fas fa-eye"></i> Show Address</button>
-            </form>
+        
+        <!-- Withdrawal Section -->
+        <section id="withdraw" class="hidden">
+          <h1 class="section-title">Withdraw Funds</h1>
+          <a href="#index" class="back-link"><i class="fas fa-arrow-left"></i> Back to Wallet</a>
+          
+          <div class="withdraw-container">
+            <div class="card glassmorph withdraw-card">
+              <h3>Withdrawal Form</h3>
+              <form id="withdraw-form">
+                <div class="form-group">
+                  <label for="withdraw-currency">Select Currency</label>
+                  <select id="withdraw-currency" class="glassmorph-input" required>
+                    <option value="">Select currency</option>
+                    <option value="btc">Bitcoin (BTC)</option>
+                    <option value="eth">Ethereum (ETH)</option>
+                    <option value="usdt">Tether (USDT)</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <label for="withdraw-address">Recipient Address</label>
+                  <input type="text" id="withdraw-address" class="glassmorph-input" placeholder="Enter recipient address" required>
+                  <small class="form-hint">Please double-check the address before submitting</small>
+                </div>
+                
+                <div class="form-group">
+                  <label for="withdraw-amount">Amount</label>
+                  <div class="amount-input-container">
+                    <input type="number" id="withdraw-amount" class="glassmorph-input" placeholder="0.00" step="0.00000001" min="0" required>
+                    <span class="currency-code" id="withdraw-currency-code">BTC</span>
+                    <button type="button" class="btn btn-small" id="max-amount-btn">MAX</button>
+                  </div>
+                  <div class="balance-info">
+                    <span>Available: </span>
+                    <span id="available-balance">0.00</span>
+                    <span id="available-currency">BTC</span>
+                  </div>
+                </div>
+                
+                <div class="fee-info">
+                  <div class="fee-row">
+                    <span>Network Fee:</span>
+                    <span id="network-fee">0.0001 BTC</span>
+                  </div>
+                  <div class="fee-row">
+                    <span>You will receive:</span>
+                    <span id="receive-amount">0.00 BTC</span>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label for="withdraw-2fa">2FA Code</label>
+                  <input type="text" id="withdraw-2fa" class="glassmorph-input" placeholder="Enter 2FA code" maxlength="6" inputmode="numeric" pattern="[0-9]*">
+                  <small class="form-hint">Required if 2FA is enabled on your account</small>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="button" class="btn btn-outline" id="cancel-withdraw">Cancel</button>
+                  <button type="submit" class="btn btn-yellow">Withdraw Funds</button>
+                </div>
+              </form>
+            </div>
+            
+            <div class="card glassmorph withdraw-info-card">
+              <h3>Withdrawal Information</h3>
+              <div class="info-item">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                  <h4>Processing Time</h4>
+                  <p>Withdrawals are typically processed within 1-2 hours, but may take longer during high network congestion.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-file-alt"></i>
+                <div>
+                  <h4>Minimum Withdrawal</h4>
+                  <p id="min-withdrawal">The minimum withdrawal amount for BTC is 0.001 BTC.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-shield-alt"></i>
+                <div>
+                  <h4>Security</h4>
+                  <p>For security reasons, large withdrawals may require additional verification.</p>
+                </div>
+              </div>
+              <div class="info-item">
+                <i class="fas fa-history"></i>
+                <div>
+                  <h4>Recent Withdrawals</h4>
+                  <div id="recent-withdrawals">
+                    <!-- Recent withdrawals will be populated by JavaScript -->
+                    <p class="no-data">No recent withdrawals</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -95,6 +322,7 @@
     <footer class="footer" id="footer-container"></footer>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', () => {
         AOS.init({ duration: 800 });
@@ -104,6 +332,8 @@
     <script src="../../assets/js/auth-service.js"></script>
     <script src="../../assets/js/utils.js"></script>
     <script src="../../assets/js/components.js"></script>
+    <script src="../../assets/js/websocket-client.js"></script>
+    <script src="../../assets/js/notification-service.js"></script>
     <script src="../../assets/js/main.js"></script>
     <script src="../../assets/js/wallet.js"></script>
     

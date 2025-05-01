@@ -1,25 +1,170 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateTransactionStatus = exports.getTransactionById = exports.getTransactions = exports.createTransaction = void 0;
+/**
+ * Transaction Routes - Handles all transaction-related API endpoints
+ */
 
-const createTransaction = (req, res) => {
-    res.status(200).json({ message: 'Transaction created successfully' });
-};
-exports.createTransaction = createTransaction;
+const express = require('express');
+const router = express.Router();
+const { storage } = require('../storage');
+const { verifyAuthToken } = require('../middleware/auth');
+const { z } = require('zod');
 
-const getTransactions = (req, res) => {
-    res.status(200).json([]);
-};
-exports.getTransactions = getTransactions;
+// Middleware to ensure user is authenticated
+router.use(verifyAuthToken);
 
-const getTransactionById = (req, res) => {
-    const id = parseInt(req.params.id);
-    res.status(200).json({ id });
-};
-exports.getTransactionById = getTransactionById;
+/**
+ * Get all user transactions
+ * GET /api/transactions
+ */
+router.get('/', async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const transactions = await storage.getTransactionsByUserId(userId);
+    
+    // Sort by created date, newest first
+    transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(transactions);
+  } catch (error) {
+    console.error('Error fetching transactions:', error);
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
 
-const updateTransactionStatus = (req, res) => {
-    const id = parseInt(req.params.id);
-    res.status(200).json({ id, updated: true });
-};
-exports.updateTransactionStatus = updateTransactionStatus;
+/**
+ * Get transaction by ID
+ * GET /api/transactions/:id
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const transactionId = parseInt(req.params.id);
+    const transaction = await storage.getTransaction(transactionId);
+    
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    
+    // Ensure user owns this transaction
+    if (transaction.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    res.json(transaction);
+  } catch (error) {
+    console.error('Error fetching transaction:', error);
+    res.status(500).json({ error: 'Failed to fetch transaction' });
+  }
+});
+
+/**
+ * Get transaction receipt
+ * GET /api/transactions/:id/receipt
+ */
+router.get('/:id/receipt', async (req, res) => {
+  try {
+    const transactionId = parseInt(req.params.id);
+    const transaction = await storage.getTransaction(transactionId);
+    
+    if (!transaction) {
+      return res.status(404).json({ error: 'Transaction not found' });
+    }
+    
+    // Ensure user owns this transaction
+    if (transaction.userId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Get user info for receipt
+    const user = await storage.getUser(transaction.userId);
+    
+    // Create receipt data
+    const receipt = {
+      receiptId: `REC-${transaction.id}-${Date.now()}`,
+      transactionId: transaction.id,
+      userId: transaction.userId,
+      userEmail: user.email,
+      type: transaction.type,
+      status: transaction.status,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      txHash: transaction.txHash,
+      description: transaction.description,
+      createdAt: transaction.createdAt,
+      completedAt: transaction.completedAt,
+      formattedDate: new Date(transaction.createdAt).toLocaleDateString(),
+      formattedTime: new Date(transaction.createdAt).toLocaleTimeString(),
+    };
+    
+    res.json(receipt);
+  } catch (error) {
+    console.error('Error generating transaction receipt:', error);
+    res.status(500).json({ error: 'Failed to generate transaction receipt' });
+  }
+});
+
+/**
+ * Get filtered transactions
+ * POST /api/transactions/filter
+ */
+router.post('/filter', async (req, res) => {
+  try {
+    // Filter schema
+    const filterSchema = z.object({
+      type: z.string().optional(),
+      currency: z.string().optional(),
+      status: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
+      walletId: z.number().optional()
+    });
+    
+    // Validate request
+    const validationResult = filterSchema.safeParse(req.body);
+    if (!validationResult.success) {
+      return res.status(400).json({ error: 'Invalid filter parameters', details: validationResult.error });
+    }
+    
+    const { type, currency, status, startDate, endDate, walletId } = req.body;
+    const userId = req.user.id;
+    
+    // Get all user transactions first
+    let transactions = await storage.getTransactionsByUserId(userId);
+    
+    // Apply filters
+    if (type) {
+      transactions = transactions.filter(t => t.type === type);
+    }
+    
+    if (currency) {
+      transactions = transactions.filter(t => t.currency.toLowerCase() === currency.toLowerCase());
+    }
+    
+    if (status) {
+      transactions = transactions.filter(t => t.status === status);
+    }
+    
+    if (walletId) {
+      transactions = transactions.filter(t => t.walletId === walletId);
+    }
+    
+    if (startDate) {
+      const start = new Date(startDate);
+      transactions = transactions.filter(t => new Date(t.createdAt) >= start);
+    }
+    
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999); // Set to end of day
+      transactions = transactions.filter(t => new Date(t.createdAt) <= end);
+    }
+    
+    // Sort by created date, newest first
+    transactions.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.json(transactions);
+  } catch (error) {
+    console.error('Error filtering transactions:', error);
+    res.status(500).json({ error: 'Failed to filter transactions' });
+  }
+});
+
+module.exports = router;

@@ -7,6 +7,8 @@ const ws_1 = require("ws");
 const WebSocket = require("ws");
 const authRoutes = require('./routes/auth');
 const securityRoutes = require('./routes/security');
+const walletRoutes = require('./routes/wallet');
+const transactionRoutes = require('./routes/transactions');
 const router = (0, express_1.Router)();
 
 // Use authentication routes
@@ -14,6 +16,12 @@ router.use('/auth', authRoutes);
 
 // Use security routes
 router.use('/security', securityRoutes);
+
+// Use wallet routes
+router.use('/wallets', walletRoutes);
+
+// Use transaction routes
+router.use('/transactions', transactionRoutes);
 
 // Health check
 router.get('/health', (req, res) => {
@@ -107,7 +115,11 @@ function setupWebSocketServer(httpServer) {
                     pairs: [
                         { symbol: 'BTC/USDT', price: Math.random() * 60000 + 30000, change: (Math.random() * 10 - 5).toFixed(2) },
                         { symbol: 'ETH/USDT', price: Math.random() * 3000 + 2000, change: (Math.random() * 10 - 5).toFixed(2) },
-                        { symbol: 'XRP/USDT', price: Math.random() * 1 + 0.3, change: (Math.random() * 10 - 5).toFixed(2) }
+                        { symbol: 'XRP/USDT', price: Math.random() * 1 + 0.3, change: (Math.random() * 10 - 5).toFixed(2) },
+                        { symbol: 'LTC/USDT', price: Math.random() * 150 + 100, change: (Math.random() * 10 - 5).toFixed(2) },
+                        { symbol: 'ADA/USDT', price: Math.random() * 0.5 + 0.4, change: (Math.random() * 10 - 5).toFixed(2) },
+                        { symbol: 'DOT/USDT', price: Math.random() * 20 + 10, change: (Math.random() * 10 - 5).toFixed(2) },
+                        { symbol: 'DOGE/USDT', price: Math.random() * 0.1 + 0.05, change: (Math.random() * 10 - 5).toFixed(2) }
                     ],
                     timestamp: new Date().toISOString()
                 }
@@ -115,8 +127,57 @@ function setupWebSocketServer(httpServer) {
         }, 5000);
     };
     
-    // Start price updates
+    // Simulated wallet notifications
+    // In a real implementation, these would be triggered by actual events
+    const startWalletUpdates = () => {
+        // Simple demonstration of a transaction notification every 25-35 seconds
+        const sendRandomNotification = () => {
+            const notificationTypes = [
+                {
+                    type: 'deposit_completed',
+                    title: 'Deposit Confirmed',
+                    message: 'Your crypto deposit has been confirmed and credited to your wallet.'
+                },
+                {
+                    type: 'withdrawal_completed',
+                    title: 'Withdrawal Completed',
+                    message: 'Your withdrawal has been processed and sent to your external wallet.'
+                },
+                {
+                    type: 'price_alert',
+                    title: 'Price Alert',
+                    message: 'BTC has increased by 5% in the last hour.'
+                },
+                {
+                    type: 'security_alert',
+                    title: 'Security Alert',
+                    message: 'A new device has been used to access your account.'
+                }
+            ];
+            
+            const randomNotification = notificationTypes[Math.floor(Math.random() * notificationTypes.length)];
+            
+            broadcast({
+                type: 'notification',
+                data: {
+                    ...randomNotification,
+                    id: `notif-${Date.now()}`,
+                    timestamp: new Date().toISOString()
+                }
+            });
+            
+            // Schedule next notification in 25-35 seconds
+            const nextInterval = Math.floor(Math.random() * 10000) + 25000;
+            setTimeout(sendRandomNotification, nextInterval);
+        };
+        
+        // Start the notification cycle
+        setTimeout(sendRandomNotification, 10000);
+    };
+    
+    // Start price updates and wallet notifications
     startPriceUpdates();
+    startWalletUpdates();
     
     return wss;
 }
