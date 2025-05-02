@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trade - FinTrustEX</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/trade.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/img/logo.svg" alt="FinTrustEX Logo" class="logo">
+        <h1>FinTrustEX</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="/dashboard.html"><i class="icon-dashboard"></i> Dashboard</a></li>
+          <li><a href="/pages/market.html"><i class="icon-market"></i> Market</a></li>
+          <li class="active"><a href="/pages/trade.html"><i class="icon-trade"></i> Trade</a></li>
+          <li><a href="/pages/wallet.html"><i class="icon-wallet"></i> Wallet</a></li>
+          <li><a href="/pages/history.html"><i class="icon-history"></i> History</a></li>
+          <li><a href="/pages/binance-settings.html"><i class="icon-settings"></i> Binance API</a></li>
+          <li><a href="/pages/settings.html"><i class="icon-settings"></i> Settings</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/pages/support.html"><i class="icon-help"></i> Support</a>
+        <a href="/logout" id="logout-btn"><i class="icon-logout"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="page-header">
+        <h1>Trade</h1>
+        <div class="user-info">
+          <span class="user-name">Welcome, <span id="username">User</span></span>
+          <div class="user-avatar">
+            <img src="/img/avatar-placeholder.svg" alt="User Avatar" id="user-avatar">
+          </div>
+        </div>
+      </header>
+
+      <section class="content-section">
+        <div id="api-not-configured" class="api-warning" style="display: none;">
+          <h2>Binance API Not Configured</h2>
+          <p>You need to configure your Binance API credentials to use the trading functionality.</p>
+          <a href="/pages/binance-settings.html" class="btn primary">Configure API</a>
+        </div>
+
+        <div id="trading-content" style="display: none;">
+          <div class="trading-container">
+            <!-- Market Info and Chart -->
+            <div class="trading-chart-container">
+              <div class="symbol-selector">
+                <select id="symbol-select">
+                  <option value="BTCUSDT">BTC/USDT</option>
+                  <option value="ETHUSDT">ETH/USDT</option>
+                  <option value="BNBUSDT">BNB/USDT</option>
+                  <option value="SOLUSDT">SOL/USDT</option>
+                  <option value="ADAUSDT">ADA/USDT</option>
+                  <option value="XRPUSDT">XRP/USDT</option>
+                </select>
+                <div class="price-info">
+                  <div class="current-price" id="current-price">--</div>
+                  <div class="price-change" id="price-change">-- (--)</div>
+                </div>
+              </div>
+              
+              <div class="chart-container">
+                <div id="price-chart">
+                  <!-- Chart will be rendered here -->
+                  <div class="chart-placeholder">
+                    <p>Loading chart data...</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="timeframe-selector">
+                <button class="timeframe-btn active" data-interval="1m">1m</button>
+                <button class="timeframe-btn" data-interval="5m">5m</button>
+                <button class="timeframe-btn" data-interval="15m">15m</button>
+                <button class="timeframe-btn" data-interval="1h">1h</button>
+                <button class="timeframe-btn" data-interval="4h">4h</button>
+                <button class="timeframe-btn" data-interval="1d">1D</button>
+              </div>
+            </div>
+            
+            <!-- Trading Form -->
+            <div class="trading-form-container">
+              <div class="card">
+                <div class="card-header trading-tabs">
+                  <button class="tab-btn active" data-tab="spot">Spot Trading</button>
+                  <button class="tab-btn" data-tab="market">Market</button>
+                  <button class="tab-btn" data-tab="limit">Limit</button>
+                </div>
+                
+                <div class="card-content">
+                  <div class="order-type-toggle">
+                    <button class="order-type-btn buy active" data-type="buy">Buy</button>
+                    <button class="order-type-btn sell" data-type="sell">Sell</button>
+                  </div>
+                  
+                  <div class="balances-info">
+                    <div class="balance-item">
+                      <span class="balance-label">Available:</span>
+                      <span class="balance-value" id="available-balance">-- USDT</span>
+                    </div>
+                  </div>
+                  
+                  <form id="trading-form" class="trading-form">
+                    <div class="form-group">
+                      <label for="order-price">Price</label>
+                      <div class="input-with-suffix">
+                        <input type="number" id="order-price" step="0.01" required>
+                        <span class="input-suffix" id="price-currency">USDT</span>
+                      </div>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="order-amount">Amount</label>
+                      <div class="input-with-suffix">
+                        <input type="number" id="order-amount" step="0.0001" required>
+                        <span class="input-suffix" id="amount-currency">BTC</span>
+                      </div>
+                    </div>
+                    
+                    <div class="amount-percentage">
+                      <button type="button" class="percentage-btn" data-percentage="25">25%</button>
+                      <button type="button" class="percentage-btn" data-percentage="50">50%</button>
+                      <button type="button" class="percentage-btn" data-percentage="75">75%</button>
+                      <button type="button" class="percentage-btn" data-percentage="100">100%</button>
+                    </div>
+                    
+                    <div class="form-group">
+                      <label for="order-total">Total</label>
+                      <div class="input-with-suffix">
+                        <input type="number" id="order-total" step="0.01" required>
+                        <span class="input-suffix">USDT</span>
+                      </div>
+                    </div>
+                    
+                    <button type="submit" class="btn submit-btn" id="submit-btn">Buy BTC</button>
+                  </form>
+                </div>
+              </div>
+              
+              <div class="card open-orders">
+                <div class="card-header">
+                  <h2>Open Orders</h2>
+                  <button class="refresh-btn" id="refresh-orders-btn">
+                    <i class="icon-refresh"></i>
+                  </button>
+                </div>
+                <div class="card-content">
+                  <div class="orders-loading" id="orders-loading">Loading orders...</div>
+                  <div id="no-open-orders" style="display: none;">No open orders</div>
+                  <div class="orders-table-container" id="orders-table-container" style="display: none;">
+                    <table class="orders-table">
+                      <thead>
+                        <tr>
+                          <th>Pair</th>
+                          <th>Type</th>
+                          <th>Side</th>
+                          <th>Price</th>
+                          <th>Amount</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="open-orders-table-body">
+                        <!-- Orders will be populated here -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notification System -->
+  <div class="notification-container" id="notification-container"></div>
+
+  <!-- JavaScript -->
+  <script src="/js/common.js"></script>
+  <script src="/js/market-data-client.js"></script>
+  <script src="/js/binance-api-manager.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Elements
+      const apiNotConfigured = document.getElementById('api-not-configured');
+      const tradingContent = document.getElementById('trading-content');
+      const symbolSelect = document.getElementById('symbol-select');
+      const currentPriceEl = document.getElementById('current-price');
+      const priceChangeEl = document.getElementById('price-change');
+      const orderPriceInput = document.getElementById('order-price');
+      const orderAmountInput = document.getElementById('order-amount');
+      const orderTotalInput = document.getElementById('order-total');
+      const submitBtn = document.getElementById('submit-btn');
+      const availableBalanceEl = document.getElementById('available-balance');
+      const orderTypeButtons = document.querySelectorAll('.order-type-btn');
+      const amountCurrencyEl = document.getElementById('amount-currency');
+      const priceCurrencyEl = document.getElementById('price-currency');
+      const percentageButtons = document.querySelectorAll('.percentage-btn');
+      const refreshOrdersBtn = document.getElementById('refresh-orders-btn');
+      const ordersLoading = document.getElementById('orders-loading');
+      const noOpenOrders = document.getElementById('no-open-orders');
+      const ordersTableContainer = document.getElementById('orders-table-container');
+      const openOrdersTableBody = document.getElementById('open-orders-table-body');
+      
+      // State
+      let currentSymbol = 'BTCUSDT';
+      let currentPrice = 0;
+      let orderType = 'buy';
+      let balances = [];
+      let openOrders = [];
+      
+      // Initialize
+      async function initialize() {
+        try {
+          // Initialize WebSocket connection
+          await window.marketDataClient.connect();
+          
+          // Initialize Binance API manager
+          const isConfigured = await window.binanceApiManager.initialize();
+          
+          if (isConfigured) {
+            apiNotConfigured.style.display = 'none';
+            tradingContent.style.display = 'block';
+            
+            // Load initial data
+            await loadMarketData();
+            await loadBalances();
+            await loadOpenOrders();
+            
+            // Subscribe to real-time updates
+            setupRealtimeUpdates();
+          } else {
+            apiNotConfigured.style.display = 'block';
+            tradingContent.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Initialization error:', error);
+          showNotification('Error initializing trading page', 'error');
+        }
+      }
+      
+      // Load market data
+      async function loadMarketData() {
+        try {
+          // Fetch ticker data
+          const response = await fetch(`/api/market/ticker/${currentSymbol}`);
+          const ticker = await response.json();
+          
+          updatePriceDisplay(ticker);
+          
+          // Set initial price input value
+          orderPriceInput.value = parseFloat(ticker.lastPrice).toFixed(2);
+          updateTotal();
+        } catch (error) {
+          console.error('Error loading market data:', error);
+          showNotification('Error loading market data', 'error');
+        }
+      }
+      
+      // Load balances
+      async function loadBalances() {
+        try {
+          balances = await window.binanceApiManager.getBalances(true);
+          updateBalanceDisplay();
+        } catch (error) {
+          console.error('Error loading balances:', error);
+          showNotification('Error loading balances', 'error');
+        }
+      }
+      
+      // Load open orders
+      async function loadOpenOrders() {
+        try {
+          ordersLoading.style.display = 'block';
+          noOpenOrders.style.display = 'none';
+          ordersTableContainer.style.display = 'none';
+          
+          openOrders = await window.binanceApiManager.getOpenOrders(true, currentSymbol);
+          
+          if (openOrders.length === 0) {
+            ordersLoading.style.display = 'none';
+            noOpenOrders.style.display = 'block';
+          } else {
+            renderOpenOrders();
+            ordersLoading.style.display = 'none';
+            ordersTableContainer.style.display = 'block';
+          }
+        } catch (error) {
+          console.error('Error loading open orders:', error);
+          showNotification('Error loading open orders', 'error');
+          ordersLoading.style.display = 'none';
+          noOpenOrders.style.display = 'block';
+        }
+      }
+      
+      // Set up real-time updates
+      function setupRealtimeUpdates() {
+        // Subscribe to ticker updates
+        window.marketDataClient.subscribeTicker(currentSymbol);
+        
+        // Listen for ticker updates
+        window.marketDataClient.on(`ticker_update_${currentSymbol.toLowerCase()}`, (data) => {
+          updatePriceDisplay(data.data);
+        });
+        
+        // Listen for balance updates
+        window.binanceApiManager.on('balances_updated', (data) => {
+          balances = data.balances;
+          updateBalanceDisplay();
+        });
+        
+        // Listen for order updates
+        window.binanceApiManager.on('orders_updated', (data) => {
+          openOrders = data.orders.filter(order => order.symbol === currentSymbol);
+          if (openOrders.length === 0) {
+            noOpenOrders.style.display = 'block';
+            ordersTableContainer.style.display = 'none';
+          } else {
+            renderOpenOrders();
+            noOpenOrders.style.display = 'none';
+            ordersTableContainer.style.display = 'block';
+          }
+        });
+      }
+      
+      // Update price display
+      function updatePriceDisplay(ticker) {
+        currentPrice = parseFloat(ticker.lastPrice);
+        currentPriceEl.textContent = `${currentPrice.toFixed(2)} USDT`;
+        
+        const priceChange = parseFloat(ticker.priceChangePercent);
+        const priceChangeDisplay = `${ticker.priceChange} (${priceChange.toFixed(2)}%)`;
+        
+        priceChangeEl.textContent = priceChangeDisplay;
+        
+        if (priceChange > 0) {
+          priceChangeEl.classList.remove('negative');
+          priceChangeEl.classList.add('positive');
+        } else if (priceChange < 0) {
+          priceChangeEl.classList.remove('positive');
+          priceChangeEl.classList.add('negative');
+        } else {
+          priceChangeEl.classList.remove('positive', 'negative');
+        }
+      }
+      
+      // Update balance display
+      function updateBalanceDisplay() {
+        const baseCurrency = currentSymbol.slice(0, -4); // e.g., BTC from BTCUSDT
+        const quoteCurrency = currentSymbol.slice(-4);   // e.g., USDT from BTCUSDT
+        
+        // Update amount currency
+        amountCurrencyEl.textContent = baseCurrency;
+        
+        // Update price currency
+        priceCurrencyEl.textContent = quoteCurrency;
+        
+        // Find relevant balance based on order type
+        const relevantCurrency = orderType === 'buy' ? quoteCurrency : baseCurrency;
+        const relevantBalance = balances.find(balance => balance.asset === relevantCurrency);
+        
+        if (relevantBalance) {
+          availableBalanceEl.textContent = `${parseFloat(relevantBalance.free).toFixed(8)} ${relevantCurrency}`;
+        } else {
+          availableBalanceEl.textContent = `0.00000000 ${relevantCurrency}`;
+        }
+      }
+      
+      // Render open orders
+      function renderOpenOrders() {
+        openOrdersTableBody.innerHTML = '';
+        
+        openOrders.forEach(order => {
+          const row = document.createElement('tr');
+          
+          row.innerHTML = `
+            <td>${order.symbol}</td>
+            <td>${order.type}</td>
+            <td class="${order.side.toLowerCase()}">${order.side}</td>
+            <td>${parseFloat(order.price).toFixed(2)}</td>
+            <td>${parseFloat(order.origQty).toFixed(8)}</td>
+            <td>
+              <button class="cancel-order-btn" data-order-id="${order.orderId}">Cancel</button>
+            </td>
+          `;
+          
+          openOrdersTableBody.appendChild(row);
+        });
+        
+        // Add event listeners to cancel buttons
+        document.querySelectorAll('.cancel-order-btn').forEach(btn => {
+          btn.addEventListener('click', async function() {
+            const orderId = this.dataset.orderId;
+            await cancelOrder(orderId);
+          });
+        });
+      }
+      
+      // Cancel order
+      async function cancelOrder(orderId) {
+        try {
+          await window.binanceApiManager.cancelOrder(currentSymbol, orderId);
+          showNotification('Order cancelled successfully', 'success');
+          await loadOpenOrders();
+        } catch (error) {
+          console.error('Error cancelling order:', error);
+          showNotification('Error cancelling order', 'error');
+        }
+      }
+      
+      // Update total amount
+      function updateTotal() {
+        const price = parseFloat(orderPriceInput.value) || 0;
+        const amount = parseFloat(orderAmountInput.value) || 0;
+        const total = price * amount;
+        
+        orderTotalInput.value = total.toFixed(2);
+      }
+      
+      // Event: Symbol change
+      symbolSelect.addEventListener('change', async function() {
+        currentSymbol = this.value;
+        
+        // Update UI elements
+        updateBalanceDisplay();
+        
+        // Unsubscribe from old symbol
+        window.marketDataClient.unsubscribeTicker(currentSymbol);
+        
+        // Load new data
+        await loadMarketData();
+        await loadOpenOrders();
+        
+        // Subscribe to new symbol
+        window.marketDataClient.subscribeTicker(currentSymbol);
+      });
+      
+      // Event: Order type change
+      orderTypeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const type = this.dataset.type;
+          
+          // Update active state
+          orderTypeButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          // Update state
+          orderType = type;
+          
+          // Update UI
+          submitBtn.textContent = `${type.charAt(0).toUpperCase() + type.slice(1)} ${currentSymbol.slice(0, -4)}`;
+          submitBtn.className = `btn submit-btn ${type}`;
+          
+          // Update balance display
+          updateBalanceDisplay();
+        });
+      });
+      
+      // Event: Price or amount change
+      orderPriceInput.addEventListener('input', updateTotal);
+      orderAmountInput.addEventListener('input', updateTotal);
+      
+      // Event: Percentage buttons
+      percentageButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const percentage = parseInt(this.dataset.percentage, 10);
+          
+          // Get available balance
+          const relevantCurrency = orderType === 'buy' ? currentSymbol.slice(-4) : currentSymbol.slice(0, -4);
+          const relevantBalance = balances.find(balance => balance.asset === relevantCurrency);
+          
+          if (relevantBalance) {
+            const availableBalance = parseFloat(relevantBalance.free);
+            
+            if (orderType === 'buy') {
+              // Calculate amount based on available quote currency and current price
+              const price = parseFloat(orderPriceInput.value) || currentPrice;
+              const amount = (availableBalance * (percentage / 100)) / price;
+              orderAmountInput.value = amount.toFixed(8);
+            } else {
+              // For sell, use percentage of available base currency
+              const amount = availableBalance * (percentage / 100);
+              orderAmountInput.value = amount.toFixed(8);
+            }
+            
+            updateTotal();
+          }
+        });
+      });
+      
+      // Event: Refresh orders
+      refreshOrdersBtn.addEventListener('click', loadOpenOrders);
+      
+      // Event: Form submission
+      document.getElementById('trading-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const price = parseFloat(orderPriceInput.value);
+        const amount = parseFloat(orderAmountInput.value);
+        
+        if (!price || !amount) {
+          showNotification('Please enter valid price and amount', 'warning');
+          return;
+        }
+        
+        try {
+          submitBtn.disabled = true;
+          
+          if (orderType === 'buy') {
+            // Create limit buy order
+            const result = await window.binanceApiManager.createLimitBuyOrder(
+              currentSymbol,
+              amount.toString(),
+              price.toString()
+            );
+            showNotification('Buy order created successfully', 'success');
+          } else {
+            // Create limit sell order
+            const result = await window.binanceApiManager.createLimitSellOrder(
+              currentSymbol,
+              amount.toString(),
+              price.toString()
+            );
+            showNotification('Sell order created successfully', 'success');
+          }
+          
+          // Refresh balances and orders
+          await loadBalances();
+          await loadOpenOrders();
+        } catch (error) {
+          console.error('Error creating order:', error);
+          showNotification(`Error creating order: ${error.message}`, 'error');
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+      
+      // Show notification
+      function showNotification(message, type = 'info') {
+        const notificationContainer = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        notificationContainer.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+          notification.classList.add('fade-out');
+          setTimeout(() => {
+            notificationContainer.removeChild(notification);
+          }, 300);
+        }, 5000);
+      }
+      
+      // Initialize the page
+      initialize();
+    });
+  </script>
+</body>
+</html>

@@ -22,6 +22,10 @@ export interface IStorage {
   updateUserLanguage(id: number, language: string): Promise<User>;
   updateUserKycStatus(id: number, status: typeof kycStatusEnum.enumValues[number]): Promise<User>;
   
+  // Binance API related methods
+  updateBinanceApiKey(userId: number, apiKey: string, apiSecret: string, enabled?: boolean): Promise<User>;
+  toggleBinanceTestnet(userId: number, isTestnet: boolean): Promise<User>;
+  
   // Wallet methods
   getWallet(id: number): Promise<Wallet | undefined>;
   getWalletsByUserId(userId: number): Promise<Wallet[]>;
@@ -32,6 +36,7 @@ export interface IStorage {
   // Order methods
   getOrder(id: number): Promise<Order | undefined>;
   getOrdersByUserId(userId: number): Promise<Order[]>;
+  getOrderByExternalId(externalOrderId: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: 'pending' | 'completed' | 'cancelled' | 'failed'): Promise<Order>;
   
@@ -117,6 +122,29 @@ export class DatabaseStorage implements IStorage {
       .returning();
     return updatedUser;
   }
+  
+  // Binance API related methods
+  async updateBinanceApiKey(userId: number, apiKey: string, apiSecret: string, enabled: boolean = true): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ 
+        binanceApiKey: apiKey, 
+        binanceApiSecret: apiSecret,
+        binanceEnabled: enabled
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
+  
+  async toggleBinanceTestnet(userId: number, isTestnet: boolean): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ binanceTestnet: isTestnet })
+      .where(eq(users.id, userId))
+      .returning();
+    return updatedUser;
+  }
 
   // Wallet methods
   async getWallet(id: number): Promise<Wallet | undefined> {
@@ -163,6 +191,11 @@ export class DatabaseStorage implements IStorage {
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {
     return await db.select().from(orders).where(eq(orders.userId, userId));
+  }
+  
+  async getOrderByExternalId(externalOrderId: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.externalOrderId, externalOrderId));
+    return order || undefined;
   }
 
   async createOrder(order: InsertOrder): Promise<Order> {

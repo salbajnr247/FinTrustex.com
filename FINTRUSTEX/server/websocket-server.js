@@ -1,524 +1,345 @@
 /**
  * WebSocket Server for FinTrustEX
- * Handles real-time market data distribution and client connections
+ * Handles real-time data streaming and client communication
  */
 
 const WebSocket = require('ws');
-const { marketDataService } = require('./services/market-data');
+const { v4: uuidv4 } = require('uuid');
+
+// Map to store active clients
+let clients = new Map();
+// Map to store admin clients for broadcasting admin-specific events
+let adminClients = new Map();
+// Map to store client subscriptions (client ID => list of channels)
+let clientSubscriptions = new Map();
 
 /**
- * Configure and initialize WebSocket server
- * @param {Object} httpServer - HTTP server instance to attach WebSocket server
- * @returns {WebSocket.Server} - WebSocket server instance
+ * Set up WebSocket server
+ * @param {http.Server} httpServer - HTTP Server to attach WebSocket server to
+ * @returns {WebSocket.Server} WebSocket server instance
  */
 function setupWebSocketServer(httpServer) {
-  if (!httpServer) {
-    throw new Error('HTTP server instance is required');
-  }
-
-  // Create WebSocket server
-  const wss = new WebSocket.Server({ 
-    server: httpServer,
-    path: '/ws' // Distinct path to avoid conflicts with Vite's HMR
-  });
-
-  // Connected clients with their subscriptions
-  const clients = new Map();
+  console.log('Setting up WebSocket server...');
   
-  // Subscription map for efficient broadcasting
-  const subscriptions = new Map();
-
+  // Create WebSocket server
+  const wss = new WebSocket.Server({
+    server: httpServer,
+    path: '/ws'
+  });
+  
+  // Set up connection handler
   wss.on('connection', (ws, req) => {
-    console.log(`WebSocket connection established: ${req.socket.remoteAddress}`);
+    // Generate a unique client ID
+    const clientId = uuidv4();
+    console.log(`New WebSocket connection: ${clientId}`);
     
-    // Generate unique client ID
-    const clientId = generateClientId();
+    // Store client reference
+    clients.set(clientId, ws);
     
-    // Initialize client tracking
-    clients.set(clientId, {
-      ws,
-      subscriptions: new Set(),
-      isAlive: true,
-      userId: null // Will be set after authentication
+    // Set up client properties
+    ws.clientId = clientId;
+    ws.isAlive = true;
+    ws.subscribedChannels = new Set();
+    
+    // Handle pong response
+    ws.on('pong', () => {
+      ws.isAlive = true;
     });
     
-    // Setup connection handling
-    setupConnection(ws, clientId);
+    // Handle incoming messages
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message);
+        console.log(`Received message from ${clientId}:`, data);
+        
+        // Handle authentication
+        if (data.type === 'auth') {
+          handleAuth(ws, data);
+        }
+        // Handle subscription
+        else if (data.type === 'subscribe') {
+          handleSubscribe(ws, data);
+        }
+        // Handle unsubscription
+        else if (data.type === 'unsubscribe') {
+          handleUnsubscribe(ws, data);
+        }
+        // Handle ping
+        else if (data.type === 'ping') {
+          send(ws, { type: 'pong', timestamp: Date.now() });
+        }
+        // Handle unknown message type
+        else {
+          send(ws, {
+            type: 'error',
+            message: 'Unknown message type',
+            timestamp: Date.now()
+          });
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+        send(ws, {
+          type: 'error',
+          message: 'Invalid message format',
+          timestamp: Date.now()
+        });
+      }
+    });
     
-    // Handle client messages
-    ws.on('message', (message) => handleMessage(ws, message, clientId));
-    
-    // Handle client disconnection
-    ws.on('close', () => handleDisconnection(clientId));
+    // Handle disconnection
+    ws.on('close', () => {
+      handleDisconnect(ws);
+    });
     
     // Send welcome message
-    sendToClient(ws, {
-      type: 'system',
-      message: 'Welcome to FinTrustEX WebSocket Server'
+    send(ws, {
+      type: 'welcome',
+      message: 'Connected to FinTrustEX WebSocket Server',
+      timestamp: Date.now()
     });
   });
   
-  // Start periodic tasks
-  startPeriodicUpdates();
-  startConnectionHeartbeat(wss);
+  // Set up heartbeat interval
+  const interval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) {
+        handleDisconnect(ws);
+        return ws.terminate();
+      }
+      
+      ws.isAlive = false;
+      ws.ping();
+    });
+  }, 30000);
   
+  // Clean up interval on server close
+  wss.on('close', () => {
+    clearInterval(interval);
+  });
+  
+  console.log('WebSocket server is ready');
   return wss;
-  
-  /**
-   * Set up new client connection
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {string} clientId - Unique client identifier
-   */
-  function setupConnection(ws, clientId) {
-    // Handle pings from client
-    ws.on('ping', () => {
-      try {
-        ws.pong();
-      } catch (error) {
-        console.error('Error sending pong:', error);
-      }
+}
+
+/**
+ * Handle client authentication
+ * @param {WebSocket} ws - WebSocket client
+ * @param {Object} data - Authentication data
+ */
+function handleAuth(ws, data) {
+  // In a real implementation, this would verify the user's credentials
+  // For now, just store user ID and admin status
+  if (data.userId) {
+    ws.userId = data.userId;
+    ws.isAdmin = data.isAdmin || false;
+    
+    // Add to admin clients if admin
+    if (ws.isAdmin) {
+      adminClients.set(ws.clientId, ws);
+    }
+    
+    send(ws, {
+      type: 'auth_success',
+      userId: ws.userId,
+      isAdmin: ws.isAdmin,
+      timestamp: Date.now()
     });
     
-    // Handle client pings
-    ws.on('pong', () => {
-      const client = clients.get(clientId);
-      if (client) {
-        client.isAlive = true;
-      }
+    console.log(`Client ${ws.clientId} authenticated as user ${ws.userId} (Admin: ${ws.isAdmin})`);
+  } else {
+    send(ws, {
+      type: 'auth_error',
+      message: 'Authentication failed',
+      timestamp: Date.now()
     });
-  }
-  
-  /**
-   * Process incoming client message
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {Buffer|string} message - Raw message data
-   * @param {string} clientId - Client identifier
-   */
-  function handleMessage(ws, message, clientId) {
-    try {
-      const data = JSON.parse(message.toString());
-      console.log(`Received message from client ${clientId}:`, data.type);
-      
-      // Handle different message types
-      switch (data.type) {
-        case 'ping':
-          sendToClient(ws, { type: 'pong' });
-          break;
-          
-        case 'subscribe':
-          handleSubscription(ws, data, clientId);
-          break;
-          
-        case 'unsubscribe':
-          handleUnsubscription(ws, data, clientId);
-          break;
-          
-        case 'auth':
-          handleAuthentication(ws, data, clientId);
-          break;
-          
-        default:
-          console.log(`Unknown message type: ${data.type}`);
-      }
-    } catch (error) {
-      console.error('Error processing message:', error);
-      sendError(ws, 'Invalid message format');
-    }
-  }
-  
-  /**
-   * Handle client subscription request
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {Object} data - Subscription data
-   * @param {string} clientId - Client identifier
-   */
-  function handleSubscription(ws, data, clientId) {
-    const { channel, symbol, interval } = data;
-    
-    if (!channel || !symbol) {
-      return sendError(ws, 'Channel and symbol are required for subscription');
-    }
-    
-    const subscriptionKey = getSubscriptionKey(channel, symbol, interval);
-    const client = clients.get(clientId);
-    
-    if (!client) {
-      return sendError(ws, 'Client not registered');
-    }
-    
-    // Add to client subscriptions
-    client.subscriptions.add(subscriptionKey);
-    
-    // Add to global subscription map
-    if (!subscriptions.has(subscriptionKey)) {
-      subscriptions.set(subscriptionKey, new Set());
-    }
-    subscriptions.get(subscriptionKey).add(clientId);
-    
-    console.log(`Client ${clientId} subscribed to ${subscriptionKey}`);
-    
-    // Send acknowledgment
-    sendToClient(ws, {
-      type: 'subscribed',
-      channel,
-      symbol,
-      interval: interval || undefined
-    });
-    
-    // Send initial data
-    sendInitialData(ws, channel, symbol, interval);
-  }
-  
-  /**
-   * Handle client unsubscription request
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {Object} data - Unsubscription data
-   * @param {string} clientId - Client identifier
-   */
-  function handleUnsubscription(ws, data, clientId) {
-    const { channel, symbol, interval } = data;
-    
-    if (!channel || !symbol) {
-      return sendError(ws, 'Channel and symbol are required for unsubscription');
-    }
-    
-    const subscriptionKey = getSubscriptionKey(channel, symbol, interval);
-    const client = clients.get(clientId);
-    
-    if (!client) {
-      return sendError(ws, 'Client not registered');
-    }
-    
-    // Remove from client subscriptions
-    client.subscriptions.delete(subscriptionKey);
-    
-    // Remove from global subscription map
-    if (subscriptions.has(subscriptionKey)) {
-      subscriptions.get(subscriptionKey).delete(clientId);
-      
-      // Clean up empty subscription sets
-      if (subscriptions.get(subscriptionKey).size === 0) {
-        subscriptions.delete(subscriptionKey);
-      }
-    }
-    
-    console.log(`Client ${clientId} unsubscribed from ${subscriptionKey}`);
-    
-    // Send acknowledgment
-    sendToClient(ws, {
-      type: 'unsubscribed',
-      channel,
-      symbol,
-      interval: interval || undefined
-    });
-  }
-  
-  /**
-   * Handle client authentication
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {Object} data - Authentication data
-   * @param {string} clientId - Client identifier
-   */
-  function handleAuthentication(ws, data, clientId) {
-    const { token } = data;
-    const client = clients.get(clientId);
-    
-    if (!client) {
-      return sendError(ws, 'Client not registered');
-    }
-    
-    // TODO: Implement proper token validation
-    // For now, just accept any token and assign a mock user ID
-    const userId = token || 'anonymous';
-    client.userId = userId;
-    
-    console.log(`Client ${clientId} authenticated as user ${userId}`);
-    
-    sendToClient(ws, {
-      type: 'auth',
-      success: true,
-      userId
-    });
-  }
-  
-  /**
-   * Handle client disconnection
-   * @param {string} clientId - Client identifier
-   */
-  function handleDisconnection(clientId) {
-    const client = clients.get(clientId);
-    
-    if (!client) {
-      return;
-    }
-    
-    console.log(`Client ${clientId} disconnected`);
-    
-    // Remove client from all subscriptions
-    client.subscriptions.forEach(subscriptionKey => {
-      if (subscriptions.has(subscriptionKey)) {
-        subscriptions.get(subscriptionKey).delete(clientId);
-        
-        // Clean up empty subscription sets
-        if (subscriptions.get(subscriptionKey).size === 0) {
-          subscriptions.delete(subscriptionKey);
-        }
-      }
-    });
-    
-    // Remove client from tracking
-    clients.delete(clientId);
-  }
-  
-  /**
-   * Send initial data for a subscription
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {string} channel - Data channel
-   * @param {string} symbol - Trading symbol
-   * @param {string|null} interval - Time interval for candle data
-   */
-  function sendInitialData(ws, channel, symbol, interval) {
-    let data;
-    
-    try {
-      // Get data from market data service based on channel
-      switch (channel) {
-        case 'ticker':
-          data = marketDataService.getTicker(symbol);
-          break;
-          
-        case 'orderbook':
-          data = marketDataService.getOrderBook(symbol);
-          break;
-          
-        case 'trades':
-          data = marketDataService.getRecentTrades(symbol);
-          break;
-          
-        case 'candles':
-          if (!interval) {
-            return sendError(ws, 'Interval is required for candle data');
-          }
-          data = marketDataService.getCandles(symbol, interval);
-          break;
-          
-        default:
-          return sendError(ws, `Unknown channel: ${channel}`);
-      }
-      
-      // Send data to client
-      sendToClient(ws, {
-        type: 'data',
-        channel,
-        symbol,
-        interval: interval || undefined,
-        data
-      });
-    } catch (error) {
-      console.error(`Error retrieving initial data for ${channel}:${symbol}:`, error);
-      sendError(ws, `Failed to retrieve ${channel} data for ${symbol}`);
-    }
-  }
-  
-  /**
-   * Send error message to client
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {string} message - Error message
-   */
-  function sendError(ws, message) {
-    sendToClient(ws, {
-      type: 'error',
-      message
-    });
-  }
-  
-  /**
-   * Send message to specific client
-   * @param {WebSocket} ws - WebSocket client instance
-   * @param {Object} message - Message to send
-   */
-  function sendToClient(ws, message) {
-    if (ws.readyState === WebSocket.OPEN) {
-      try {
-        ws.send(JSON.stringify(message));
-      } catch (error) {
-        console.error('Error sending message to client:', error);
-      }
-    }
-  }
-  
-  /**
-   * Broadcast message to all subscribed clients
-   * @param {string} subscriptionKey - Subscription identifier
-   * @param {Object} message - Message to broadcast
-   */
-  function broadcast(subscriptionKey, message) {
-    if (!subscriptions.has(subscriptionKey)) {
-      return; // No subscribers
-    }
-    
-    const clientIds = subscriptions.get(subscriptionKey);
-    
-    clientIds.forEach(clientId => {
-      const client = clients.get(clientId);
-      
-      if (client && client.ws.readyState === WebSocket.OPEN) {
-        try {
-          client.ws.send(JSON.stringify(message));
-        } catch (error) {
-          console.error(`Error broadcasting to client ${clientId}:`, error);
-        }
-      }
-    });
-  }
-  
-  /**
-   * Start periodic market data updates
-   */
-  function startPeriodicUpdates() {
-    // Update tickers every 3 seconds
-    setInterval(() => {
-      // Get all ticker subscription keys
-      for (const [key, clientIds] of subscriptions.entries()) {
-        if (key.startsWith('ticker:')) {
-          const [, symbol] = key.split(':');
-          
-          try {
-            const tickerData = marketDataService.getTicker(symbol);
-            
-            broadcast(key, {
-              type: 'data',
-              channel: 'ticker',
-              symbol,
-              data: tickerData
-            });
-          } catch (error) {
-            console.error(`Error updating ticker for ${symbol}:`, error);
-          }
-        }
-      }
-    }, 3000);
-    
-    // Update order books every 5 seconds
-    setInterval(() => {
-      for (const [key, clientIds] of subscriptions.entries()) {
-        if (key.startsWith('orderbook:')) {
-          const [, symbol] = key.split(':');
-          
-          try {
-            const orderbookData = marketDataService.getOrderBook(symbol);
-            
-            broadcast(key, {
-              type: 'data',
-              channel: 'orderbook',
-              symbol,
-              data: orderbookData
-            });
-          } catch (error) {
-            console.error(`Error updating orderbook for ${symbol}:`, error);
-          }
-        }
-      }
-    }, 5000);
-    
-    // Simulate occasional trades (random intervals)
-    setInterval(() => {
-      for (const [key, clientIds] of subscriptions.entries()) {
-        if (key.startsWith('trades:')) {
-          const [, symbol] = key.split(':');
-          
-          // Only send trade updates occasionally (simulation)
-          if (Math.random() > 0.3) {
-            continue;
-          }
-          
-          try {
-            const tradeData = marketDataService.getNewTrade(symbol);
-            
-            broadcast(key, {
-              type: 'data',
-              channel: 'trades',
-              symbol,
-              data: tradeData
-            });
-          } catch (error) {
-            console.error(`Error sending trade update for ${symbol}:`, error);
-          }
-        }
-      }
-    }, 2000);
-    
-    // Update candles based on their interval
-    setInterval(() => {
-      for (const [key, clientIds] of subscriptions.entries()) {
-        if (key.startsWith('candles:')) {
-          const [, symbol, interval] = key.split(':');
-          
-          if (!interval) continue;
-          
-          try {
-            const candleData = marketDataService.getCandles(symbol, interval);
-            
-            broadcast(key, {
-              type: 'data',
-              channel: 'candles',
-              symbol,
-              interval,
-              data: candleData
-            });
-          } catch (error) {
-            console.error(`Error updating candles for ${symbol}:${interval}:`, error);
-          }
-        }
-      }
-    }, 10000);
-  }
-  
-  /**
-   * Start WebSocket connection heartbeat
-   * @param {WebSocket.Server} wss - WebSocket server instance
-   */
-  function startConnectionHeartbeat(wss) {
-    const HEARTBEAT_INTERVAL = 30000; // 30 seconds
-    
-    setInterval(() => {
-      clients.forEach((client, clientId) => {
-        if (!client.isAlive) {
-          console.log(`Client ${clientId} failed heartbeat check, terminating connection`);
-          client.ws.terminate();
-          return;
-        }
-        
-        client.isAlive = false;
-        
-        try {
-          client.ws.ping();
-        } catch (error) {
-          console.error(`Error sending ping to client ${clientId}:`, error);
-          client.ws.terminate();
-        }
-      });
-    }, HEARTBEAT_INTERVAL);
-  }
-  
-  /**
-   * Generate a unique client identifier
-   * @returns {string} - Unique client ID
-   */
-  function generateClientId() {
-    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-  
-  /**
-   * Generate subscription key from parts
-   * @param {string} channel - Data channel
-   * @param {string} symbol - Trading symbol
-   * @param {string|null} interval - Time interval
-   * @returns {string} - Unique subscription key
-   */
-  function getSubscriptionKey(channel, symbol, interval) {
-    return `${channel}:${symbol}${interval ? ':' + interval : ''}`;
   }
 }
 
-module.exports = { setupWebSocketServer };
+/**
+ * Handle subscription request
+ * @param {WebSocket} ws - WebSocket client
+ * @param {Object} data - Subscription data
+ */
+function handleSubscribe(ws, data) {
+  if (!data.channel) {
+    return send(ws, {
+      type: 'error',
+      message: 'Channel is required for subscription',
+      timestamp: Date.now()
+    });
+  }
+  
+  // Add channel to client's subscriptions
+  ws.subscribedChannels.add(data.channel);
+  
+  // Add to channel subscriptions map
+  if (!clientSubscriptions.has(data.channel)) {
+    clientSubscriptions.set(data.channel, new Set());
+  }
+  clientSubscriptions.get(data.channel).add(ws.clientId);
+  
+  console.log(`Client ${ws.clientId} subscribed to channel: ${data.channel}`);
+  
+  send(ws, {
+    type: 'subscribed',
+    channel: data.channel,
+    timestamp: Date.now()
+  });
+}
+
+/**
+ * Handle unsubscription request
+ * @param {WebSocket} ws - WebSocket client
+ * @param {Object} data - Unsubscription data
+ */
+function handleUnsubscribe(ws, data) {
+  if (data.all) {
+    // Unsubscribe from all channels
+    ws.subscribedChannels.forEach(channel => {
+      if (clientSubscriptions.has(channel)) {
+        clientSubscriptions.get(channel).delete(ws.clientId);
+      }
+    });
+    
+    ws.subscribedChannels.clear();
+    
+    console.log(`Client ${ws.clientId} unsubscribed from all channels`);
+    
+    send(ws, {
+      type: 'unsubscribed',
+      all: true,
+      timestamp: Date.now()
+    });
+    
+    return;
+  }
+  
+  if (!data.channel) {
+    return send(ws, {
+      type: 'error',
+      message: 'Channel is required for unsubscription',
+      timestamp: Date.now()
+    });
+  }
+  
+  // Remove channel from client's subscriptions
+  ws.subscribedChannels.delete(data.channel);
+  
+  // Remove from channel subscriptions map
+  if (clientSubscriptions.has(data.channel)) {
+    clientSubscriptions.get(data.channel).delete(ws.clientId);
+  }
+  
+  console.log(`Client ${ws.clientId} unsubscribed from channel: ${data.channel}`);
+  
+  send(ws, {
+    type: 'unsubscribed',
+    channel: data.channel,
+    timestamp: Date.now()
+  });
+}
+
+/**
+ * Handle client disconnection
+ * @param {WebSocket} ws - WebSocket client
+ */
+function handleDisconnect(ws) {
+  console.log(`WebSocket disconnected: ${ws.clientId}`);
+  
+  // Remove from clients map
+  clients.delete(ws.clientId);
+  
+  // Remove from admin clients if admin
+  if (ws.isAdmin) {
+    adminClients.delete(ws.clientId);
+  }
+  
+  // Remove from all subscriptions
+  ws.subscribedChannels.forEach(channel => {
+    if (clientSubscriptions.has(channel)) {
+      clientSubscriptions.get(channel).delete(ws.clientId);
+    }
+  });
+}
+
+/**
+ * Send a message to a specific client
+ * @param {WebSocket} ws - WebSocket client
+ * @param {Object} message - Message to send
+ */
+function send(ws, message) {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(message));
+  }
+}
+
+/**
+ * Broadcast a message to all clients
+ * @param {Object} message - Message to broadcast
+ */
+function broadcast(message) {
+  const messageStr = JSON.stringify(message);
+  
+  clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+}
+
+/**
+ * Broadcast a message to all clients subscribed to a channel
+ * @param {string} channel - Channel to broadcast to
+ * @param {Object} message - Message to broadcast
+ */
+function broadcastToChannel(channel, message) {
+  if (!clientSubscriptions.has(channel)) {
+    return;
+  }
+  
+  const messageStr = JSON.stringify(message);
+  
+  clientSubscriptions.get(channel).forEach(clientId => {
+    const client = clients.get(clientId);
+    if (client && client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+}
+
+/**
+ * Broadcast a message to all admin clients
+ * @param {Object} message - Message to broadcast
+ */
+function broadcastToAdmins(message) {
+  const messageStr = JSON.stringify(message);
+  
+  adminClients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+}
+
+/**
+ * Broadcast a message to a specific user
+ * @param {string} userId - User ID to broadcast to
+ * @param {Object} message - Message to broadcast
+ */
+function broadcastToUser(userId, message) {
+  const messageStr = JSON.stringify(message);
+  
+  clients.forEach((client) => {
+    if (client.userId === userId && client.readyState === WebSocket.OPEN) {
+      client.send(messageStr);
+    }
+  });
+}
+
+module.exports = {
+  setupWebSocketServer,
+  broadcast,
+  broadcastToChannel,
+  broadcastToAdmins,
+  broadcastToUser
+};

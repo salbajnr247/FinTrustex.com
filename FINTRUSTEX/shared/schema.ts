@@ -46,6 +46,11 @@ export const users = pgTable('users', {
   preferredLanguage: text('preferred_language').default('en'),
   stripeCustomerId: text('stripe_customer_id'),
   stripeSubscriptionId: text('stripe_subscription_id'),
+  // Binance API credentials (encrypted in production)
+  binanceApiKey: text('binance_api_key'),
+  binanceApiSecret: text('binance_api_secret'),
+  binanceEnabled: boolean('binance_enabled').default(false),
+  binanceTestnet: boolean('binance_testnet').default(true),
   createdAt: timestamp('created_at').defaultNow(),
   lastLoginAt: timestamp('last_login_at'),
 });
@@ -152,9 +157,14 @@ export const orders = pgTable('orders', {
   baseCurrency: text('base_currency').notNull(),
   quoteCurrency: text('quote_currency').notNull(),
   amount: numeric('amount').notNull(),
-  price: numeric('price').notNull(),
-  totalValue: numeric('total_value').notNull(),
+  price: numeric('price'),  // Can be null for market orders
+  totalValue: numeric('total_value'),
   fee: numeric('fee'),
+  // Binance API specific fields
+  symbol: text('symbol'),  // Combined currency pair (e.g., 'BTCUSDT')
+  side: text('side'),  // 'buy' or 'sell'
+  externalOrderId: text('external_order_id'),  // Order ID returned by Binance
+  externalData: jsonb('external_data'),  // Full order data from Binance
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
   completedAt: timestamp('completed_at'),

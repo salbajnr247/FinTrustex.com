@@ -1,315 +1,315 @@
 /**
- * Market Data WebSocket Client for FinTrustEX
- * Handles real-time market data from the server via WebSockets
+ * Market Data Client for FinTrustEX
+ * Handles WebSocket connection for real-time market data updates
  */
 
+/**
+ * Market Data Client Class
+ * @class
+ */
 class MarketDataClient {
+  /**
+   * Create a new Market Data Client
+   * @constructor
+   */
   constructor() {
     this.socket = null;
-    this.connected = false;
+    this.isConnected = false;
+    this.subscriptions = new Set();
+    this.eventListeners = new Map();
     this.reconnectAttempts = 0;
     this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Start with 1 second delay
-    this.subscriptions = new Map(); // Map of subscription keys to callback functions
-    this.activeChannels = new Set(); // Set of active channel keys
-    this.handlers = {
-      onConnect: () => {},
-      onDisconnect: () => {},
-      onError: () => {}
-    };
+    this.reconnectDelay = 2000; // Start with 2 seconds
+    this.userId = null;
+    this.cachedData = new Map();
   }
 
   /**
-   * Connect to the WebSocket server for market data
-   * @param {string} url - WebSocket server URL
-   * @returns {Promise} - Resolves when connected
+   * Connect to the WebSocket server
+   * @param {string} userId - User ID for authentication
+   * @returns {Promise<boolean>} Success state
    */
-  connect(url) {
+  async connect(userId = null) {
     return new Promise((resolve, reject) => {
-      if (this.socket && this.connected) {
-        return resolve();
-      }
-
-      // If we already have a socket, close it
-      if (this.socket) {
-        this.socket.close();
-        this.socket = null;
-      }
-
-      this.socket = new WebSocket(url);
-
-      this.socket.onopen = () => {
-        console.log('Connected to market data server');
-        this.connected = true;
-        this.reconnectAttempts = 0;
-        this.reconnectDelay = 1000;
-        this.handlers.onConnect();
+      try {
+        this.userId = userId;
         
-        // Resubscribe to active channels
-        if (this.activeChannels.size > 0) {
-          this.activeChannels.forEach(channel => {
-            const [type, symbol, interval] = channel.split(':');
-            this.subscribe(type, symbol, interval);
-          });
+        // Close existing connection if any
+        if (this.socket && this.socket.readyState !== WebSocket.CLOSED) {
+          this.socket.close();
         }
         
-        resolve();
-      };
-
-      this.socket.onclose = (event) => {
-        if (this.connected) {
-          console.log('Disconnected from market data server');
-          this.connected = false;
-          this.handlers.onDisconnect();
-        }
+        // Determine the WebSocket URL
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         
-        // Attempt to reconnect
-        this.reconnect();
-      };
-
-      this.socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        this.handlers.onError(error);
+        // Create new WebSocket connection
+        this.socket = new WebSocket(wsUrl);
+        
+        // Set up event handlers
+        this.socket.onopen = () => {
+          console.log('WebSocket connection established');
+          this.isConnected = true;
+          this.reconnectAttempts = 0;
+          
+          // Authenticate if userId is provided
+          if (this.userId) {
+            this.authenticate(this.userId);
+          }
+          
+          // Resubscribe to previous subscriptions
+          this.resubscribe();
+          
+          resolve(true);
+        };
+        
+        this.socket.onclose = (event) => {
+          console.log('WebSocket connection closed', event);
+          this.isConnected = false;
+          
+          // Attempt reconnection
+          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.attemptReconnect();
+          } else {
+            console.error('Maximum reconnection attempts reached');
+            this.triggerEvent('connection_failed', { reason: 'Maximum reconnection attempts reached' });
+          }
+        };
+        
+        this.socket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          reject(error);
+        };
+        
+        this.socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            // Cache data if appropriate
+            if (data.type === 'ticker_update' && data.symbol) {
+              this.cachedData.set(`ticker_${data.symbol.toLowerCase()}`, data);
+            }
+            
+            // Trigger event listeners
+            this.triggerEvent(data.type, data);
+            
+            // Trigger symbol-specific event listeners
+            if (data.symbol) {
+              this.triggerEvent(`${data.type}_${data.symbol.toLowerCase()}`, data);
+            }
+          } catch (error) {
+            console.error('Error processing WebSocket message:', error, event.data);
+          }
+        };
+      } catch (error) {
+        console.error('Error connecting to WebSocket:', error);
         reject(error);
-      };
+      }
+    });
+  }
 
-      this.socket.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          this.handleMessage(message);
-        } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
-        }
-      };
+  /**
+   * Authenticate with the WebSocket server
+   * @param {string} userId - User ID for authentication
+   */
+  authenticate(userId) {
+    if (!this.isConnected) {
+      console.warn('Cannot authenticate: not connected to WebSocket server');
+      return;
+    }
+    
+    this.userId = userId;
+    
+    this.send({
+      type: 'auth',
+      userId: userId
+    });
+  }
+
+  /**
+   * Disconnect from the WebSocket server
+   */
+  disconnect() {
+    if (this.socket) {
+      this.socket.close();
+    }
+    
+    this.isConnected = false;
+    this.subscriptions.clear();
+  }
+
+  /**
+   * Send data to the WebSocket server
+   * @param {Object} data - Data to send
+   */
+  send(data) {
+    if (!this.isConnected) {
+      console.warn('Cannot send data: not connected to WebSocket server');
+      return;
+    }
+    
+    this.socket.send(JSON.stringify(data));
+  }
+
+  /**
+   * Subscribe to a specific market data channel
+   * @param {string} channel - Channel name (e.g., 'ticker_btcusdt')
+   */
+  subscribe(channel) {
+    if (!this.isConnected) {
+      console.warn(`Cannot subscribe to ${channel}: not connected to WebSocket server`);
+      this.subscriptions.add(channel); // Store for later when connection is established
+      return;
+    }
+    
+    this.send({
+      type: 'subscribe',
+      channel: channel
+    });
+    
+    this.subscriptions.add(channel);
+  }
+
+  /**
+   * Unsubscribe from a specific market data channel
+   * @param {string} channel - Channel name (e.g., 'ticker_btcusdt')
+   */
+  unsubscribe(channel) {
+    if (!this.isConnected) {
+      console.warn(`Cannot unsubscribe from ${channel}: not connected to WebSocket server`);
+      this.subscriptions.delete(channel);
+      return;
+    }
+    
+    this.send({
+      type: 'unsubscribe',
+      channel: channel
+    });
+    
+    this.subscriptions.delete(channel);
+  }
+
+  /**
+   * Resubscribe to previous subscriptions
+   * @private
+   */
+  resubscribe() {
+    if (!this.isConnected) {
+      return;
+    }
+    
+    // Resubscribe to all previously subscribed channels
+    this.subscriptions.forEach(channel => {
+      this.send({
+        type: 'subscribe',
+        channel: channel
+      });
+      
+      console.log(`Resubscribed to channel: ${channel}`);
     });
   }
 
   /**
    * Attempt to reconnect to the WebSocket server
+   * @private
    */
-  reconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max reconnect attempts reached. Please refresh the page.');
-      return;
-    }
-
+  attemptReconnect() {
     this.reconnectAttempts++;
-    console.log(`Reconnecting (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1);
     
-    // Exponential backoff for reconnect attempts
-    const delay = Math.min(30000, this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1));
+    console.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     
     setTimeout(() => {
-      if (!this.connected) {
-        this.connect(this.url);
-      }
+      this.connect(this.userId).catch(error => {
+        console.error('Reconnection attempt failed:', error);
+      });
     }, delay);
   }
 
   /**
-   * Handle incoming WebSocket messages
-   * @param {Object} message - Message data
+   * Add an event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Callback function
    */
-  handleMessage(message) {
-    switch (message.type) {
-      case 'welcome':
-        console.log('Received welcome message:', message.message);
-        break;
-        
-      case 'subscribed':
-        console.log(`Subscribed to ${message.channel} for ${message.symbol}`);
-        break;
-        
-      case 'unsubscribed':
-        console.log(`Unsubscribed from ${message.channel || 'all channels'}`);
-        break;
-        
-      case 'error':
-        console.error('WebSocket error:', message.message);
-        break;
-        
-      case 'trade':
-      case 'candle':
-      case 'depth':
-        // Handle market data updates
-        const key = this.getSubscriptionKey(message.type, message.symbol, message.interval);
-        const callback = this.subscriptions.get(key);
-        
-        if (callback) {
-          callback(message.data);
-        }
-        break;
-        
-      case 'pong':
-        // Heartbeat response, nothing to do
-        break;
-        
-      default:
-        console.log('Unknown message type:', message.type);
+  on(event, callback) {
+    if (!this.eventListeners.has(event)) {
+      this.eventListeners.set(event, []);
     }
+    
+    this.eventListeners.get(event).push(callback);
   }
 
   /**
-   * Subscribe to a market data channel
-   * @param {string} channel - Channel type ('trades', 'candles', 'depth')
-   * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
-   * @param {string} interval - Optional interval for candles
-   * @param {Function} callback - Function to call with market data updates
+   * Remove an event listener
+   * @param {string} event - Event name
+   * @param {Function} callback - Callback function to remove
    */
-  subscribe(channel, symbol, interval, callback) {
-    if (!this.connected) {
-      console.error('Not connected to market data server');
+  off(event, callback) {
+    if (!this.eventListeners.has(event)) {
       return;
     }
     
-    const subscriptionKey = this.getSubscriptionKey(channel, symbol, interval);
+    const listeners = this.eventListeners.get(event);
+    const index = listeners.indexOf(callback);
     
-    // Save the callback
-    if (callback) {
-      this.subscriptions.set(subscriptionKey, callback);
+    if (index !== -1) {
+      listeners.splice(index, 1);
     }
     
-    // Add to active channels
-    this.activeChannels.add(subscriptionKey);
-    
-    // Send subscription message
-    this.socket.send(JSON.stringify({
-      type: 'subscribe',
-      channel,
-      symbol,
-      interval
-    }));
+    if (listeners.length === 0) {
+      this.eventListeners.delete(event);
+    }
   }
 
   /**
-   * Unsubscribe from a market data channel
-   * @param {string} channel - Channel type ('trades', 'candles', 'depth')
-   * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
-   * @param {string} interval - Optional interval for candles
+   * Trigger event listeners for an event
+   * @param {string} event - Event name
+   * @param {Object} data - Event data
+   * @private
    */
-  unsubscribe(channel, symbol, interval) {
-    if (!this.connected) {
-      console.error('Not connected to market data server');
+  triggerEvent(event, data) {
+    if (!this.eventListeners.has(event)) {
       return;
     }
     
-    const subscriptionKey = this.getSubscriptionKey(channel, symbol, interval);
-    
-    // Remove from active channels
-    this.activeChannels.delete(subscriptionKey);
-    
-    // Remove callback
-    this.subscriptions.delete(subscriptionKey);
-    
-    // Send unsubscription message
-    this.socket.send(JSON.stringify({
-      type: 'unsubscribe',
-      channel,
-      symbol,
-      interval
-    }));
+    this.eventListeners.get(event).forEach(callback => {
+      try {
+        callback(data);
+      } catch (error) {
+        console.error(`Error in event listener for ${event}:`, error);
+      }
+    });
   }
 
   /**
-   * Unsubscribe from all channels
+   * Get cached data for a symbol
+   * @param {string} symbol - Symbol to get data for (e.g., 'btcusdt')
+   * @returns {Object|null} Cached data or null if not available
    */
-  unsubscribeAll() {
-    if (!this.connected) {
-      console.error('Not connected to market data server');
-      return;
-    }
-    
-    // Clear all subscriptions
-    this.subscriptions.clear();
-    this.activeChannels.clear();
-    
-    // Send unsubscription message
-    this.socket.send(JSON.stringify({
-      type: 'unsubscribe',
-      all: true
-    }));
+  getCachedData(symbol) {
+    const key = `ticker_${symbol.toLowerCase()}`;
+    return this.cachedData.has(key) ? this.cachedData.get(key) : null;
   }
 
   /**
-   * Send a ping message to keep the connection alive
+   * Subscribe to ticker updates for a symbol
+   * @param {string} symbol - Symbol to subscribe to (e.g., 'BTCUSDT')
    */
-  ping() {
-    if (this.connected) {
-      this.socket.send(JSON.stringify({
-        type: 'ping',
-        timestamp: Date.now()
-      }));
-    }
+  subscribeTicker(symbol) {
+    this.subscribe(`ticker_${symbol.toLowerCase()}`);
   }
 
   /**
-   * Close the WebSocket connection
+   * Unsubscribe from ticker updates for a symbol
+   * @param {string} symbol - Symbol to unsubscribe from (e.g., 'BTCUSDT')
    */
-  disconnect() {
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-      this.connected = false;
-    }
-  }
-
-  /**
-   * Set a handler for connect events
-   * @param {Function} handler - Function to call on connect
-   */
-  onConnect(handler) {
-    this.handlers.onConnect = handler;
-  }
-
-  /**
-   * Set a handler for disconnect events
-   * @param {Function} handler - Function to call on disconnect
-   */
-  onDisconnect(handler) {
-    this.handlers.onDisconnect = handler;
-  }
-
-  /**
-   * Set a handler for error events
-   * @param {Function} handler - Function to call on error
-   */
-  onError(handler) {
-    this.handlers.onError = handler;
-  }
-
-  /**
-   * Create a subscription key
-   * @param {string} channel - Channel name
-   * @param {string} symbol - Trading pair
-   * @param {string} interval - Optional interval for candles
-   * @returns {string} Subscription key
-   */
-  getSubscriptionKey(channel, symbol, interval = '') {
-    return `${channel}:${symbol}:${interval}`;
+  unsubscribeTicker(symbol) {
+    this.unsubscribe(`ticker_${symbol.toLowerCase()}`);
   }
 }
 
 // Create singleton instance
 const marketDataClient = new MarketDataClient();
 
-// Example usage:
-// Initialize connection
-// const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-// const host = window.location.host;
-// const url = `${protocol}//${host}/ws`;
-// marketDataClient.connect(url);
-// 
-// // Subscribe to BTC/USDT trades
-// marketDataClient.subscribe('trades', 'BTCUSDT', null, (trade) => {
-//   console.log('Trade update:', trade);
-// });
-// 
-// // Subscribe to ETH/USDT 1-minute candles
-// marketDataClient.subscribe('candles', 'ETHUSDT', '1m', (candle) => {
-//   console.log('Candle update:', candle);
-// });
-// 
-// // Keep connection alive with periodic pings
-// setInterval(() => {
-//   marketDataClient.ping();
-// }, 30000);
+// Export singleton
+window.marketDataClient = marketDataClient;

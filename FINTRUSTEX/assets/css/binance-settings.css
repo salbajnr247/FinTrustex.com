@@ -1,0 +1,227 @@
+/* Binance Settings Page Styles */
+
+.api-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-dot.status-enabled {
+  background-color: #10b981; /* Green */
+}
+
+.status-dot.status-disabled {
+  background-color: #f59e0b; /* Yellow */
+}
+
+.status-dot.status-not-configured {
+  background-color: #ef4444; /* Red */
+}
+
+.status-text {
+  font-weight: 500;
+}
+
+.api-form {
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="password"]:focus {
+  border-color: #3b82f6;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.form-help {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn.primary:hover {
+  background-color: #2563eb;
+}
+
+.btn.secondary {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.btn.secondary:hover {
+  background-color: #e5e7eb;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.api-security-info {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
+}
+
+.api-security-info h3 {
+  margin-top: 0;
+  color: #1e3a8a;
+}
+
+.api-security-info ul {
+  padding-left: 20px;
+}
+
+.api-security-info li {
+  margin-bottom: 8px;
+}
+
+.steps-list {
+  padding-left: 24px;
+  counter-reset: steps;
+}
+
+.steps-list li {
+  position: relative;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.steps-list li:last-child {
+  border-bottom: none;
+}
+
+.steps-list li h4 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: #1e3a8a;
+}
+
+.steps-list li p {
+  margin: 0 0 8px 0;
+}
+
+.steps-list li p.warning {
+  color: #b91c1c;
+  font-weight: 500;
+}
+
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 350px;
+}
+
+.notification {
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: slide-in 0.3s ease-out;
+  color: white;
+}
+
+.notification-success {
+  background-color: #10b981;
+}
+
+.notification-error {
+  background-color: #ef4444;
+}
+
+.notification-warning {
+  background-color: #f59e0b;
+}
+
+.notification-info {
+  background-color: #3b82f6;
+}
+
+.notification.fade-out {
+  opacity: 0;
+  transition: opacity 0.3s ease-out;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}

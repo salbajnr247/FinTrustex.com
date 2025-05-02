@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binance API Settings - FinTrustEX</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/binance-settings.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <img src="/img/logo.svg" alt="FinTrustEX Logo" class="logo">
+        <h1>FinTrustEX</h1>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="/dashboard.html"><i class="icon-dashboard"></i> Dashboard</a></li>
+          <li><a href="/pages/market.html"><i class="icon-market"></i> Market</a></li>
+          <li><a href="/pages/trade.html"><i class="icon-trade"></i> Trade</a></li>
+          <li><a href="/pages/wallet.html"><i class="icon-wallet"></i> Wallet</a></li>
+          <li><a href="/pages/history.html"><i class="icon-history"></i> History</a></li>
+          <li class="active"><a href="/pages/binance-settings.html"><i class="icon-settings"></i> Binance API</a></li>
+          <li><a href="/pages/settings.html"><i class="icon-settings"></i> Settings</a></li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/pages/support.html"><i class="icon-help"></i> Support</a>
+        <a href="/logout" id="logout-btn"><i class="icon-logout"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="page-header">
+        <h1>Binance API Settings</h1>
+        <div class="user-info">
+          <span class="user-name">Welcome, <span id="username">User</span></span>
+          <div class="user-avatar">
+            <img src="/img/avatar-placeholder.svg" alt="User Avatar" id="user-avatar">
+          </div>
+        </div>
+      </header>
+
+      <section class="content-section">
+        <div class="card">
+          <div class="card-header">
+            <h2>Binance API Integration</h2>
+          </div>
+          <div class="card-content">
+            <p class="info-text">
+              Connect your Binance account to FinTrustEX to enable real trading functionality. 
+              Your API keys are stored securely and are used only to execute trades on your behalf.
+            </p>
+            
+            <div class="api-status" id="api-status">
+              <div class="status-indicator">
+                <span class="status-dot" id="status-dot"></span>
+                <span class="status-text" id="status-text">Checking status...</span>
+              </div>
+              <button class="btn" id="toggle-api-btn">Enable API</button>
+            </div>
+
+            <form id="api-credentials-form" class="api-form">
+              <div class="form-group">
+                <label for="api-key">API Key</label>
+                <input type="text" id="api-key" name="apiKey" placeholder="Enter your Binance API key" required>
+                <p class="form-help">Found in your Binance account under API Management</p>
+              </div>
+              
+              <div class="form-group">
+                <label for="api-secret">API Secret</label>
+                <input type="password" id="api-secret" name="apiSecret" placeholder="Enter your Binance API secret" required>
+                <p class="form-help">Keep this secret secure, it grants access to your Binance account</p>
+              </div>
+              
+              <div class="form-group checkbox-group">
+                <input type="checkbox" id="use-testnet" name="useTestnet" checked>
+                <label for="use-testnet">Use Testnet (Recommended for testing)</label>
+                <p class="form-help">Testnet uses test coins instead of real assets. Recommended for initial setup and testing.</p>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="btn secondary" id="test-connection-btn">Test Connection</button>
+                <button type="submit" class="btn primary" id="save-credentials-btn">Save Credentials</button>
+              </div>
+            </form>
+
+            <div class="api-security-info">
+              <h3>Security Information</h3>
+              <ul>
+                <li>Create an API key with <strong>only</strong> trading permissions (not withdrawal permissions)</li>
+                <li>Restrict API access to specific IP addresses when possible</li>
+                <li>Enable two-factor authentication (2FA) on your Binance account</li>
+                <li>Review your API key permissions regularly</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>How to Create a Binance API Key</h2>
+          </div>
+          <div class="card-content">
+            <ol class="steps-list">
+              <li>
+                <h4>Log in to your Binance account</h4>
+                <p>Visit <a href="https://www.binance.com" target="_blank">Binance.com</a> and log in to your account</p>
+              </li>
+              <li>
+                <h4>Navigate to API Management</h4>
+                <p>Go to your account profile and select "API Management"</p>
+              </li>
+              <li>
+                <h4>Create a new API key</h4>
+                <p>Click "Create API" and follow the security verification steps</p>
+              </li>
+              <li>
+                <h4>Set appropriate permissions</h4>
+                <p>Enable "Enable Reading" and "Enable Spot & Margin Trading" only</p>
+                <p class="warning">Do NOT enable withdrawal permissions for security reasons</p>
+              </li>
+              <li>
+                <h4>Set restrictions (recommended)</h4>
+                <p>Restrict access to specific IP addresses when possible</p>
+              </li>
+              <li>
+                <h4>Copy your API Key and Secret</h4>
+                <p>Save your API Key and Secret in a secure location</p>
+                <p class="warning">Your API Secret will only be shown once</p>
+              </li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Notification System -->
+  <div class="notification-container" id="notification-container"></div>
+
+  <!-- JavaScript -->
+  <script src="/js/common.js"></script>
+  <script src="/js/binance-api-manager.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Initialize UI
+      const apiStatusDot = document.getElementById('status-dot');
+      const apiStatusText = document.getElementById('status-text');
+      const toggleApiBtn = document.getElementById('toggle-api-btn');
+      const testConnectionBtn = document.getElementById('test-connection-btn');
+      const saveCredentialsBtn = document.getElementById('save-credentials-btn');
+      const apiForm = document.getElementById('api-credentials-form');
+      const apiKeyInput = document.getElementById('api-key');
+      const apiSecretInput = document.getElementById('api-secret');
+      const useTestnetCheckbox = document.getElementById('use-testnet');
+      
+      // Load current status
+      try {
+        const response = await fetch('/api/binance/status');
+        const data = await response.json();
+        
+        updateStatusUI(data.configured, data.enabled, data.isTestnet);
+        useTestnetCheckbox.checked = data.isTestnet;
+      } catch (error) {
+        console.error('Error fetching API status:', error);
+        showNotification('Error fetching API status', 'error');
+      }
+      
+      // Toggle API enabled/disabled
+      toggleApiBtn.addEventListener('click', async function() {
+        const isCurrentlyEnabled = toggleApiBtn.textContent === 'Disable API';
+        
+        try {
+          const response = await fetch('/api/binance/toggle', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enabled: !isCurrentlyEnabled })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            updateStatusUI(true, !isCurrentlyEnabled, useTestnetCheckbox.checked);
+            showNotification(`Binance API ${!isCurrentlyEnabled ? 'enabled' : 'disabled'} successfully`, 'success');
+          } else {
+            showNotification(data.error || 'Failed to toggle API status', 'error');
+          }
+        } catch (error) {
+          console.error('Error toggling API status:', error);
+          showNotification('Error toggling API status', 'error');
+        }
+      });
+      
+      // Test connection
+      testConnectionBtn.addEventListener('click', async function() {
+        const apiKey = apiKeyInput.value.trim();
+        const apiSecret = apiSecretInput.value.trim();
+        const isTestnet = useTestnetCheckbox.checked;
+        
+        if (!apiKey || !apiSecret) {
+          showNotification('Please enter API key and secret', 'warning');
+          return;
+        }
+        
+        try {
+          testConnectionBtn.disabled = true;
+          testConnectionBtn.textContent = 'Testing...';
+          
+          const response = await fetch('/api/binance/test-connection', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              apiKey,
+              apiSecret,
+              isTestnet
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            showNotification('Connection successful!', 'success');
+          } else {
+            showNotification(data.message || 'Connection failed', 'error');
+          }
+        } catch (error) {
+          console.error('Error testing connection:', error);
+          showNotification('Error testing connection', 'error');
+        } finally {
+          testConnectionBtn.disabled = false;
+          testConnectionBtn.textContent = 'Test Connection';
+        }
+      });
+      
+      // Save credentials
+      apiForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        const apiKey = apiKeyInput.value.trim();
+        const apiSecret = apiSecretInput.value.trim();
+        const isTestnet = useTestnetCheckbox.checked;
+        
+        if (!apiKey || !apiSecret) {
+          showNotification('Please enter API key and secret', 'warning');
+          return;
+        }
+        
+        try {
+          saveCredentialsBtn.disabled = true;
+          saveCredentialsBtn.textContent = 'Saving...';
+          
+          const response = await fetch('/api/binance/credentials', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              apiKey,
+              apiSecret,
+              isTestnet
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            updateStatusUI(true, true, isTestnet);
+            showNotification('API credentials saved successfully', 'success');
+            
+            // Clear form
+            apiKeyInput.value = '';
+            apiSecretInput.value = '';
+          } else {
+            showNotification(data.error || 'Failed to save API credentials', 'error');
+          }
+        } catch (error) {
+          console.error('Error saving API credentials:', error);
+          showNotification('Error saving API credentials', 'error');
+        } finally {
+          saveCredentialsBtn.disabled = false;
+          saveCredentialsBtn.textContent = 'Save Credentials';
+        }
+      });
+      
+      // Toggle testnet
+      useTestnetCheckbox.addEventListener('change', async function() {
+        const isTestnet = useTestnetCheckbox.checked;
+        
+        // Only update if API is already configured
+        if (apiStatusText.textContent !== 'Not configured') {
+          try {
+            const response = await fetch('/api/binance/toggle-testnet', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ isTestnet })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              showNotification(`Testnet mode ${isTestnet ? 'enabled' : 'disabled'}`, 'success');
+            } else {
+              showNotification(data.error || 'Failed to toggle testnet mode', 'error');
+              // Revert checkbox if failed
+              useTestnetCheckbox.checked = !isTestnet;
+            }
+          } catch (error) {
+            console.error('Error toggling testnet mode:', error);
+            showNotification('Error toggling testnet mode', 'error');
+            // Revert checkbox if failed
+            useTestnetCheckbox.checked = !isTestnet;
+          }
+        }
+      });
+      
+      // Helper functions
+      function updateStatusUI(configured, enabled, isTestnet) {
+        if (!configured) {
+          apiStatusDot.className = 'status-dot status-not-configured';
+          apiStatusText.textContent = 'Not configured';
+          toggleApiBtn.disabled = true;
+          toggleApiBtn.textContent = 'Enable API';
+        } else {
+          if (enabled) {
+            apiStatusDot.className = 'status-dot status-enabled';
+            apiStatusText.textContent = `Connected (${isTestnet ? 'Testnet' : 'Production'})`;
+            toggleApiBtn.disabled = false;
+            toggleApiBtn.textContent = 'Disable API';
+          } else {
+            apiStatusDot.className = 'status-dot status-disabled';
+            apiStatusText.textContent = 'Disabled';
+            toggleApiBtn.disabled = false;
+            toggleApiBtn.textContent = 'Enable API';
+          }
+        }
+      }
+      
+      function showNotification(message, type = 'info') {
+        const notificationContainer = document.getElementById('notification-container');
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        notificationContainer.appendChild(notification);
+        
+        // Remove notification after 5 seconds
+        setTimeout(() => {
+          notification.classList.add('fade-out');
+          setTimeout(() => {
+            notificationContainer.removeChild(notification);
+          }, 300);
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
