@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - FinTrustEX</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .dashboard-overview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .overview-card {
+      background-color: var(--bg-card);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .overview-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .overview-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+
+    .overview-card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.25rem;
+    }
+
+    .icon-portfolio {
+      background-color: #4c51bf;
+    }
+
+    .icon-market {
+      background-color: #38a169;
+    }
+
+    .icon-activity {
+      background-color: #d69e2e;
+    }
+
+    .icon-alert {
+      background-color: #e53e3e;
+    }
+
+    .overview-card-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0.5rem 0;
+    }
+
+    .overview-card-change {
+      display: flex;
+      align-items: center;
+      font-size: 0.875rem;
+      margin-top: auto;
+    }
+
+    .overview-card-change.positive {
+      color: #38a169;
+    }
+
+    .overview-card-change.negative {
+      color: #e53e3e;
+    }
+
+    .overview-card-change i {
+      margin-right: 0.25rem;
+    }
+
+    .dashboard-section {
+      background-color: var(--bg-card);
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+
+    .section-action {
+      color: var(--primary-color);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .section-action i {
+      margin-left: 0.25rem;
+    }
+
+    .balances-table, .market-overview-table, .recent-activity-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .balances-table th, .balances-table td,
+    .market-overview-table th, .market-overview-table td,
+    .recent-activity-table th, .recent-activity-table td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .balances-table th, .market-overview-table th, .recent-activity-table th {
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+
+    .market-overview-table .change-positive {
+      color: #38a169;
+    }
+
+    .market-overview-table .change-negative {
+      color: #e53e3e;
+    }
+
+    .recent-activity-table .activity-type {
+      display: flex;
+      align-items: center;
+    }
+
+    .recent-activity-table .activity-type i {
+      margin-right: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .recent-activity-table .activity-buy i {
+      color: #38a169;
+    }
+
+    .recent-activity-table .activity-sell i {
+      color: #e53e3e;
+    }
+
+    .recent-activity-table .activity-deposit i {
+      color: #4c51bf;
+    }
+
+    .recent-activity-table .activity-withdraw i {
+      color: #d69e2e;
+    }
+
+    .asset-icon {
+      width: 24px;
+      height: 24px;
+      margin-right: 0.5rem;
+      border-radius: 50%;
+      vertical-align: middle;
+    }
+
+    .asset-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+    }
+
+    .asset-symbol {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      margin-left: 0.25rem;
+    }
+
+    .balance-value {
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    .balance-value-usd {
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid var(--primary-color);
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .api-warning {
+      background-color: rgba(237, 137, 54, 0.1);
+      border: 1px solid rgba(237, 137, 54, 0.5);
+      color: rgb(179, 98, 34);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .api-warning i {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .api-warning a {
+      color: rgb(179, 98, 34);
+      text-decoration: underline;
+      font-weight: 600;
+    }
+
+    .welcome-message {
+      margin-bottom: 2rem;
+    }
+
+    .welcome-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 300px;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <img src="assets/images/logo.svg" alt="FinTrustEX" class="logo">
+        <h1>FinTrustEX</h1>
+      </div>
+      <ul class="sidebar-menu">
+        <li class="active"><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="pages/market.html"><i class="fas fa-chart-line"></i> Market</a></li>
+        <li><a href="pages/trade.html"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+        <li><a href="pages/wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
+        <li><a href="pages/history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="pages/binance-settings.html"><i class="fas fa-key"></i> API Settings</a></li>
+        <li><a href="pages/support.html"><i class="fas fa-headset"></i> Support</a></li>
+        <li><a href="pages/settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <header class="dashboard-header">
+        <div class="header-left">
+          <button id="sidebar-toggle" class="sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h2>Dashboard</h2>
+        </div>
+        <div class="header-right">
+          <div class="user-account">
+            <img src="assets/images/default-avatar.svg" alt="User" class="user-avatar">
+            <span class="username">Welcome, <span id="username">User</span></span>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Welcome message -->
+        <div class="welcome-message">
+          <h1 class="welcome-title">Welcome back, <span id="welcome-username">User</span>!</h1>
+          <p class="welcome-subtitle">Here's what's happening with your portfolio today.</p>
+        </div>
+
+        <!-- API Warning for non-connected users -->
+        <div id="apiWarning" class="api-warning" style="display: none;">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <p>You are not connected to the Binance API. To see real-time portfolio data and trade with real assets, please <a href="pages/binance-settings.html">configure your API keys</a>.</p>
+          </div>
+        </div>
+
+        <!-- Overview Cards -->
+        <div class="dashboard-overview">
+          <div class="overview-card">
+            <div class="overview-card-header">
+              <h3 class="overview-card-title">Total Portfolio Value</h3>
+              <div class="overview-card-icon icon-portfolio">
+                <i class="fas fa-wallet"></i>
+              </div>
+            </div>
+            <div id="portfolio-value" class="overview-card-value">$0.00</div>
+            <div id="portfolio-change" class="overview-card-change positive">
+              <i class="fas fa-caret-up"></i>
+              <span>0.00% today</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-header">
+              <h3 class="overview-card-title">Bitcoin Price</h3>
+              <div class="overview-card-icon icon-market">
+                <i class="fab fa-bitcoin"></i>
+              </div>
+            </div>
+            <div id="bitcoin-price" class="overview-card-value">$0.00</div>
+            <div id="bitcoin-change" class="overview-card-change positive">
+              <i class="fas fa-caret-up"></i>
+              <span>0.00% (24h)</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-header">
+              <h3 class="overview-card-title">Trading Volume (24h)</h3>
+              <div class="overview-card-icon icon-activity">
+                <i class="fas fa-chart-bar"></i>
+              </div>
+            </div>
+            <div id="trading-volume" class="overview-card-value">$0.00</div>
+            <div id="volume-change" class="overview-card-change positive">
+              <i class="fas fa-caret-up"></i>
+              <span>0.00% from yesterday</span>
+            </div>
+          </div>
+          <div class="overview-card">
+            <div class="overview-card-header">
+              <h3 class="overview-card-title">Open Orders</h3>
+              <div class="overview-card-icon icon-alert">
+                <i class="fas fa-hourglass-half"></i>
+              </div>
+            </div>
+            <div id="open-orders" class="overview-card-value">0</div>
+            <div class="overview-card-change">
+              <span id="orders-info">No open orders</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="dashboard-left">
+            <!-- Portfolio Balances -->
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h3 class="section-title">Portfolio Balances</h3>
+                <a href="pages/wallet.html" class="section-action">View All <i class="fas fa-arrow-right"></i></a>
+              </div>
+              <div id="balances-loading" class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <div id="balances-content" style="display: none;">
+                <table class="balances-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Balance</th>
+                      <th>Value (USD)</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="balances-table-body">
+                    <!-- Will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Market Overview -->
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h3 class="section-title">Market Overview</h3>
+                <a href="pages/market.html" class="section-action">View All <i class="fas fa-arrow-right"></i></a>
+              </div>
+              <div id="market-loading" class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <div id="market-content" style="display: none;">
+                <table class="market-overview-table">
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Price</th>
+                      <th>24h Change</th>
+                      <th>Volume</th>
+                    </tr>
+                  </thead>
+                  <tbody id="market-table-body">
+                    <!-- Will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-right">
+            <!-- Recent Activity -->
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h3 class="section-title">Recent Activity</h3>
+                <a href="pages/history.html" class="section-action">View All <i class="fas fa-arrow-right"></i></a>
+              </div>
+              <div id="activity-loading" class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+              <div id="activity-content" style="display: none;">
+                <table class="recent-activity-table">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Details</th>
+                      <th>Time</th>
+                    </tr>
+                  </thead>
+                  <tbody id="activity-table-body">
+                    <!-- Will be populated dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Price Alerts -->
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h3 class="section-title">Price Alerts</h3>
+                <a href="#" class="section-action" id="add-alert-btn">Add Alert <i class="fas fa-plus"></i></a>
+              </div>
+              <div id="alerts-content">
+                <!-- When no alerts are set -->
+                <div id="no-alerts" style="text-align: center; padding: 1.5rem;">
+                  <p>No price alerts set. Create alerts to get notified when prices reach your targets.</p>
+                  <button class="btn btn-primary" id="create-alert-btn" style="margin-top: 1rem;">Create Alert</button>
+                </div>
+                <!-- Alert list will be populated here -->
+                <div id="alerts-list" style="display: none;">
+                  <!-- Alert items will go here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/sidebar.js"></script>
+  <script src="assets/js/binance-api-manager.js"></script>
+  <script>
+    // When the DOM is loaded
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Check if user is authenticated
+      if (!isAuthenticated()) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      // Get current user
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('username').textContent = user.username;
+        document.getElementById('welcome-username').textContent = user.username;
+      }
+
+      // Initialize Binance API manager
+      try {
+        await binanceApiManager.initialize();
+        const isApiConfigured = binanceApiManager.isApiKeyConfigured();
+        
+        // Show/hide API warning
+        document.getElementById('apiWarning').style.display = isApiConfigured ? 'none' : 'block';
+        
+        // Load data based on API configuration
+        if (isApiConfigured) {
+          // Load real data from Binance
+          loadRealPortfolioData();
+        } else {
+          // Load simulated data
+          loadSimulatedData();
+        }
+      } catch (error) {
+        console.error('Error initializing Binance API:', error);
+        // Load simulated data as fallback
+        loadSimulatedData();
+      }
+
+      // Logout handler
+      document.getElementById('logout-link').addEventListener('click', function(event) {
+        event.preventDefault();
+        logout();
+        window.location.href = 'login.html';
+      });
+
+      // Price alert buttons handlers
+      document.getElementById('add-alert-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+        showCreateAlertModal();
+      });
+
+      document.getElementById('create-alert-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+        showCreateAlertModal();
+      });
+    });
+
+    // Load real portfolio data from Binance API
+    async function loadRealPortfolioData() {
+      try {
+        // Get account info
+        const accountInfo = await binanceApiManager.getAccountInfo();
+        
+        // Get all prices for conversion to USD
+        const prices = await binanceApiManager.getAllPrices();
+        
+        // Format and process balances
+        const balances = binanceApiManager.formatBalances(accountInfo.balances);
+        
+        // Calculate total portfolio value
+        let totalValue = 0;
+        
+        // Process each balance
+        balances.forEach(balance => {
+          let usdValue = 0;
+          
+          if (balance.asset === 'USDT' || balance.asset === 'BUSD' || balance.asset === 'USDC') {
+            // Stablecoins are approximately 1 USD
+            usdValue = balance.total;
+          } else if (balance.asset === 'BTC') {
+            // BTC value
+            const btcPrice = prices['BTCUSDT'];
+            usdValue = balance.total * btcPrice;
+          } else {
+            // Try to find a USDT pair for this asset
+            const symbol = `${balance.asset}USDT`;
+            if (prices[symbol]) {
+              usdValue = balance.total * prices[symbol];
+            } else {
+              // If no direct USDT pair, try BTC and convert
+              const btcSymbol = `${balance.asset}BTC`;
+              if (prices[btcSymbol] && prices['BTCUSDT']) {
+                usdValue = balance.total * prices[btcSymbol] * prices['BTCUSDT'];
+              }
+            }
+          }
+          
+          totalValue += usdValue;
+        });
+        
+        // Update portfolio value card
+        document.getElementById('portfolio-value').textContent = formatCurrency(totalValue);
+        
+        // Set a random portfolio change (in a real app, this would be calculated from historical data)
+        const portfolioChange = (Math.random() * 5 - 2.5).toFixed(2);
+        const portfolioChangeEl = document.getElementById('portfolio-change');
+        
+        if (parseFloat(portfolioChange) >= 0) {
+          portfolioChangeEl.className = 'overview-card-change positive';
+          portfolioChangeEl.innerHTML = `<i class="fas fa-caret-up"></i><span>${portfolioChange}% today</span>`;
+        } else {
+          portfolioChangeEl.className = 'overview-card-change negative';
+          portfolioChangeEl.innerHTML = `<i class="fas fa-caret-down"></i><span>${Math.abs(portfolioChange)}% today</span>`;
+        }
+        
+        // Get Bitcoin price
+        const btcPrice = prices['BTCUSDT'];
+        document.getElementById('bitcoin-price').textContent = formatCurrency(btcPrice);
+        
+        // Get Bitcoin 24h change (using simulated data for now)
+        const btcChange = (Math.random() * 8 - 4).toFixed(2);
+        const btcChangeEl = document.getElementById('bitcoin-change');
+        
+        if (parseFloat(btcChange) >= 0) {
+          btcChangeEl.className = 'overview-card-change positive';
+          btcChangeEl.innerHTML = `<i class="fas fa-caret-up"></i><span>${btcChange}% (24h)</span>`;
+        } else {
+          btcChangeEl.className = 'overview-card-change negative';
+          btcChangeEl.innerHTML = `<i class="fas fa-caret-down"></i><span>${Math.abs(btcChange)}% (24h)</span>`;
+        }
+        
+        // Set trading volume (simulated)
+        const tradingVolume = Math.random() * 5000000 + 1000000;
+        document.getElementById('trading-volume').textContent = formatCurrency(tradingVolume);
+        
+        // Set trading volume change (simulated)
+        const volumeChange = (Math.random() * 10 - 5).toFixed(2);
+        const volumeChangeEl = document.getElementById('volume-change');
+        
+        if (parseFloat(volumeChange) >= 0) {
+          volumeChangeEl.className = 'overview-card-change positive';
+          volumeChangeEl.innerHTML = `<i class="fas fa-caret-up"></i><span>${volumeChange}% from yesterday</span>`;
+        } else {
+          volumeChangeEl.className = 'overview-card-change negative';
+          volumeChangeEl.innerHTML = `<i class="fas fa-caret-down"></i><span>${Math.abs(volumeChange)}% from yesterday</span>`;
+        }
+        
+        // Get open orders
+        const openOrders = await binanceApiManager.getOpenOrders();
+        document.getElementById('open-orders').textContent = openOrders.length;
+        
+        if (openOrders.length === 0) {
+          document.getElementById('orders-info').textContent = 'No open orders';
+        } else if (openOrders.length === 1) {
+          document.getElementById('orders-info').textContent = '1 order pending';
+        } else {
+          document.getElementById('orders-info').textContent = `${openOrders.length} orders pending`;
+        }
+        
+        // Populate balances table
+        populateBalancesTable(balances.slice(0, 5), prices);
+        
+        // Populate market table with top coins
+        const topCoins = ['BTC', 'ETH', 'BNB', 'ADA', 'XRP'].filter(coin => 
+          prices[`${coin}USDT`] !== undefined
+        );
+        
+        populateMarketTable(topCoins, prices);
+        
+        // Populate activity table (with simulated data for now)
+        populateActivityTable();
+        
+        // Hide loading spinners and show content
+        document.getElementById('balances-loading').style.display = 'none';
+        document.getElementById('balances-content').style.display = 'block';
+        document.getElementById('market-loading').style.display = 'none';
+        document.getElementById('market-content').style.display = 'block';
+        document.getElementById('activity-loading').style.display = 'none';
+        document.getElementById('activity-content').style.display = 'block';
+      } catch (error) {
+        console.error('Error loading portfolio data:', error);
+        // Fall back to simulated data
+        loadSimulatedData();
+      }
+    }
+    
+    // Load simulated portfolio data for demo purposes
+    function loadSimulatedData() {
+      // Portfolio value
+      document.getElementById('portfolio-value').textContent = '$12,345.67';
+      
+      const portfolioChange = '2.34';
+      const portfolioChangeEl = document.getElementById('portfolio-change');
+      portfolioChangeEl.className = 'overview-card-change positive';
+      portfolioChangeEl.innerHTML = `<i class="fas fa-caret-up"></i><span>${portfolioChange}% today</span>`;
+      
+      // Bitcoin price
+      document.getElementById('bitcoin-price').textContent = '$45,678.90';
+      
+      const btcChange = '1.23';
+      const btcChangeEl = document.getElementById('bitcoin-change');
+      btcChangeEl.className = 'overview-card-change positive';
+      btcChangeEl.innerHTML = `<i class="fas fa-caret-up"></i><span>${btcChange}% (24h)</span>`;
+      
+      // Trading volume
+      document.getElementById('trading-volume').textContent = '$3,456,789.00';
+      
+      const volumeChange = '-0.75';
+      const volumeChangeEl = document.getElementById('volume-change');
+      volumeChangeEl.className = 'overview-card-change negative';
+      volumeChangeEl.innerHTML = `<i class="fas fa-caret-down"></i><span>${Math.abs(parseFloat(volumeChange))}% from yesterday</span>`;
+      
+      // Open orders
+      document.getElementById('open-orders').textContent = '2';
+      document.getElementById('orders-info').textContent = '2 orders pending';
+      
+      // Sample data for tables
+      const sampleBalances = [
+        { asset: 'BTC', free: 0.1, locked: 0, total: 0.1, usdValue: 4567.89 },
+        { asset: 'ETH', free: 1.5, locked: 0, total: 1.5, usdValue: 3456.78 },
+        { asset: 'ADA', free: 1000, locked: 0, total: 1000, usdValue: 1234.56 },
+        { asset: 'USDT', free: 2500, locked: 0, total: 2500, usdValue: 2500 },
+        { asset: 'BNB', free: 2.5, locked: 0, total: 2.5, usdValue: 750.25 }
+      ];
+      
+      const sampleMarket = [
+        { coin: 'BTC', price: 45678.90, change: 1.23, volume: 24567890000 },
+        { coin: 'ETH', price: 2345.67, change: 2.34, volume: 12345678000 },
+        { coin: 'BNB', price: 300.10, change: -0.75, volume: 1234567800 },
+        { coin: 'ADA', price: 1.23, change: 5.67, volume: 987654321 },
+        { coin: 'XRP', price: 0.75, change: -1.23, volume: 765432100 }
+      ];
+      
+      // Populate tables
+      populateSimulatedBalancesTable(sampleBalances);
+      populateSimulatedMarketTable(sampleMarket);
+      populateActivityTable(); // This is already using simulated data
+      
+      // Hide loading spinners and show content
+      document.getElementById('balances-loading').style.display = 'none';
+      document.getElementById('balances-content').style.display = 'block';
+      document.getElementById('market-loading').style.display = 'none';
+      document.getElementById('market-content').style.display = 'block';
+      document.getElementById('activity-loading').style.display = 'none';
+      document.getElementById('activity-content').style.display = 'block';
+    }
+    
+    // Populate balances table with real data
+    function populateBalancesTable(balances, prices) {
+      const tableBody = document.getElementById('balances-table-body');
+      tableBody.innerHTML = '';
+      
+      balances.forEach(balance => {
+        let usdValue = 0;
+        
+        if (balance.asset === 'USDT' || balance.asset === 'BUSD' || balance.asset === 'USDC') {
+          usdValue = balance.total;
+        } else if (balance.asset === 'BTC') {
+          const btcPrice = prices['BTCUSDT'];
+          usdValue = balance.total * btcPrice;
+        } else {
+          const symbol = `${balance.asset}USDT`;
+          if (prices[symbol]) {
+            usdValue = balance.total * prices[symbol];
+          } else {
+            const btcSymbol = `${balance.asset}BTC`;
+            if (prices[btcSymbol] && prices['BTCUSDT']) {
+              usdValue = balance.total * prices[btcSymbol] * prices['BTCUSDT'];
+            }
+          }
+        }
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="asset-name">
+            <img src="assets/images/crypto/${balance.asset.toLowerCase()}.svg" alt="${balance.asset}" class="asset-icon" onerror="this.src='assets/images/crypto/generic.svg'">
+            ${balance.asset}
+          </td>
+          <td class="balance-value">${balance.total.toFixed(8)}</td>
+          <td>
+            <span class="balance-value">${formatCurrency(usdValue)}</span>
+          </td>
+          <td>
+            <a href="pages/trade.html?symbol=${balance.asset}USDT" class="btn btn-sm btn-primary">Trade</a>
+          </td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Populate market table with real data
+    function populateMarketTable(coins, prices) {
+      const tableBody = document.getElementById('market-table-body');
+      tableBody.innerHTML = '';
+      
+      // Simulated 24h changes and volumes for demo
+      const changes = {
+        'BTC': 1.23,
+        'ETH': 2.34,
+        'BNB': -0.75,
+        'ADA': 5.67,
+        'XRP': -1.23,
+        'SOL': 3.45,
+        'DOT': -2.34,
+        'DOGE': 7.89,
+        'AVAX': 4.56,
+        'MATIC': -3.21
+      };
+      
+      const volumes = {
+        'BTC': 24567890000,
+        'ETH': 12345678000,
+        'BNB': 1234567800,
+        'ADA': 987654321,
+        'XRP': 765432100,
+        'SOL': 543210987,
+        'DOT': 432109876,
+        'DOGE': 321098765,
+        'AVAX': 210987654,
+        'MATIC': 109876543
+      };
+      
+      coins.forEach(coin => {
+        const symbol = `${coin}USDT`;
+        const price = prices[symbol];
+        const change = changes[coin] || (Math.random() * 10 - 5).toFixed(2);
+        const volume = volumes[coin] || Math.random() * 1000000000;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="asset-name">
+            <img src="assets/images/crypto/${coin.toLowerCase()}.svg" alt="${coin}" class="asset-icon" onerror="this.src='assets/images/crypto/generic.svg'">
+            ${coin} <span class="asset-symbol">/${coin}USDT</span>
+          </td>
+          <td class="balance-value">${formatCurrency(price)}</td>
+          <td class="change-${change >= 0 ? 'positive' : 'negative'}">
+            ${change >= 0 ? '+' : ''}${change}%
+          </td>
+          <td>${formatCompactNumber(volume)}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Populate balances table with simulated data
+    function populateSimulatedBalancesTable(balances) {
+      const tableBody = document.getElementById('balances-table-body');
+      tableBody.innerHTML = '';
+      
+      balances.forEach(balance => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="asset-name">
+            <img src="assets/images/crypto/${balance.asset.toLowerCase()}.svg" alt="${balance.asset}" class="asset-icon" onerror="this.src='assets/images/crypto/generic.svg'">
+            ${balance.asset}
+          </td>
+          <td class="balance-value">${balance.total.toFixed(8)}</td>
+          <td>
+            <span class="balance-value">${formatCurrency(balance.usdValue)}</span>
+          </td>
+          <td>
+            <a href="pages/trade.html?symbol=${balance.asset}USDT" class="btn btn-sm btn-primary">Trade</a>
+          </td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Populate market table with simulated data
+    function populateSimulatedMarketTable(marketData) {
+      const tableBody = document.getElementById('market-table-body');
+      tableBody.innerHTML = '';
+      
+      marketData.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="asset-name">
+            <img src="assets/images/crypto/${item.coin.toLowerCase()}.svg" alt="${item.coin}" class="asset-icon" onerror="this.src='assets/images/crypto/generic.svg'">
+            ${item.coin} <span class="asset-symbol">/${item.coin}USDT</span>
+          </td>
+          <td class="balance-value">${formatCurrency(item.price)}</td>
+          <td class="change-${item.change >= 0 ? 'positive' : 'negative'}">
+            ${item.change >= 0 ? '+' : ''}${item.change}%
+          </td>
+          <td>${formatCompactNumber(item.volume)}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      });
+    }
+    
+    // Populate activity table with simulated data
+    function populateActivityTable() {
+      const tableBody = document.getElementById('activity-table-body');
+      tableBody.innerHTML = '';
+      
+      // Sample activity types
+      const activityTypes = ['buy', 'sell', 'deposit', 'withdraw'];
+      
+      // Sample assets
+      const assets = ['BTC', 'ETH', 'ADA', 'USDT', 'BNB'];
+      
+      // Generate random activities
+      for (let i = 0; i < 5; i++) {
+        const type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
+        const asset = assets[Math.floor(Math.random() * assets.length)];
+        const amount = (Math.random() * 10).toFixed(4);
+        
+        // Random time in the last 24 hours
+        const time = new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000);
+        
+        let iconClass, typeText;
+        switch (type) {
+          case 'buy':
+            iconClass = 'fa-arrow-down';
+            typeText = 'Buy';
+            break;
+          case 'sell':
+            iconClass = 'fa-arrow-up';
+            typeText = 'Sell';
+            break;
+          case 'deposit':
+            iconClass = 'fa-arrow-right';
+            typeText = 'Deposit';
+            break;
+          case 'withdraw':
+            iconClass = 'fa-arrow-left';
+            typeText = 'Withdraw';
+            break;
+        }
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>
+            <div class="activity-type activity-${type}">
+              <i class="fas ${iconClass}"></i> ${typeText}
+            </div>
+          </td>
+          <td>${amount} ${asset}</td>
+          <td>${time.toLocaleString()}</td>
+        `;
+        
+        tableBody.appendChild(row);
+      }
+    }
+    
+    // Show modal to create a price alert (simplified, would be more complex in a real app)
+    function showCreateAlertModal() {
+      alert('Price alert creation is coming soon!');
+    }
+    
+    // Format currency values
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+    
+    // Format large numbers in a compact way
+    function formatCompactNumber(value) {
+      return new Intl.NumberFormat('en-US', {
+        notation: "compact",
+        compactDisplay: "short"
+      }).format(value);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Binance API Settings - FinTrustEX</title>
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="../assets/css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    .api-settings-container {
+      background-color: var(--bg-card);
+      padding: 2rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+    
+    .api-settings-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    
+    .api-form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .api-form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    
+    .api-form-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      background-color: var(--bg-input);
+      color: var(--text-primary);
+    }
+    
+    .api-form-group input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
+    }
+    
+    .api-instructions {
+      background-color: var(--bg-light);
+      padding: 1.5rem;
+      border-radius: 0.5rem;
+      border-left: 4px solid var(--primary-color);
+      margin-bottom: 2rem;
+    }
+    
+    .api-instructions h3 {
+      color: var(--text-primary);
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.2rem;
+    }
+    
+    .api-instructions ol {
+      padding-left: 1.5rem;
+      margin-bottom: 0;
+      color: var(--text-secondary);
+    }
+    
+    .api-instructions li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .api-instructions a {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .api-instructions a:hover {
+      text-decoration: underline;
+    }
+    
+    .api-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.25rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    
+    .api-btn:hover {
+      background-color: var(--primary-hover);
+    }
+    
+    .api-btn:disabled {
+      background-color: var(--text-muted);
+      cursor: not-allowed;
+    }
+    
+    .api-status {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .api-status.connected {
+      background-color: rgba(72, 187, 120, 0.1);
+      border: 1px solid rgba(72, 187, 120, 0.5);
+      color: rgb(39, 129, 79);
+    }
+    
+    .api-status.not-connected {
+      background-color: rgba(237, 137, 54, 0.1);
+      border: 1px solid rgba(237, 137, 54, 0.5);
+      color: rgb(179, 98, 34);
+    }
+    
+    .api-status i {
+      margin-right: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .security-section {
+      margin-top: 3rem;
+    }
+    
+    .security-note {
+      background-color: #fff8e1;
+      border: 1px solid #ffe57f;
+      color: #b7922e;
+      padding: 1rem;
+      border-radius: 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    #balanceSection {
+      display: none;
+    }
+    
+    .balance-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    
+    .balance-table th, .balance-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+    
+    .balance-table th {
+      font-weight: 600;
+      background-color: var(--bg-light);
+      color: var(--text-secondary);
+    }
+    
+    .balance-table tr:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .balance-value {
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 2px solid rgba(var(--primary-rgb), 0.3);
+      border-radius: 50%;
+      border-top-color: var(--primary-color);
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <img src="../assets/images/logo.svg" alt="FinTrustEX" class="logo">
+        <h1>FinTrustEX</h1>
+      </div>
+      <ul class="sidebar-menu">
+        <li><a href="../dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="./market.html"><i class="fas fa-chart-line"></i> Market</a></li>
+        <li><a href="./trade.html"><i class="fas fa-exchange-alt"></i> Trade</a></li>
+        <li><a href="./wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
+        <li><a href="./history.html"><i class="fas fa-history"></i> History</a></li>
+        <li class="active"><a href="./binance-settings.html"><i class="fas fa-key"></i> API Settings</a></li>
+        <li><a href="./support.html"><i class="fas fa-headset"></i> Support</a></li>
+        <li><a href="./settings.html"><i class="fas fa-cog"></i> Settings</a></li>
+      </ul>
+      <div class="sidebar-footer">
+        <a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <header class="dashboard-header">
+        <div class="header-left">
+          <button id="sidebar-toggle" class="sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <h2>Binance API Settings</h2>
+        </div>
+        <div class="header-right">
+          <div class="user-account">
+            <img src="../assets/images/default-avatar.svg" alt="User" class="user-avatar">
+            <span class="username">Welcome, <span id="username">User</span></span>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <div id="connectionStatus" class="api-status not-connected">
+          <i class="fas fa-exclamation-circle"></i>
+          <span>Not connected to Binance API</span>
+        </div>
+
+        <div class="api-instructions">
+          <h3>How to Get Your Binance API Keys</h3>
+          <ol>
+            <li>Log in to your <a href="https://www.binance.com/en/my/settings/api-management" target="_blank">Binance account</a>.</li>
+            <li>Navigate to "API Management" in your account settings.</li>
+            <li>Click "Create API" and complete any security verification required.</li>
+            <li>For security reasons, enable the following permissions only:
+              <ul>
+                <li>Read-Only (if you only want to track your portfolio)</li>
+                <li>Enable Trading (if you want to execute trades)</li>
+                <li>Do NOT enable withdrawal permissions</li>
+              </ul>
+            </li>
+            <li>Copy your API Key and Secret Key and enter them below.</li>
+            <li>For added security, restrict API access to your IP address in the Binance settings.</li>
+          </ol>
+        </div>
+
+        <div class="api-settings-container">
+          <h3 class="api-settings-title">Binance API Credentials</h3>
+          <form id="binanceApiForm">
+            <div class="api-form-group">
+              <label for="apiKey">API Key</label>
+              <input type="text" id="apiKey" name="apiKey" placeholder="Enter your Binance API Key" required>
+            </div>
+            <div class="api-form-group">
+              <label for="apiSecret">API Secret</label>
+              <input type="password" id="apiSecret" name="apiSecret" placeholder="Enter your Binance API Secret" required>
+            </div>
+            <div class="security-note">
+              <i class="fas fa-shield-alt"></i> For security reasons, never share your API keys or enter them on any site other than FinTrustEX.
+            </div>
+            <button type="submit" id="saveApiButton" class="api-btn">
+              Save API Keys
+            </button>
+          </form>
+        </div>
+
+        <div id="balanceSection" class="api-settings-container">
+          <h3 class="api-settings-title">Account Balances</h3>
+          <p>Your Binance account balances will be displayed here once your API keys are configured.</p>
+          <table class="balance-table" id="balanceTable">
+            <thead>
+              <tr>
+                <th>Asset</th>
+                <th>Available</th>
+                <th>In Order</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="balanceTableBody">
+              <!-- Balances will be populated here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="security-section">
+          <div class="api-settings-container">
+            <h3 class="api-settings-title">Security Recommendations</h3>
+            <ul>
+              <li>Create API keys that are specific to FinTrustEX.</li>
+              <li>Restrict API access to your IP address when possible.</li>
+              <li>Regularly review and audit your API keys on Binance.</li>
+              <li>Enable two-factor authentication on your Binance account.</li>
+              <li>Use a strong, unique password for your Binance account.</li>
+              <li>Never enable withdrawal permissions for API keys used with third-party services.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/js/auth.js"></script>
+  <script src="../assets/js/sidebar.js"></script>
+  <script src="../assets/js/binance-api-manager.js"></script>
+  <script>
+    // Check if user is authenticated
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        // Authentication check
+        if (!isAuthenticated()) {
+          window.location.href = '../login.html';
+          return;
+        }
+
+        // Set username
+        const user = getCurrentUser();
+        if (user && user.username) {
+          document.getElementById('username').textContent = user.username;
+        }
+
+        // Initialize Binance API manager
+        await binanceApiManager.initialize();
+        
+        // Update UI based on API connection status
+        updateConnectionStatus();
+        
+        // Show account balances if connected
+        if (binanceApiManager.isApiKeyConfigured()) {
+          showAccountBalances();
+        }
+        
+        // Handle form submission
+        document.getElementById('binanceApiForm').addEventListener('submit', async function(event) {
+          event.preventDefault();
+          
+          const saveButton = document.getElementById('saveApiButton');
+          const originalText = saveButton.innerHTML;
+          
+          saveButton.disabled = true;
+          saveButton.innerHTML = '<span class="spinner"></span> Saving...';
+          
+          const apiKey = document.getElementById('apiKey').value.trim();
+          const apiSecret = document.getElementById('apiSecret').value.trim();
+          
+          try {
+            await binanceApiManager.saveApiCredentials(apiKey, apiSecret);
+            updateConnectionStatus(true);
+            showAccountBalances();
+            alert('API keys saved successfully!');
+          } catch (error) {
+            console.error('Error saving API keys:', error);
+            alert('Error: ' + (error.message || 'Failed to save API keys. Please try again.'));
+          } finally {
+            saveButton.disabled = false;
+            saveButton.innerHTML = originalText;
+          }
+        });
+        
+        // Logout handler
+        document.getElementById('logout-link').addEventListener('click', function(event) {
+          event.preventDefault();
+          logout();
+          window.location.href = '../login.html';
+        });
+      } catch (error) {
+        console.error('Error initializing page:', error);
+      }
+    });
+    
+    function updateConnectionStatus(isConnected) {
+      const statusEl = document.getElementById('connectionStatus');
+      
+      if (isConnected || binanceApiManager.isApiKeyConfigured()) {
+        statusEl.className = 'api-status connected';
+        statusEl.innerHTML = '<i class="fas fa-check-circle"></i><span>Connected to Binance API</span>';
+      } else {
+        statusEl.className = 'api-status not-connected';
+        statusEl.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Not connected to Binance API</span>';
+      }
+    }
+    
+    async function showAccountBalances() {
+      try {
+        document.getElementById('balanceSection').style.display = 'block';
+        
+        // Get account info
+        const accountInfo = await binanceApiManager.getAccountInfo();
+        
+        // Clear existing rows
+        const tableBody = document.getElementById('balanceTableBody');
+        tableBody.innerHTML = '';
+        
+        // Format and sort balances
+        const formattedBalances = binanceApiManager.formatBalances(accountInfo.balances);
+        
+        if (formattedBalances.length === 0) {
+          // No balances to show
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="4" style="text-align: center;">No balances found in your account.</td>
+            </tr>
+          `;
+          return;
+        }
+        
+        // Add rows for each balance
+        formattedBalances.forEach(balance => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${balance.asset}</td>
+            <td class="balance-value">${balance.free.toFixed(8)}</td>
+            <td class="balance-value">${balance.locked.toFixed(8)}</td>
+            <td class="balance-value">${balance.total.toFixed(8)}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error showing account balances:', error);
+        document.getElementById('balanceSection').innerHTML = `
+          <h3 class="api-settings-title">Account Balances</h3>
+          <div class="api-status not-connected">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>Error loading balances: ${error.message || 'Unknown error'}</span>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

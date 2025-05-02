@@ -1570,10 +1570,26 @@ router.get('/admin/users/:userId/restrictions', requireAdmin, async (req, res) =
 // This function now delegates to the specialized implementation
 function setupWebSocketServer(httpServer) {
   const { setupWebSocketServer: setupWS } = require('./websocket-server');
-  return setupWS(httpServer);
+  const marketDataService = require('./services/market-data-service');
+  
+  // Create WebSocket server instance
+  const wss = setupWS(httpServer);
+  
+  // Initialize market data service with WebSocket server
+  marketDataService.initialize(wss);
+  
+  console.log('WebSocket server and market data service initialized');
+  
+  return wss;
 }
 
 // WebSocket handlers have been moved to websocket-server.js
+
+// Import Binance routes
+const binanceRoutes = require('./routes/binance-routes');
+
+// Mount Binance routes
+router.use('/binance', binanceRoutes);
 
 // =============================
 // Support Ticket System Routes
@@ -2056,5 +2072,6 @@ function broadcastToUser(userId, message) {
 
 module.exports = {
   router,
-  setupWebSocketServer
+  setupWebSocketServer,
+  binanceRoutes
 };

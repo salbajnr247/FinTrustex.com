@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Generic Cryptocurrency</title>
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <circle fill="#8A92B2" cx="12" cy="12" r="12"></circle>
+        <path d="M12,4 C16.4183,4 20,7.58172 20,12 C20,16.4183 16.4183,20 12,20 C7.58172,20 4,16.4183 4,12 C4,7.58172 7.58172,4 12,4 Z M12,6 C8.68629,6 6,8.68629 6,12 C6,15.3137 8.68629,18 12,18 C15.3137,18 18,15.3137 18,12 C18,8.68629 15.3137,6 12,6 Z M12,8 C14.2091,8 16,9.79086 16,12 C16,14.2091 14.2091,16 12,16 C9.79086,16 8,14.2091 8,12 C8,9.79086 9.79086,8 12,8 Z" fill="#FFFFFF" fill-rule="nonzero"></path>
+    </g>
+</svg>
