@@ -1,472 +1,402 @@
 /**
- * Binance API Service for FinTrustEX
- * Handles communication with Binance API for trading operations
+ * Binance Service
+ * Provides functionality for interacting with the Binance API
  */
 
 const Binance = require('binance-api-node').default;
-const { storage } = require('../storage');
+const crypto = require('crypto');
 
-/**
- * Create a Binance client for a user
- * @param {number} userId - User ID
- * @returns {Promise<Object>} Binance client instance
- * @throws {Error} If user not found or API keys not configured
- */
-async function createClientForUser(userId) {
-  const user = await storage.getUser(userId);
-  
-  if (!user) {
-    throw new Error('User not found');
+class BinanceService {
+  /**
+   * Create a Binance API client
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @returns {Object} Binance client instance
+   */
+  createClient(apiKey, apiSecret, isTestnet = false) {
+    return Binance({
+      apiKey,
+      apiSecret,
+      getTime: () => Date.now(),
+      httpBase: isTestnet ? 'https://testnet.binance.vision' : undefined
+    });
   }
-  
-  if (!user.binanceApiKey || !user.binanceApiSecret) {
-    throw new Error('Binance API credentials not configured');
-  }
-  
-  if (!user.binanceEnabled) {
-    throw new Error('Binance API integration is disabled for this user');
-  }
-  
-  // Create Binance client with user's API key
-  const client = Binance({
-    apiKey: user.binanceApiKey,
-    apiSecret: user.binanceApiSecret,
-    // Use testnet if configured for user (default for safety)
-    useServerTime: true,
-    testnet: user.binanceTestnet !== false
-  });
-  
-  return client;
-}
 
-/**
- * Get account information for a user
- * @param {number} userId - User ID
- * @returns {Promise<Object>} Account information
- */
-async function getAccountInfo(userId) {
-  try {
-    const client = await createClientForUser(userId);
-    return await client.accountInfo();
-  } catch (error) {
-    console.error(`Error fetching account info for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Get account balances for a user
- * @param {number} userId - User ID
- * @returns {Promise<Array>} Array of balances for different assets
- */
-async function getBalances(userId) {
-  try {
-    const accountInfo = await getAccountInfo(userId);
-    return accountInfo.balances;
-  } catch (error) {
-    console.error(`Error fetching balances for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Create a market buy order
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} quantity - Amount to buy
- * @returns {Promise<Object>} Order result
- */
-async function createMarketBuyOrder(userId, symbol, quantity) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Execute market buy order
-    const order = await client.order({
-      symbol: symbol,
-      side: 'BUY',
-      type: 'MARKET',
-      quantity: quantity
-    });
-    
-    // Store order in database
-    const storedOrder = await storage.createOrder({
-      userId: userId,
-      type: 'buy',
-      status: 'completed',
-      baseCurrency: symbol.slice(0, -4), // e.g., BTC from BTCUSDT
-      quoteCurrency: symbol.slice(-4),   // e.g., USDT from BTCUSDT
-      amount: quantity,
-      symbol: symbol,
-      side: 'BUY',
-      externalOrderId: order.orderId.toString(),
-      externalData: order
-    });
-    
-    return {
-      order: order,
-      storedOrder: storedOrder
-    };
-  } catch (error) {
-    console.error(`Error creating market buy order for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Create a market sell order
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} quantity - Amount to sell
- * @returns {Promise<Object>} Order result
- */
-async function createMarketSellOrder(userId, symbol, quantity) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Execute market sell order
-    const order = await client.order({
-      symbol: symbol,
-      side: 'SELL',
-      type: 'MARKET',
-      quantity: quantity
-    });
-    
-    // Store order in database
-    const storedOrder = await storage.createOrder({
-      userId: userId,
-      type: 'sell',
-      status: 'completed',
-      baseCurrency: symbol.slice(0, -4), // e.g., BTC from BTCUSDT
-      quoteCurrency: symbol.slice(-4),   // e.g., USDT from BTCUSDT
-      amount: quantity,
-      symbol: symbol,
-      side: 'SELL',
-      externalOrderId: order.orderId.toString(),
-      externalData: order
-    });
-    
-    return {
-      order: order,
-      storedOrder: storedOrder
-    };
-  } catch (error) {
-    console.error(`Error creating market sell order for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Create a limit buy order
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} quantity - Amount to buy
- * @param {string} price - Limit price
- * @returns {Promise<Object>} Order result
- */
-async function createLimitBuyOrder(userId, symbol, quantity, price) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Execute limit buy order
-    const order = await client.order({
-      symbol: symbol,
-      side: 'BUY',
-      type: 'LIMIT',
-      timeInForce: 'GTC', // Good Till Cancelled
-      quantity: quantity,
-      price: price
-    });
-    
-    // Store order in database
-    const storedOrder = await storage.createOrder({
-      userId: userId,
-      type: 'buy',
-      status: 'pending',
-      baseCurrency: symbol.slice(0, -4), // e.g., BTC from BTCUSDT
-      quoteCurrency: symbol.slice(-4),   // e.g., USDT from BTCUSDT
-      amount: quantity,
-      price: price,
-      totalValue: (parseFloat(quantity) * parseFloat(price)).toString(),
-      symbol: symbol,
-      side: 'BUY',
-      externalOrderId: order.orderId.toString(),
-      externalData: order
-    });
-    
-    return {
-      order: order,
-      storedOrder: storedOrder
-    };
-  } catch (error) {
-    console.error(`Error creating limit buy order for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Create a limit sell order
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} quantity - Amount to sell
- * @param {string} price - Limit price
- * @returns {Promise<Object>} Order result
- */
-async function createLimitSellOrder(userId, symbol, quantity, price) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Execute limit sell order
-    const order = await client.order({
-      symbol: symbol,
-      side: 'SELL',
-      type: 'LIMIT',
-      timeInForce: 'GTC', // Good Till Cancelled
-      quantity: quantity,
-      price: price
-    });
-    
-    // Store order in database
-    const storedOrder = await storage.createOrder({
-      userId: userId,
-      type: 'sell',
-      status: 'pending',
-      baseCurrency: symbol.slice(0, -4), // e.g., BTC from BTCUSDT
-      quoteCurrency: symbol.slice(-4),   // e.g., USDT from BTCUSDT
-      amount: quantity,
-      price: price,
-      totalValue: (parseFloat(quantity) * parseFloat(price)).toString(),
-      symbol: symbol,
-      side: 'SELL',
-      externalOrderId: order.orderId.toString(),
-      externalData: order
-    });
-    
-    return {
-      order: order,
-      storedOrder: storedOrder
-    };
-  } catch (error) {
-    console.error(`Error creating limit sell order for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Cancel an order
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} orderId - Binance order ID
- * @returns {Promise<Object>} Cancel result
- */
-async function cancelOrder(userId, symbol, orderId) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Cancel order on Binance
-    const result = await client.cancelOrder({
-      symbol: symbol,
-      orderId: orderId
-    });
-    
-    // Get our internal order by external ID
-    const internalOrder = await storage.getOrderByExternalId(orderId.toString());
-    
-    if (internalOrder) {
-      // Update order status in database
-      await storage.updateOrderStatus(internalOrder.id, 'cancelled');
-    }
-    
-    return result;
-  } catch (error) {
-    console.error(`Error cancelling order for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Get all open orders for a user
- * @param {number} userId - User ID
- * @param {string} [symbol] - Optional trading pair to filter by
- * @returns {Promise<Array>} Open orders
- */
-async function getOpenOrders(userId, symbol = null) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Get open orders from Binance
-    const openOrders = symbol ? 
-      await client.openOrders({ symbol }) : 
-      await client.openOrders();
-    
-    return openOrders;
-  } catch (error) {
-    console.error(`Error fetching open orders for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Get order status
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @param {string} orderId - Binance order ID
- * @returns {Promise<Object>} Order status
- */
-async function getOrderStatus(userId, symbol, orderId) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Get order status from Binance
-    const order = await client.getOrder({
-      symbol: symbol,
-      orderId: orderId
-    });
-    
-    // Get our internal order by external ID
-    const internalOrder = await storage.getOrderByExternalId(orderId.toString());
-    
-    if (internalOrder) {
-      // Check if order status needs updating
-      let newStatus;
-      if (order.status === 'FILLED') {
-        newStatus = 'completed';
-      } else if (order.status === 'CANCELED' || order.status === 'REJECTED' || order.status === 'EXPIRED') {
-        newStatus = 'cancelled';
-      } else if (order.status === 'NEW' || order.status === 'PARTIALLY_FILLED') {
-        newStatus = 'pending';
+  /**
+   * Test connection to the Binance API
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @returns {Promise<Object>} Connection test result
+   */
+  async testConnection(apiKey, apiSecret, isTestnet = false) {
+    try {
+      if (!apiKey || !apiSecret) {
+        return { success: false, error: 'API key and secret are required' };
       }
       
-      // Update order status if needed
-      if (newStatus && internalOrder.status !== newStatus) {
-        await storage.updateOrderStatus(internalOrder.id, newStatus);
-      }
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      // Test account connection
+      await client.accountInfo();
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Binance connection test error:', error);
+      
+      return { 
+        success: false, 
+        error: error.message || 'Connection test failed' 
+      };
     }
-    
-    return order;
-  } catch (error) {
-    console.error(`Error fetching order status for user ${userId}:`, error);
-    throw error;
   }
-}
 
-/**
- * Get trade history for a symbol
- * @param {number} userId - User ID
- * @param {string} symbol - Trading pair (e.g., 'BTCUSDT')
- * @returns {Promise<Array>} Trade history
- */
-async function getTradeHistory(userId, symbol) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Get trades from Binance
-    const trades = await client.myTrades({
-      symbol: symbol
-    });
-    
-    return trades;
-  } catch (error) {
-    console.error(`Error fetching trade history for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Get deposit history
- * @param {number} userId - User ID
- * @param {string} [asset] - Optional asset to filter by
- * @returns {Promise<Array>} Deposit history
- */
-async function getDepositHistory(userId, asset = null) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Get deposit history from Binance
-    const history = asset ? 
-      await client.depositHistory({ asset }) : 
-      await client.depositHistory();
-    
-    return history;
-  } catch (error) {
-    console.error(`Error fetching deposit history for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Get withdrawal history
- * @param {number} userId - User ID
- * @param {string} [asset] - Optional asset to filter by
- * @returns {Promise<Array>} Withdrawal history
- */
-async function getWithdrawalHistory(userId, asset = null) {
-  try {
-    const client = await createClientForUser(userId);
-    
-    // Get withdrawal history from Binance
-    const history = asset ? 
-      await client.withdrawHistory({ asset }) : 
-      await client.withdrawHistory();
-    
-    return history;
-  } catch (error) {
-    console.error(`Error fetching withdrawal history for user ${userId}:`, error);
-    throw error;
-  }
-}
-
-/**
- * Test Binance API connection for a user
- * @param {string} apiKey - API key
- * @param {string} apiSecret - API secret
- * @param {boolean} [useTestnet=true] - Whether to use testnet
- * @returns {Promise<Object>} Test result
- */
-async function testConnection(apiKey, apiSecret, useTestnet = true) {
-  try {
-    // Create Binance client with provided credentials
-    const client = Binance({
-      apiKey: apiKey,
-      apiSecret: apiSecret,
-      useServerTime: true,
-      testnet: useTestnet
-    });
-    
-    // Attempt to get account info to verify credentials
-    const accountInfo = await client.accountInfo();
-    
-    return {
-      success: true,
-      message: 'Connection successful',
-      data: {
+  /**
+   * Get account information
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @returns {Promise<Object>} Account information
+   */
+  async getAccountInfo(apiKey, apiSecret, isTestnet = false) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const accountInfo = await client.accountInfo();
+      
+      return {
+        makerCommission: accountInfo.makerCommission,
+        takerCommission: accountInfo.takerCommission,
+        buyerCommission: accountInfo.buyerCommission,
+        sellerCommission: accountInfo.sellerCommission,
         canTrade: accountInfo.canTrade,
+        canWithdraw: accountInfo.canWithdraw,
+        canDeposit: accountInfo.canDeposit,
+        updateTime: accountInfo.updateTime,
+        accountType: accountInfo.accountType,
+        permissions: accountInfo.permissions,
         balances: accountInfo.balances
+      };
+    } catch (error) {
+      console.error('Error getting account info:', error);
+      
+      return { 
+        error: error.message || 'Failed to get account information' 
+      };
+    }
+  }
+
+  /**
+   * Get account balances
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @returns {Promise<Array>} Account balances
+   */
+  async getBalances(apiKey, apiSecret, isTestnet = false) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const accountInfo = await client.accountInfo();
+      
+      return accountInfo.balances;
+    } catch (error) {
+      console.error('Error getting balances:', error);
+      
+      return { 
+        error: error.message || 'Failed to get balances' 
+      };
+    }
+  }
+
+  /**
+   * Get open orders
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} [symbol] - Symbol to get orders for
+   * @returns {Promise<Array>} Open orders
+   */
+  async getOpenOrders(apiKey, apiSecret, isTestnet = false, symbol = null) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const params = symbol ? { symbol } : {};
+      
+      const orders = await client.openOrders(params);
+      
+      return orders;
+    } catch (error) {
+      console.error('Error getting open orders:', error);
+      
+      return { 
+        error: error.message || 'Failed to get open orders' 
+      };
+    }
+  }
+
+  /**
+   * Get order history
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} [symbol] - Symbol to get orders for
+   * @returns {Promise<Array>} Order history
+   */
+  async getOrderHistory(apiKey, apiSecret, isTestnet = false, symbol = null) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      if (!symbol) {
+        // Get all symbols and fetch orders for each
+        const exchangeInfo = await client.exchangeInfo();
+        const allSymbols = exchangeInfo.symbols
+          .filter(s => s.status === 'TRADING')
+          .map(s => s.symbol);
+        
+        let allOrders = [];
+        
+        // Use a limit to prevent hitting rate limits
+        const symbolsToCheck = allSymbols.slice(0, 10);
+        
+        for (const sym of symbolsToCheck) {
+          try {
+            const symOrders = await client.allOrders({ symbol: sym });
+            allOrders = allOrders.concat(symOrders);
+          } catch (err) {
+            console.warn(`Could not fetch orders for ${sym}:`, err.message);
+          }
+        }
+        
+        return allOrders.sort((a, b) => b.time - a.time);
       }
-    };
-  } catch (error) {
-    console.error('Error testing Binance connection:', error);
-    
-    return {
-      success: false,
-      message: error.message || 'Connection failed',
-      error: error
-    };
+      
+      const orders = await client.allOrders({ symbol });
+      
+      return orders;
+    } catch (error) {
+      console.error('Error getting order history:', error);
+      
+      return { 
+        error: error.message || 'Failed to get order history' 
+      };
+    }
+  }
+
+  /**
+   * Create a new order
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {Object} params - Order parameters
+   * @returns {Promise<Object>} Created order
+   */
+  async createOrder(apiKey, apiSecret, isTestnet = false, params) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      // Check required parameters
+      if (!params.symbol) {
+        throw new Error('Symbol is required');
+      }
+      
+      if (!params.side) {
+        throw new Error('Side is required');
+      }
+      
+      if (!params.type) {
+        throw new Error('Type is required');
+      }
+      
+      if (!params.quantity) {
+        throw new Error('Quantity is required');
+      }
+      
+      // For limit orders, ensure price and timeInForce are provided
+      if (params.type === 'LIMIT') {
+        if (!params.price) {
+          throw new Error('Price is required for limit orders');
+        }
+        
+        if (!params.timeInForce) {
+          params.timeInForce = 'GTC';
+        }
+      }
+      
+      const order = await client.order(params);
+      
+      return order;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      
+      return { 
+        error: error.message || 'Failed to create order' 
+      };
+    }
+  }
+
+  /**
+   * Cancel an order
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol of the order
+   * @param {string} orderId - ID of the order to cancel
+   * @returns {Promise<Object>} Cancellation result
+   */
+  async cancelOrder(apiKey, apiSecret, isTestnet = false, symbol, orderId) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const result = await client.cancelOrder({
+        symbol,
+        orderId
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      
+      return { 
+        error: error.message || 'Failed to cancel order' 
+      };
+    }
+  }
+
+  /**
+   * Get latest price for a symbol
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol to get price for
+   * @returns {Promise<Object>} Latest price
+   */
+  async getPrice(apiKey, apiSecret, isTestnet = false, symbol) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const price = await client.prices({ symbol });
+      
+      return price;
+    } catch (error) {
+      console.error('Error getting price:', error);
+      
+      return { 
+        error: error.message || 'Failed to get price' 
+      };
+    }
+  }
+
+  /**
+   * Get ticker information for a symbol
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol to get ticker for
+   * @returns {Promise<Object>} Ticker information
+   */
+  async getTicker(apiKey, apiSecret, isTestnet = false, symbol) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const ticker = await client.ticker({ symbol });
+      
+      return ticker;
+    } catch (error) {
+      console.error('Error getting ticker:', error);
+      
+      return { 
+        error: error.message || 'Failed to get ticker' 
+      };
+    }
+  }
+
+  /**
+   * Get candlestick data for a symbol
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol to get candlesticks for
+   * @param {string} interval - Candlestick interval
+   * @param {Object} [options] - Additional options
+   * @returns {Promise<Array>} Candlestick data
+   */
+  async getCandles(apiKey, apiSecret, isTestnet = false, symbol, interval, options = {}) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const candles = await client.candles({
+        symbol,
+        interval,
+        ...options
+      });
+      
+      return candles;
+    } catch (error) {
+      console.error('Error getting candles:', error);
+      
+      return { 
+        error: error.message || 'Failed to get candles' 
+      };
+    }
+  }
+
+  /**
+   * Get order book for a symbol
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol to get order book for
+   * @param {number} [limit=100] - Limit of results
+   * @returns {Promise<Object>} Order book
+   */
+  async getOrderBook(apiKey, apiSecret, isTestnet = false, symbol, limit = 100) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const orderBook = await client.book({
+        symbol,
+        limit
+      });
+      
+      return orderBook;
+    } catch (error) {
+      console.error('Error getting order book:', error);
+      
+      return { 
+        error: error.message || 'Failed to get order book' 
+      };
+    }
+  }
+
+  /**
+   * Get recent trades for a symbol
+   * @param {string} apiKey - Binance API key
+   * @param {string} apiSecret - Binance API secret
+   * @param {boolean} isTestnet - Whether to use testnet
+   * @param {string} symbol - Symbol to get trades for
+   * @param {number} [limit=50] - Limit of results
+   * @returns {Promise<Array>} Recent trades
+   */
+  async getRecentTrades(apiKey, apiSecret, isTestnet = false, symbol, limit = 50) {
+    try {
+      const client = this.createClient(apiKey, apiSecret, isTestnet);
+      
+      const trades = await client.trades({
+        symbol,
+        limit
+      });
+      
+      return trades;
+    } catch (error) {
+      console.error('Error getting recent trades:', error);
+      
+      return { 
+        error: error.message || 'Failed to get recent trades' 
+      };
+    }
   }
 }
 
-module.exports = {
-  createClientForUser,
-  getAccountInfo,
-  getBalances,
-  createMarketBuyOrder,
-  createMarketSellOrder,
-  createLimitBuyOrder,
-  createLimitSellOrder,
-  cancelOrder,
-  getOpenOrders,
-  getOrderStatus,
-  getTradeHistory,
-  getDepositHistory,
-  getWithdrawalHistory,
-  testConnection
-};
+module.exports = { BinanceService };

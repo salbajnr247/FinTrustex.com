@@ -1,345 +1,288 @@
 /**
  * WebSocket Server for FinTrustEX
- * Handles real-time data streaming and client communication
+ * Manages real-time data transmission between the backend and clients
  */
 
 const WebSocket = require('ws');
+const http = require('http');
 const { v4: uuidv4 } = require('uuid');
 
-// Map to store active clients
-let clients = new Map();
-// Map to store admin clients for broadcasting admin-specific events
-let adminClients = new Map();
-// Map to store client subscriptions (client ID => list of channels)
-let clientSubscriptions = new Map();
-
 /**
- * Set up WebSocket server
- * @param {http.Server} httpServer - HTTP Server to attach WebSocket server to
+ * Initialize WebSocket server
+ * @param {http.Server} httpServer - HTTP server instance
  * @returns {WebSocket.Server} WebSocket server instance
  */
-function setupWebSocketServer(httpServer) {
-  console.log('Setting up WebSocket server...');
-  
-  // Create WebSocket server
-  const wss = new WebSocket.Server({
+function initializeWebSocketServer(httpServer) {
+  // Create WebSocket server on a specific path to avoid conflicts with other WebSocket connections
+  const wss = new WebSocket.Server({ 
     server: httpServer,
     path: '/ws'
   });
+
+  // Client tracking
+  const clients = new Map();
   
-  // Set up connection handler
-  wss.on('connection', (ws, req) => {
-    // Generate a unique client ID
-    const clientId = uuidv4();
-    console.log(`New WebSocket connection: ${clientId}`);
-    
-    // Store client reference
-    clients.set(clientId, ws);
-    
-    // Set up client properties
-    ws.clientId = clientId;
-    ws.isAlive = true;
-    ws.subscribedChannels = new Set();
-    
-    // Handle pong response
-    ws.on('pong', () => {
-      ws.isAlive = true;
-    });
-    
-    // Handle incoming messages
-    ws.on('message', (message) => {
-      try {
-        const data = JSON.parse(message);
-        console.log(`Received message from ${clientId}:`, data);
-        
-        // Handle authentication
-        if (data.type === 'auth') {
-          handleAuth(ws, data);
-        }
-        // Handle subscription
-        else if (data.type === 'subscribe') {
-          handleSubscribe(ws, data);
-        }
-        // Handle unsubscription
-        else if (data.type === 'unsubscribe') {
-          handleUnsubscribe(ws, data);
-        }
-        // Handle ping
-        else if (data.type === 'ping') {
-          send(ws, { type: 'pong', timestamp: Date.now() });
-        }
-        // Handle unknown message type
-        else {
-          send(ws, {
-            type: 'error',
-            message: 'Unknown message type',
-            timestamp: Date.now()
-          });
-        }
-      } catch (error) {
-        console.error('Error processing WebSocket message:', error);
-        send(ws, {
-          type: 'error',
-          message: 'Invalid message format',
-          timestamp: Date.now()
-        });
-      }
-    });
-    
-    // Handle disconnection
-    ws.on('close', () => {
-      handleDisconnect(ws);
-    });
-    
-    // Send welcome message
-    send(ws, {
-      type: 'welcome',
-      message: 'Connected to FinTrustEX WebSocket Server',
-      timestamp: Date.now()
-    });
-  });
+  // Subscription tracking: { channel: Set<clientId> }
+  const subscriptions = new Map();
   
-  // Set up heartbeat interval
-  const interval = setInterval(() => {
+  // Set up heartbeat to detect disconnected clients
+  const heartbeatInterval = setInterval(() => {
     wss.clients.forEach((ws) => {
-      if (ws.isAlive === false) {
-        handleDisconnect(ws);
+      const client = clients.get(ws);
+      
+      if (!client) {
+        return;
+      }
+      
+      if (client.isAlive === false) {
+        // Clean up subscriptions for this client
+        handleClientDisconnect(ws);
         return ws.terminate();
       }
       
-      ws.isAlive = false;
-      ws.ping();
+      client.isAlive = false;
+      sendMessage(ws, { type: 'heartbeat', timestamp: Date.now() });
     });
   }, 30000);
   
   // Clean up interval on server close
   wss.on('close', () => {
-    clearInterval(interval);
+    clearInterval(heartbeatInterval);
   });
   
-  console.log('WebSocket server is ready');
-  return wss;
-}
-
-/**
- * Handle client authentication
- * @param {WebSocket} ws - WebSocket client
- * @param {Object} data - Authentication data
- */
-function handleAuth(ws, data) {
-  // In a real implementation, this would verify the user's credentials
-  // For now, just store user ID and admin status
-  if (data.userId) {
-    ws.userId = data.userId;
-    ws.isAdmin = data.isAdmin || false;
+  // Handle new connections
+  wss.on('connection', (ws, req) => {
+    // Assign a unique client ID
+    const clientId = uuidv4();
     
-    // Add to admin clients if admin
-    if (ws.isAdmin) {
-      adminClients.set(ws.clientId, ws);
-    }
-    
-    send(ws, {
-      type: 'auth_success',
-      userId: ws.userId,
-      isAdmin: ws.isAdmin,
-      timestamp: Date.now()
+    // Store client info
+    clients.set(ws, {
+      id: clientId,
+      isAlive: true,
+      subscriptions: new Set()
     });
     
-    console.log(`Client ${ws.clientId} authenticated as user ${ws.userId} (Admin: ${ws.isAdmin})`);
-  } else {
-    send(ws, {
-      type: 'auth_error',
-      message: 'Authentication failed',
-      timestamp: Date.now()
+    // Send client ID to client
+    sendMessage(ws, { 
+      type: 'client_id',
+      clientId,
+      message: 'Connected to FinTrustEX WebSocket server'
     });
-  }
-}
-
-/**
- * Handle subscription request
- * @param {WebSocket} ws - WebSocket client
- * @param {Object} data - Subscription data
- */
-function handleSubscribe(ws, data) {
-  if (!data.channel) {
-    return send(ws, {
-      type: 'error',
-      message: 'Channel is required for subscription',
-      timestamp: Date.now()
-    });
-  }
-  
-  // Add channel to client's subscriptions
-  ws.subscribedChannels.add(data.channel);
-  
-  // Add to channel subscriptions map
-  if (!clientSubscriptions.has(data.channel)) {
-    clientSubscriptions.set(data.channel, new Set());
-  }
-  clientSubscriptions.get(data.channel).add(ws.clientId);
-  
-  console.log(`Client ${ws.clientId} subscribed to channel: ${data.channel}`);
-  
-  send(ws, {
-    type: 'subscribed',
-    channel: data.channel,
-    timestamp: Date.now()
-  });
-}
-
-/**
- * Handle unsubscription request
- * @param {WebSocket} ws - WebSocket client
- * @param {Object} data - Unsubscription data
- */
-function handleUnsubscribe(ws, data) {
-  if (data.all) {
-    // Unsubscribe from all channels
-    ws.subscribedChannels.forEach(channel => {
-      if (clientSubscriptions.has(channel)) {
-        clientSubscriptions.get(channel).delete(ws.clientId);
+    
+    console.log(`WebSocket client connected: ${clientId}`);
+    
+    // Handle heartbeat pings
+    ws.on('pong', () => {
+      const client = clients.get(ws);
+      if (client) {
+        client.isAlive = true;
       }
     });
     
-    ws.subscribedChannels.clear();
-    
-    console.log(`Client ${ws.clientId} unsubscribed from all channels`);
-    
-    send(ws, {
-      type: 'unsubscribed',
-      all: true,
-      timestamp: Date.now()
+    // Handle heartbeat acknowledgments
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data);
+        
+        if (message.type === 'heartbeat_ack') {
+          const client = clients.get(ws);
+          if (client) {
+            client.isAlive = true;
+          }
+          return;
+        }
+        
+        // Handle client messages
+        handleClientMessage(ws, message);
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+      }
     });
     
-    return;
+    // Handle disconnects
+    ws.on('close', () => {
+      handleClientDisconnect(ws);
+    });
+  });
+  
+  /**
+   * Handle messages from clients
+   * @param {WebSocket} ws - WebSocket connection
+   * @param {Object} message - Parsed message from client
+   */
+  function handleClientMessage(ws, message) {
+    const client = clients.get(ws);
+    
+    if (!client) {
+      return;
+    }
+    
+    switch (message.type) {
+      case 'subscribe':
+        handleSubscription(ws, client, message.channel);
+        break;
+        
+      case 'unsubscribe':
+        handleUnsubscription(ws, client, message.channel);
+        break;
+        
+      default:
+        console.log(`Received message from ${client.id}:`, message);
+    }
   }
   
-  if (!data.channel) {
-    return send(ws, {
-      type: 'error',
-      message: 'Channel is required for unsubscription',
+  /**
+   * Handle client subscription request
+   * @param {WebSocket} ws - WebSocket connection
+   * @param {Object} client - Client information
+   * @param {string} channel - Channel to subscribe to
+   */
+  function handleSubscription(ws, client, channel) {
+    if (!channel) {
+      return;
+    }
+    
+    // Add channel to client's subscriptions
+    client.subscriptions.add(channel);
+    
+    // Add client to channel subscribers
+    if (!subscriptions.has(channel)) {
+      subscriptions.set(channel, new Set());
+    }
+    
+    subscriptions.get(channel).add(client.id);
+    
+    // Confirm subscription
+    sendMessage(ws, {
+      type: 'subscription_success',
+      channel,
+      message: `Subscribed to ${channel}`
+    });
+    
+    console.log(`Client ${client.id} subscribed to ${channel}`);
+  }
+  
+  /**
+   * Handle client unsubscription request
+   * @param {WebSocket} ws - WebSocket connection
+   * @param {Object} client - Client information
+   * @param {string} channel - Channel to unsubscribe from
+   */
+  function handleUnsubscription(ws, client, channel) {
+    if (!channel) {
+      return;
+    }
+    
+    // Remove channel from client's subscriptions
+    client.subscriptions.delete(channel);
+    
+    // Remove client from channel subscribers
+    if (subscriptions.has(channel)) {
+      subscriptions.get(channel).delete(client.id);
+      
+      // Clean up empty channels
+      if (subscriptions.get(channel).size === 0) {
+        subscriptions.delete(channel);
+      }
+    }
+    
+    // Confirm unsubscription
+    sendMessage(ws, {
+      type: 'unsubscription_success',
+      channel,
+      message: `Unsubscribed from ${channel}`
+    });
+    
+    console.log(`Client ${client.id} unsubscribed from ${channel}`);
+  }
+  
+  /**
+   * Handle client disconnect
+   * @param {WebSocket} ws - WebSocket connection
+   */
+  function handleClientDisconnect(ws) {
+    const client = clients.get(ws);
+    
+    if (!client) {
+      return;
+    }
+    
+    console.log(`WebSocket client disconnected: ${client.id}`);
+    
+    // Clean up subscriptions
+    for (const channel of client.subscriptions) {
+      if (subscriptions.has(channel)) {
+        subscriptions.get(channel).delete(client.id);
+        
+        // Clean up empty channels
+        if (subscriptions.get(channel).size === 0) {
+          subscriptions.delete(channel);
+        }
+      }
+    }
+    
+    // Remove client
+    clients.delete(ws);
+  }
+  
+  /**
+   * Send a message to a client
+   * @param {WebSocket} ws - WebSocket connection
+   * @param {Object} message - Message to send
+   */
+  function sendMessage(ws, message) {
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(message));
+    }
+  }
+  
+  /**
+   * Broadcast a message to all subscribers of a channel
+   * @param {string} channel - Channel to broadcast to
+   * @param {Object} data - Data to broadcast
+   * @param {string} event - Event type
+   */
+  function broadcast(channel, data, event) {
+    if (!subscriptions.has(channel)) {
+      return;
+    }
+    
+    const message = {
+      event: event || channel,
+      channel,
+      data,
       timestamp: Date.now()
+    };
+    
+    // Broadcast to all subscribers
+    const subscribers = subscriptions.get(channel);
+    
+    wss.clients.forEach((ws) => {
+      const client = clients.get(ws);
+      
+      if (client && subscribers.has(client.id) && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
     });
   }
   
-  // Remove channel from client's subscriptions
-  ws.subscribedChannels.delete(data.channel);
-  
-  // Remove from channel subscriptions map
-  if (clientSubscriptions.has(data.channel)) {
-    clientSubscriptions.get(data.channel).delete(ws.clientId);
-  }
-  
-  console.log(`Client ${ws.clientId} unsubscribed from channel: ${data.channel}`);
-  
-  send(ws, {
-    type: 'unsubscribed',
-    channel: data.channel,
-    timestamp: Date.now()
-  });
-}
-
-/**
- * Handle client disconnection
- * @param {WebSocket} ws - WebSocket client
- */
-function handleDisconnect(ws) {
-  console.log(`WebSocket disconnected: ${ws.clientId}`);
-  
-  // Remove from clients map
-  clients.delete(ws.clientId);
-  
-  // Remove from admin clients if admin
-  if (ws.isAdmin) {
-    adminClients.delete(ws.clientId);
-  }
-  
-  // Remove from all subscriptions
-  ws.subscribedChannels.forEach(channel => {
-    if (clientSubscriptions.has(channel)) {
-      clientSubscriptions.get(channel).delete(ws.clientId);
+  // Export public API
+  return {
+    wss,
+    broadcast,
+    getSubscriptionCount: (channel) => {
+      if (!subscriptions.has(channel)) {
+        return 0;
+      }
+      return subscriptions.get(channel).size;
+    },
+    getClientCount: () => {
+      return clients.size;
+    },
+    getChannels: () => {
+      return Array.from(subscriptions.keys());
     }
-  });
+  };
 }
 
-/**
- * Send a message to a specific client
- * @param {WebSocket} ws - WebSocket client
- * @param {Object} message - Message to send
- */
-function send(ws, message) {
-  if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(message));
-  }
-}
-
-/**
- * Broadcast a message to all clients
- * @param {Object} message - Message to broadcast
- */
-function broadcast(message) {
-  const messageStr = JSON.stringify(message);
-  
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(messageStr);
-    }
-  });
-}
-
-/**
- * Broadcast a message to all clients subscribed to a channel
- * @param {string} channel - Channel to broadcast to
- * @param {Object} message - Message to broadcast
- */
-function broadcastToChannel(channel, message) {
-  if (!clientSubscriptions.has(channel)) {
-    return;
-  }
-  
-  const messageStr = JSON.stringify(message);
-  
-  clientSubscriptions.get(channel).forEach(clientId => {
-    const client = clients.get(clientId);
-    if (client && client.readyState === WebSocket.OPEN) {
-      client.send(messageStr);
-    }
-  });
-}
-
-/**
- * Broadcast a message to all admin clients
- * @param {Object} message - Message to broadcast
- */
-function broadcastToAdmins(message) {
-  const messageStr = JSON.stringify(message);
-  
-  adminClients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(messageStr);
-    }
-  });
-}
-
-/**
- * Broadcast a message to a specific user
- * @param {string} userId - User ID to broadcast to
- * @param {Object} message - Message to broadcast
- */
-function broadcastToUser(userId, message) {
-  const messageStr = JSON.stringify(message);
-  
-  clients.forEach((client) => {
-    if (client.userId === userId && client.readyState === WebSocket.OPEN) {
-      client.send(messageStr);
-    }
-  });
-}
-
-module.exports = {
-  setupWebSocketServer,
-  broadcast,
-  broadcastToChannel,
-  broadcastToAdmins,
-  broadcastToUser
-};
+module.exports = { initializeWebSocketServer };

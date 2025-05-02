@@ -1,0 +1,23 @@
+{
+  "name": "FINTRUSTEX",
+  "description": "Start the FinTrustEX server with WebSocket support",
+  "icon": "generated-icon.png",
+  "buildCommand": "cd FINTRUSTEX && npm install",
+  "runCommand": "./FINTRUSTEX/start-server-with-websocket.sh",
+  "language": "nodejs",
+  "template": "nodejs",
+  "features": {
+    "ghcr.io": true,
+    "github": false,
+    "secrets": [
+      "DATABASE_URL",
+      "PGDATABASE",
+      "PGHOST",
+      "PGPORT",
+      "PGPASSWORD",
+      "PGUSER",
+      "STRIPE_SECRET_KEY",
+      "VITE_STRIPE_PUBLIC_KEY"
+    ]
+  }
+}
