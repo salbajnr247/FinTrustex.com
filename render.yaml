@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: fintrustex
+    env: node
+    buildCommand: npm install
+    startCommand: node start-render.js
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fintrustex-db
+          property: connectionString
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: VITE_STRIPE_PUBLIC_KEY
+        sync: false
+
+databases:
+  - name: fintrustex-db
+    databaseName: fintrustex
+    plan: free
