@@ -1,0 +1,24 @@
+{
+  "name": "FinTrustEX",
+  "description": "Run the FinTrustEX platform",
+  "path": "/",
+  "shell": "bash",
+  "command": [
+    "cd FINTRUSTEX && node server-start.js"
+  ],
+  "outputCapture": "both",
+  "clearOutput": true,
+  "outputFilter": [
+    {
+      "type": "match",
+      "pattern": "Server running on port (\\d+)",
+      "highlightAsDuration": false,
+      "highlight": true,
+      "openIn": "browser",
+      "previewUrl": "http://localhost:$1"
+    }
+  ],
+  "docs": {
+    "description": "Run the FinTrustEX server"
+  }
+}

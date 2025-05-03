@@ -1,0 +1,7 @@
+{
+  "type": "Script",
+  "name": "FinTrustEX Server",
+  "description": "Run the FinTrustEX server",
+  "script": "cd FINTRUSTEX && node -r esbuild-register server/simplified-server.js",
+  "runOnBoot": false
+}

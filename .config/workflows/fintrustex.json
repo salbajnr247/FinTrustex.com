@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "workflows": [
+    {
+      "name": "fintrustex",
+      "display_name": "Start FinTrustEX",
+      "run_command": "cd FINTRUSTEX && node server-start.js",
+      "default_trigger": {
+        "type": "automatic"
+      }
+    }
+  ]
+}

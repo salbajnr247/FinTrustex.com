@@ -1,0 +1,7 @@
+{
+  "name": "Start Server",
+  "command": "./start-fintrustex.sh",
+  "restartOn": {
+    "files": ["FINTRUSTEX/**"]
+  }
+}

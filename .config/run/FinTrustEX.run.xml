@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="FinTrustEX" type="NodeJSConfigurationType" path-to-js-file="server-start.js" working-dir="$PROJECT_DIR$/FINTRUSTEX">
+    <method v="2" />
+  </configuration>
+</component>
