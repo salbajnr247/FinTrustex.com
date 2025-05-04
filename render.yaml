@@ -20,5 +20,5 @@ services:
 
 databases:
   - name: fintrustex-db
-    databaseName: fintrustex
+    databaseName: Postgres
     plan: free
