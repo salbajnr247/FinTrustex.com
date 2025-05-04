@@ -1,7 +1,8 @@
 services:
   - type: web
     name: fintrustex
-    env: node
+    env: node 
+    plan: free
     buildCommand: npm install
     startCommand: node start-render.js
     healthCheckPath: /api/health
